@@ -36,8 +36,11 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let env = embedded::get_env()?;
     let config = embedded::get_config(env.config)?;
     let reviewer = config.reviewer.unwrap_or("".to_string());
-    let db_file = File::open(config.db.unwrap())?;
-    let reviewed_docs = read_reviewed_docs(db_file, reviewer)?;
+    let db_file = File::open(config.db.unwrap());
+    let reviewed_docs = match db_file {
+        Err(_) => HashSet::new(), // The file may not exist yet
+        Ok(file) => read_reviewed_docs(file, reviewer)?,
+    };
     let input = File::open(env.input.unwrap())?;
     let reader = BufReader::new(input);
     let in_events = embedded::events(reader);
