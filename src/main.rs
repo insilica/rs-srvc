@@ -1,3 +1,15 @@
+// `error_chain!` can recurse deeply
+#![recursion_limit = "1024"]
+
+#[macro_use]
+extern crate error_chain;
+
+mod errors {
+    error_chain! {}
+}
+
+use errors::*;
+
 use clap::{Parser, Subcommand};
 
 mod embedded;
@@ -25,13 +37,13 @@ enum EmbeddedSteps {
     RemoveReviewed {},
 }
 
-fn run_embedded_step(name: EmbeddedSteps) -> Result<(), Box<dyn std::error::Error>> {
+fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
     match name {
         EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),
     }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -40,3 +52,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 }
+
+quick_main!(run);

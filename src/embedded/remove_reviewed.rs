@@ -8,11 +8,9 @@ use std::io::Write;
 use serde::Serialize;
 
 use crate::embedded;
+use crate::errors::*;
 
-pub fn read_reviewed_docs(
-    file: File,
-    reviewer: String,
-) -> Result<HashSet<String>, Box<dyn std::error::Error>> {
+pub fn read_reviewed_docs(file: File, reviewer: String) -> Result<HashSet<String>> {
     let reader = BufReader::new(file);
     let events = embedded::events(reader);
     let mut hashes = HashSet::new();
@@ -32,8 +30,8 @@ pub fn read_reviewed_docs(
     Ok(hashes)
 }
 
-pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let env = embedded::get_env()?;
+pub fn run() -> Result<()> {
+    let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
     let config = embedded::get_config(env.config)?;
     let reviewer = config.reviewer;
     let db_file = File::open(config.db);
@@ -41,18 +39,23 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         Err(_) => HashSet::new(), // The file may not exist yet
         Ok(file) => read_reviewed_docs(file, reviewer)?,
     };
-    let input = File::open(env.input.unwrap())?;
+    let input = File::open(env.input.unwrap()).chain_err(|| "Cannot open SR_INPUT")?;
     let reader = BufReader::new(input);
     let in_events = embedded::events(reader);
-    let output = OpenOptions::new().write(true).open(env.output.unwrap())?;
+    let output = OpenOptions::new()
+        .write(true)
+        .open(env.output.unwrap())
+        .chain_err(|| "Cannot open SR_OUTPUT")?;
     let mut writer = LineWriter::new(output);
 
     for result in in_events {
-        let event = result?;
+        let event = result.chain_err(|| "Cannot parse line as JSON")?;
         let hash = event.hash.clone().unwrap_or("".to_string());
         if !reviewed_docs.contains(&hash) {
-            event.serialize(&mut serde_json::Serializer::new(&mut writer))?;
-            writer.write(b"\n")?;
+            event
+                .serialize(&mut serde_json::Serializer::new(&mut writer))
+                .chain_err(|| "Event serialization failed")?;
+            writer.write(b"\n").chain_err(|| "Buffer write failed")?;
         }
     }
 
