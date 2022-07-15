@@ -35,8 +35,8 @@ pub fn read_reviewed_docs(
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let env = embedded::get_env()?;
     let config = embedded::get_config(env.config)?;
-    let reviewer = config.reviewer.unwrap_or("".to_string());
-    let db_file = File::open(config.db.unwrap());
+    let reviewer = config.reviewer;
+    let db_file = File::open(config.db);
     let reviewed_docs = match db_file {
         Err(_) => HashSet::new(), // The file may not exist yet
         Ok(file) => read_reviewed_docs(file, reviewer)?,

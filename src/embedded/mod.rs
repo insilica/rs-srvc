@@ -12,8 +12,8 @@ pub mod remove_reviewed;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
-    db: Option<String>,
-    reviewer: Option<String>,
+    db: String,
+    reviewer: String,
 }
 
 pub struct Env {
