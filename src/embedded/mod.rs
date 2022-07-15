@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 use serde::Serialize;
+use serde_with::skip_serializing_none;
 
 use crate::errors::*;
 
@@ -24,6 +25,7 @@ pub struct Env {
     output: Option<PathBuf>,
 }
 
+#[skip_serializing_none]
 #[derive(Deserialize, Serialize)]
 pub struct Event {
     data: Option<serde_json::Value>,

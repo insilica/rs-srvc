@@ -13,16 +13,27 @@ use errors::*;
 use clap::{Parser, Subcommand};
 
 mod embedded;
+mod lib;
+mod sr_yaml;
 
 /// Sysrev version control CLI
 #[derive(Parser)]
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
+
+    #[clap(short, long, default_value = "sr.yaml")]
+    config: String,
 }
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Run a review flow
+    Review {
+        /// The name of the review flow
+        name: String,
+    },
+
     /// Run an embedded review step
     RunEmbeddedStep {
         /// The name of an embedded review step
@@ -45,11 +56,11 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
 
 fn run() -> Result<()> {
     let cli = Cli::parse();
+    let opts = lib::Opts { config: cli.config };
 
     match cli.command {
-        Commands::RunEmbeddedStep { name } => {
-            run_embedded_step(name)
-        }
+        Commands::Review { name } => sr_yaml::run(opts, name),
+        Commands::RunEmbeddedStep { name } => run_embedded_step(name),
     }
 }
 
