@@ -27,7 +27,7 @@ enum EmbeddedSteps {
 
 fn run_embedded_step(name: EmbeddedSteps) -> Result<(), Box<dyn std::error::Error>> {
     match name {
-        EmbeddedSteps::RemoveReviewed {} => return embedded::remove_reviewed::run(),
+        EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),
     }
 }
 
@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match cli.command {
         Commands::RunEmbeddedStep { name } => {
-            return run_embedded_step(name);
+            run_embedded_step(name)
         }
     }
 }
