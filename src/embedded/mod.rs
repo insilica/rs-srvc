@@ -13,12 +13,13 @@ use crate::errors::*;
 
 pub mod remove_reviewed;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     db: String,
     reviewer: String,
 }
 
+#[derive(Debug)]
 pub struct Env {
     config: PathBuf,
     input: Option<PathBuf>,
@@ -26,7 +27,7 @@ pub struct Env {
 }
 
 #[skip_serializing_none]
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Event {
     data: Option<serde_json::Value>,
     #[serde(flatten)]
