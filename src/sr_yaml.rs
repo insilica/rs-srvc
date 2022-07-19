@@ -11,23 +11,24 @@ use crate::errors::*;
 use crate::lib;
 
 #[skip_serializing_none]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Step {
     #[serde(flatten)]
-    extra: HashMap<String, serde_yaml::Value>,
-    run: Option<String>,
+    pub extra: HashMap<String, serde_yaml::Value>,
+    pub labels: Option<Vec<String>>,
+    pub run: Option<String>,
 }
 
 #[skip_serializing_none]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Flow {
     #[serde(flatten)]
-    extra: HashMap<String, serde_yaml::Value>,
-    steps: Option<Vec<Step>>,
+    pub extra: HashMap<String, serde_yaml::Value>,
+    pub steps: Option<Vec<Step>>,
 }
 
 #[skip_serializing_none]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Label {
     #[serde(flatten)]
     extra: HashMap<String, serde_yaml::Value>,
@@ -37,17 +38,17 @@ pub struct Label {
 }
 
 #[skip_serializing_none]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
-    db: Option<String>,
+    pub db: Option<String>,
     #[serde(flatten)]
-    extra: HashMap<String, serde_yaml::Value>,
-    flows: Option<HashMap<String, Flow>>,
-    labels: Option<HashMap<String, Label>>,
-    reviewer: Option<String>,
+    pub extra: HashMap<String, serde_yaml::Value>,
+    pub flows: Option<HashMap<String, Flow>>,
+    pub labels: Option<HashMap<String, Label>>,
+    pub reviewer: Option<String>,
 }
 
-pub fn non_blank(id: & str, k: &str, s: Option<String>) -> Result<String> {
+pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
     match s {
         Some(s) => {
             let s = s.trim();
@@ -56,28 +57,65 @@ pub fn non_blank(id: & str, k: &str, s: Option<String>) -> Result<String> {
             } else {
                 Ok(s.to_string())
             }
-        },
-        None => Err(format!("The {} label does not have a {}", id, k).into())
+        }
+        None => Err(format!("The {} label does not have a {}", id, k).into()),
     }
 }
 
-pub fn parse_label(id: &str, label: Label) -> Result<lib::Label> {
-    Ok(lib::Label {
-        extra: label.extra,
-        id: id.to_string(),
-        question: non_blank(id, "question", label.question)?.to_lowercase(),
-        required: true,
-        r#type: non_blank(id, "type", label.r#type)?.to_lowercase(),
+pub fn parse_step(step: Step) -> Result<lib::Step> {
+    Ok(lib::Step {
+        extra: step.extra,
+        labels: step.labels.unwrap_or(Vec::new()),
+        run: step.run,
     })
 }
 
-pub fn parse_labels(labels: Option<HashMap<String, Label>>) -> Result<HashMap<String, lib::Label>> {
+pub fn parse_flow(flow: Flow) -> Result<lib::Flow> {
+    let steps = &mut flow.steps.unwrap_or(Vec::new());
+    if steps.len() == 0 {
+        return Err("No steps in flow".into());
+    }
+
+    let mut vec = Vec::new();
+    for step in steps {
+        let step = parse_step(step.to_owned())?;
+        vec.push(step);
+    }
+    Ok(lib::Flow {
+        extra: flow.extra,
+        steps: vec,
+    })
+}
+
+pub fn parse_flows(flows: Option<HashMap<String, Flow>>) -> Result<HashMap<String, lib::Flow>> {
+    let flows = flows.unwrap_or(HashMap::new());
+    let mut m = HashMap::new();
+    for (flow_name, flow) in flows {
+        let flow = parse_flow(flow)?;
+        m.insert(flow_name, flow);
+    }
+    Ok(m)
+}
+
+pub fn parse_label(id: &str, label: &Label) -> Result<lib::Label> {
+    Ok(lib::Label {
+        extra: label.extra.to_owned(),
+        id: id.to_string(),
+        question: non_blank(id, "question", &label.question)?.to_lowercase(),
+        required: true,
+        r#type: non_blank(id, "type", &label.r#type)?.to_lowercase(),
+    })
+}
+
+pub fn parse_labels(
+    labels: &Option<HashMap<String, Label>>,
+) -> Result<HashMap<String, lib::Label>> {
     match labels {
         Some(labels) => {
             let mut m = HashMap::new();
             for (id, label) in labels {
                 let parsed = parse_label(&id, label)?;
-                m.insert(id, parsed);
+                m.insert(id.to_owned(), parsed);
             }
             Ok(m)
         }
@@ -86,9 +124,17 @@ pub fn parse_labels(labels: Option<HashMap<String, Label>>) -> Result<HashMap<St
 }
 
 pub fn parse_config(config: Config) -> Result<lib::Config> {
+    let reviewer = match config.reviewer {
+        Some(reviewer) => Ok(reviewer),
+        None => Err("Reviewer not set in config"),
+    }?;
     Ok(lib::Config {
+        current_labels: None,
+        current_step: None,
         extra: config.extra,
-        labels: parse_labels(config.labels)?,
+        flows: parse_flows(config.flows)?,
+        labels: parse_labels(&config.labels)?,
+        reviewer: reviewer,
     })
 }
 
@@ -102,11 +148,4 @@ pub fn get_config(filename: PathBuf) -> Result<Config> {
             filename.to_string_lossy()
         )
     })
-}
-
-pub fn run(opts: lib::Opts, _name: String) -> Result<()> {
-    let yaml_config = get_config(PathBuf::from(opts.config))?;
-    let config = parse_config(yaml_config)?;
-    println!("{}", serde_yaml::to_string(&config).chain_err(|| "")?);
-    Ok(())
 }

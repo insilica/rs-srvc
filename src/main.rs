@@ -14,6 +14,7 @@ use clap::{Parser, Subcommand};
 
 mod embedded;
 mod lib;
+mod review;
 mod sr_yaml;
 
 /// Sysrev version control CLI
@@ -59,7 +60,7 @@ fn run() -> Result<()> {
     let opts = lib::Opts { config: cli.config };
 
     match cli.command {
-        Commands::Review { name } => sr_yaml::run(opts, name),
+        Commands::Review { name } => review::run(opts, name),
         Commands::RunEmbeddedStep { name } => run_embedded_step(name),
     }
 }
