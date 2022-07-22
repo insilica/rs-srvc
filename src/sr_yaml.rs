@@ -85,17 +85,17 @@ pub fn parse_flow(flow: Flow) -> Result<lib::Flow> {
         run_embedded: Some(String::from("add-hashes")),
     };
 
-    let num_steps = steps.len();
-    let mut i = 0;
     let mut vec = Vec::new();
-    for step in steps {
-        i += 1;
-        let step = parse_step(step.to_owned())?;
+    for step in steps {        let step = parse_step(step.to_owned())?;
         vec.push(step);
-        if i != num_steps {
-            vec.push(add_hashes_step.clone());
-        }
+        vec.push(add_hashes_step.clone());
     }
+    vec.push(lib::Step {
+        extra: HashMap::new(),
+        labels: Vec::new(),
+        run: None,
+        run_embedded: Some(String::from("sink")),
+    });
     Ok(lib::Flow {
         extra: flow.extra,
         steps: vec,
