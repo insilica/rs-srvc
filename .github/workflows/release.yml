@@ -131,7 +131,7 @@ jobs:
 
     - name: Strip release binary (linux and macos)
       if: matrix.build == 'linux' || matrix.build == 'macos'
-      run: strip "target/${{ matrix.target }}/release/rg"
+      run: strip "target/${{ matrix.target }}/release/sr"
 
     - name: Strip release binary (arm)
       if: matrix.build == 'linux-arm'
@@ -140,7 +140,7 @@ jobs:
           "$PWD/target:/target:Z" \
           rustembedded/cross:arm-unknown-linux-gnueabihf \
           arm-linux-gnueabihf-strip \
-          /target/arm-unknown-linux-gnueabihf/release/rg
+          /target/arm-unknown-linux-gnueabihf/release/sr
 
     - name: Build archive
       shell: bash
