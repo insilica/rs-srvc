@@ -128,6 +128,7 @@ jobs:
       run: |
         outdir="$(ci/cargo-out-dir "${{ env.TARGET_DIR }}")"
         staging="srvc-${{ needs.create-release.outputs.rg_version }}-${{ matrix.target }}"
+        mkdir -p "$staging/"
 
         if [ "${{ matrix.os }}" = "windows-2019" ]; then
           cp "target/${{ matrix.target }}/release/sr.exe" "$staging/"
