@@ -13,5 +13,3 @@ flows:
       - run: "gen/gen.sh"
 
       - run_embedded: "remove-reviewed"
-
-      - run_embedded: "sink"
