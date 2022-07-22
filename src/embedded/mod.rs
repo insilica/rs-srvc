@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::BufRead;
@@ -7,9 +6,9 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 use serde::Serialize;
-use serde_with::skip_serializing_none;
 
 use crate::errors::*;
+use crate::event::Event;
 
 pub mod remove_reviewed;
 pub mod sink;
@@ -25,16 +24,6 @@ pub struct Env {
     config: PathBuf,
     input: Option<PathBuf>,
     output: Option<PathBuf>,
-}
-
-#[skip_serializing_none]
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Event {
-    data: Option<serde_json::Value>,
-    #[serde(flatten)]
-    extra: HashMap<String, serde_json::Value>,
-    hash: Option<String>,
-    r#type: String,
 }
 
 pub fn get_config(filename: PathBuf) -> Result<Config> {

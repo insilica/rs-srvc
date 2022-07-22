@@ -13,6 +13,7 @@ use errors::*;
 use clap::{Parser, Subcommand};
 
 mod embedded;
+mod event;
 mod lib;
 mod review;
 mod sr_yaml;
