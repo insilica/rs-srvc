@@ -31,7 +31,7 @@ pub fn make_fifo(dir: &tempfile::TempDir) -> Result<PathBuf> {
     let mut filename = String::from("fifo-");
     filename.push_str(&Uuid::new_v4().to_string());
     let path = dir.path().join(filename);
-    unistd::mkfifo(&path, stat::Mode::S_IRWXU)
+    unistd::mkfifo(&path, stat::Mode::S_IRUSR | stat::Mode::S_IWUSR)
         .chain_err(|| "Failed to create named pipe (mkfifo)")?;
     Ok(path)
 }
@@ -56,7 +56,11 @@ pub fn run_step(
     let output = if output { Some(make_fifo(dir)) } else { None }.transpose()?;
     let runcmd = step.run.as_ref().ok_or("Step has no run phase")?;
     let empty_path = PathBuf::new();
-    let process = process::Command::new(runcmd)
+    let args = shell_words::split(runcmd)
+        .chain_err(|| format!("Failed to parse run command: {}", runcmd))?;
+    let program = args.first().ok_or("No command to run")?;
+    let process = process::Command::new(program)
+        .args(&args[1..])
         .env("SR_CONFIG", config_path)
         .env(
             "SR_INPUT",
@@ -93,11 +97,14 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
         let process = run_step(config, &dir, step, last_output, !is_last_step)?;
         last_process = Some(process);
     }
-    last_process
+    let process = last_process
         .ok_or("No final step in flow")?
         .process
         .wait()
-        .chain_err(|| "Error waiting for child process")
+        .chain_err(|| "Error waiting for child process")?;
+    dir.close()
+        .chain_err(|| "Failed to delete temporary directory")?;
+    Ok(process)
 }
 
 pub fn run(opts: lib::Opts, flow_name: String) -> Result<()> {

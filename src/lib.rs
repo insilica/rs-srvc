@@ -37,6 +37,7 @@ pub struct Config {
     #[serde(flatten)]
     pub current_labels: Option<Vec<Label>>,
     pub current_step: Option<Step>,
+    pub db: String,
     pub extra: HashMap<String, serde_yaml::Value>,
     pub flows: HashMap<String, Flow>,
     pub labels: HashMap<String, Label>,
