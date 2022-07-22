@@ -86,7 +86,8 @@ pub fn parse_flow(flow: Flow) -> Result<lib::Flow> {
     };
 
     let mut vec = Vec::new();
-    for step in steps {        let step = parse_step(step.to_owned())?;
+    for step in steps {
+        let step = parse_step(step.to_owned())?;
         vec.push(step);
         vec.push(add_hashes_step.clone());
     }

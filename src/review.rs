@@ -37,8 +37,16 @@ pub fn make_fifo(dir: &tempfile::TempDir) -> Result<PathBuf> {
 }
 
 pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> {
+    let mut labels = Vec::new();
+    for label_id in &step.labels {
+        let label = config
+            .labels
+            .get(label_id)
+            .ok_or(format!("Label not defined: {}", label_id))?;
+        labels.push(label.to_owned());
+    }
     Ok(lib::Config {
-        current_labels: None,
+        current_labels: Some(labels),
         current_step: Some(step),
         ..config
     })
