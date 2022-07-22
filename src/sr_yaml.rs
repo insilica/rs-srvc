@@ -17,6 +17,7 @@ pub struct Step {
     pub extra: HashMap<String, serde_yaml::Value>,
     pub labels: Option<Vec<String>>,
     pub run: Option<String>,
+    pub run_embedded: Option<String>,
 }
 
 #[skip_serializing_none]
@@ -67,6 +68,7 @@ pub fn parse_step(step: Step) -> Result<lib::Step> {
         extra: step.extra,
         labels: step.labels.unwrap_or(Vec::new()),
         run: step.run,
+        run_embedded: step.run_embedded,
     })
 }
 
