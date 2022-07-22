@@ -124,17 +124,14 @@ pub fn parse_labels(
 }
 
 pub fn parse_config(config: Config) -> Result<lib::Config> {
-    let reviewer = match config.reviewer {
-        Some(reviewer) => Ok(reviewer),
-        None => Err("Reviewer not set in config"),
-    }?;
     Ok(lib::Config {
         current_labels: None,
         current_step: None,
+        db: config.db.ok_or("\"db\" not set in config")?,
         extra: config.extra,
         flows: parse_flows(config.flows)?,
         labels: parse_labels(&config.labels)?,
-        reviewer: reviewer,
+        reviewer: config.reviewer.ok_or("\"reviewer\" not set in config")?,
     })
 }
 
