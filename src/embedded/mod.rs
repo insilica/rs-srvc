@@ -12,6 +12,7 @@ use serde_with::skip_serializing_none;
 use crate::errors::*;
 
 pub mod remove_reviewed;
+pub mod sink;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
