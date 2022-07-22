@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# From https://github.com/BurntSushi/ripgrep/blob/87b33c96c02b5d728324632956d301ef3d234f80/ci/cargo-out-dir
+
+# Finds Cargo's `OUT_DIR` directory from the most recent build.
+#
+# This requires one parameter corresponding to the target directory
+# to search for the build output.
+
+if [ $# != 1 ]; then
+  echo "Usage: $(basename "$0") <target-dir>" >&2
+  exit 2
+fi
+
+target_dir="$1"
+find "$target_dir" -name sr -print0 \
+  | xargs -0 ls -t \
+  | head -n1 \
+  | xargs dirname
