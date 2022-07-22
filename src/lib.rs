@@ -11,6 +11,7 @@ pub struct Step {
     pub extra: HashMap<String, serde_yaml::Value>,
     pub labels: Vec<String>,
     pub run: Option<String>,
+    pub run_embedded: Option<String>,
 }
 
 #[skip_serializing_none]

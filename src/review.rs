@@ -44,23 +44,47 @@ pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> 
     })
 }
 
+pub fn get_exe_path() -> Result<PathBuf> {
+    Ok(std::env::current_exe()
+        .chain_err(|| "Failed to get current exe path")?
+        .canonicalize()
+        .chain_err(|| "Failed to canonicalize current exe path")?)
+}
+
+pub fn get_run_command(step: &lib::Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<String>)> {
+    Ok(match step.run_embedded.clone() {
+        Some(embedded) => {
+            let mut runcmd = "run-embedded-step ".to_string();
+            runcmd.push_str(&embedded);
+            let args = shell_words::split(&runcmd)
+                .chain_err(|| format!("Failed to parse run_embedded command: {}", embedded))?;
+            (exe_path, args)
+        }
+        None => {
+            let runcmd = step.run.as_ref().ok_or("Step has no run phase")?.to_owned();
+            let args = shell_words::split(&runcmd)
+                .chain_err(|| format!("Failed to parse run command: {}", runcmd))?;
+            let program = args.first().ok_or("No command to run")?;
+            (program.into(), Vec::from(&args[1..]))
+        }
+    })
+}
+
 pub fn run_step(
     config: &lib::Config,
     dir: &tempfile::TempDir,
     step: &lib::Step,
     input: Option<PathBuf>,
     output: bool,
+    exe_path: PathBuf,
 ) -> Result<StepProcess> {
     let step_config = step_config(config.to_owned(), step.to_owned())?;
     let config_path = make_config(&step_config, dir)?;
     let output = if output { Some(make_fifo(dir)) } else { None }.transpose()?;
-    let runcmd = step.run.as_ref().ok_or("Step has no run phase")?;
     let empty_path = PathBuf::new();
-    let args = shell_words::split(runcmd)
-        .chain_err(|| format!("Failed to parse run command: {}", runcmd))?;
-    let program = args.first().ok_or("No command to run")?;
+    let (program, args) = get_run_command(step, exe_path)?;
     let process = process::Command::new(program)
-        .args(&args[1..])
+        .args(args)
         .env("SR_CONFIG", config_path)
         .env(
             "SR_INPUT",
@@ -86,6 +110,7 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
         .prefix("srvc-")
         .tempdir()
         .chain_err(|| "Failed to create temporary directory")?;
+    let exe_path = get_exe_path()?;
 
     let last_step = &flow.steps.last();
     let mut last_process = None;
@@ -94,7 +119,14 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
         let last_output = last_process
             .map(|x: StepProcess| x.output.ok_or("None"))
             .transpose()?;
-        let process = run_step(config, &dir, step, last_output, !is_last_step)?;
+        let process = run_step(
+            config,
+            &dir,
+            step,
+            last_output,
+            !is_last_step,
+            exe_path.clone(),
+        )?;
         last_process = Some(process);
     }
     let process = last_process
