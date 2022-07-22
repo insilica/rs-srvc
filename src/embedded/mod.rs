@@ -10,6 +10,7 @@ use serde::Serialize;
 use crate::errors::*;
 use crate::event::Event;
 
+pub mod add_hashes;
 pub mod remove_reviewed;
 pub mod sink;
 

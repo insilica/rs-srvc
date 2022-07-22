@@ -46,7 +46,9 @@ enum Commands {
 
 #[derive(Subcommand, Debug)]
 enum EmbeddedSteps {
-    /// Remove articles that have already been reviewed
+    /// Add hashes to events
+    AddHashes {},
+    /// Remove documents that have already been reviewed
     RemoveReviewed {},
     /// Store review events in a file
     Sink {},
@@ -54,6 +56,7 @@ enum EmbeddedSteps {
 
 fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
     match name {
+        EmbeddedSteps::AddHashes {} => embedded::add_hashes::run(),
         EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),
         EmbeddedSteps::Sink {} => embedded::sink::run(),
     }
