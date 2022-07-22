@@ -42,8 +42,18 @@ pub fn run() -> Result<()> {
     let mut writer = LineWriter::new(db_file);
 
     for result in in_events {
-        let event = result.chain_err(|| "Cannot parse line as JSON")?;
+        let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
+        let expected_hash = crate::event::event_hash(event.clone())?;
         let hash = event.hash.clone().unwrap_or("".to_string());
+        if hash == "" {
+            event.hash = Some(expected_hash);
+        } else if expected_hash != hash {
+            return Err(format!(
+                "Incorrect event hash. Expected: \"{}\". Found: \"{}\".",
+                expected_hash, hash
+            )
+            .into());
+        }
         if !hashes.contains(&hash) {
             event
                 .serialize(&mut serde_json::Serializer::new(&mut writer))
