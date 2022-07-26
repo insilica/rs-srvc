@@ -19,10 +19,8 @@ pub struct Event {
 
 pub fn event_hash(mut event: Event) -> Result<String> {
     event.hash = None;
-    let event_value = serde_json::to_value(event).chain_err(|| "Failed to serialize event")?;
-    let s =
-        canonical_json::ser::to_string(&event_value).chain_err(|| "Failed to serialize event")?;
-    let hash = multihash::Code::Sha2_256.digest(s.as_bytes());
+    let bytes = serde_ipld_dagcbor::to_vec(&event).chain_err(|| "Failed to serialize event")?;
+    let hash = multihash::Code::Sha2_256.digest(&bytes);
     let base58 = bs58::encode(hash.to_bytes());
     Ok(base58.into_string())
 }
