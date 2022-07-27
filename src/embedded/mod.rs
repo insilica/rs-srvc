@@ -11,6 +11,7 @@ use crate::errors::*;
 use crate::event::Event;
 
 pub mod add_hashes;
+pub mod generator_file;
 pub mod remove_reviewed;
 pub mod sink;
 

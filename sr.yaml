@@ -10,6 +10,6 @@ labels:
 flows:
   simple:
     steps:
-      - run: "gen/gen.sh"
+      - run_embedded: "generator-file gendocs.jsonl"
 
       - run_embedded: "remove-reviewed"
