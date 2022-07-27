@@ -9,7 +9,9 @@ edition = "2021"
 bs58 = "0.4"
 clap = { version = "3.0", features = ["derive"] }
 error-chain = "0.12"
+mio = { version = "0.8", features = ["os-ext"] }
 multihash = "0.16"
+named_pipe = "0.4"
 nix = { version = "0.24", features = ["fs"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_ipld_dagcbor = "0.2"
@@ -19,3 +21,5 @@ serde_with = "1.0"
 shell-words = "1.0"
 tempfile = "3.0"
 uuid = { version = "1.0", features = ["v4", "fast-rng"] }
+windows-sys = { version = "0.36", features = [ "Win32_Storage_FileSystem" ] }
+windows-win = "2.0"

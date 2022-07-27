@@ -1,7 +1,10 @@
 use std::env;
 use std::fs::File;
+use std::fs::OpenOptions;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::io::LineWriter;
+use std::io::Write;
 use std::path::PathBuf;
 
 use serde::Deserialize;
@@ -55,4 +58,19 @@ pub fn events(reader: BufReader<File>) -> impl Iterator<Item = Result<Event>> {
     reader
         .lines()
         .map(|line| parse_event(line.chain_err(|| "Failed to read line")?.as_str()))
+}
+
+#[cfg(windows)]
+pub fn pipe_writer(name: &str) -> Result<Box<dyn Write>> {
+    if name.starts_with(r#"\\.\pipe\"#) {
+        let client = named_pipe::PipeClient::connect_ms(&name, 10000)
+            .chain_err(|| format!("Failed to open named pipe {}", name))?;
+        Ok(Box::new(LineWriter::new(client)))
+    } else {
+        let output = OpenOptions::new()
+            .write(true)
+            .open(name)
+            .chain_err(|| format!("Failed to open named pipe {}", name))?;
+        Ok(Box::new(LineWriter::new(output)))
+    }
 }

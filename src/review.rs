@@ -3,7 +3,11 @@ use std::io::BufWriter;
 use std::path::PathBuf;
 use std::process;
 
+#[cfg(windows)]
+use mio::windows::NamedPipe;
+#[cfg(unix)]
 use nix::sys::stat;
+#[cfg(unix)]
 use nix::unistd;
 use uuid::Uuid;
 
@@ -27,6 +31,7 @@ pub fn make_config(config: &lib::Config, dir: &tempfile::TempDir) -> Result<Path
     Ok(path)
 }
 
+#[cfg(unix)]
 pub fn make_fifo(dir: &tempfile::TempDir) -> Result<PathBuf> {
     let mut filename = String::from("fifo-");
     filename.push_str(&Uuid::new_v4().to_string());
@@ -34,6 +39,14 @@ pub fn make_fifo(dir: &tempfile::TempDir) -> Result<PathBuf> {
     unistd::mkfifo(&path, stat::Mode::S_IRUSR | stat::Mode::S_IWUSR)
         .chain_err(|| "Failed to create named pipe (mkfifo)")?;
     Ok(path)
+}
+
+#[cfg(windows)]
+pub fn make_fifo(_dir: &tempfile::TempDir) -> Result<PathBuf> {
+    let mut pipe_name = String::from(r#"\\.\pipe\"#);
+    pipe_name.push_str(&Uuid::new_v4().to_string());
+    NamedPipe::new(&pipe_name).chain_err(|| "Failed to create named pipe (mio)")?;
+    Ok(PathBuf::from(pipe_name))
 }
 
 pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> {
@@ -52,11 +65,22 @@ pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> 
     })
 }
 
+#[cfg(unix)]
 pub fn get_exe_path() -> Result<PathBuf> {
     Ok(std::env::current_exe()
         .chain_err(|| "Failed to get current exe path")?
         .canonicalize()
         .chain_err(|| "Failed to canonicalize current exe path")?)
+}
+
+// std::env::current_exe() returns paths like "\\\\?\\C:\\Users\\"
+// We want just the path from C:\ onwards
+#[cfg(windows)]
+pub fn get_exe_path() -> Result<PathBuf> {
+    let handle = windows_win::raw::process::get_current_handle();
+    let path = windows_win::raw::process::get_exe_path(handle)
+        .chain_err(|| "Failed to get current exe path")?;
+    Ok(PathBuf::from(path))
 }
 
 pub fn get_run_command(step: &lib::Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<String>)> {
