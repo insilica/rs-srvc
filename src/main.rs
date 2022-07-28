@@ -20,6 +20,8 @@ mod lib;
 mod review;
 mod sr_yaml;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 /// Sysrev version control CLI
 #[derive(Parser)]
 struct Cli {
@@ -44,6 +46,9 @@ enum Commands {
         #[clap(subcommand)]
         name: EmbeddedSteps,
     },
+
+    /// Print the srvc version
+    Version {},
 }
 
 #[derive(Subcommand, Debug)]
@@ -67,6 +72,10 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
     }
 }
 
+fn version() -> () {
+    println!("srvc {}", VERSION)
+}
+
 fn run() -> Result<()> {
     let cli = Cli::parse();
     let opts = lib::Opts { config: cli.config };
@@ -74,6 +83,7 @@ fn run() -> Result<()> {
     match cli.command {
         Commands::Review { name } => review::run(opts, name),
         Commands::RunEmbeddedStep { name } => run_embedded_step(name),
+        Commands::Version {} => Ok(version()),
     }
 }
 
