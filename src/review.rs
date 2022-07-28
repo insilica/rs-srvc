@@ -147,7 +147,7 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
     Ok(process)
 }
 
-pub fn run(opts: lib::Opts, flow_name: String) -> Result<()> {
+pub fn run(opts: &lib::Opts, flow_name: String) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
     let config = sr_yaml::parse_config(yaml_config)?;
     let flow = config.flows.get(&flow_name);

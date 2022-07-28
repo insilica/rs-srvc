@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::{Read, Stderr, Stdout, Write};
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -45,6 +46,33 @@ pub struct Config {
     pub reviewer: String,
 }
 
+// Dependency-Injection supporting Write trait
+// https://stackoverflow.com/a/63501831
+pub trait DIWrite: Write {
+    fn get_buffer(&self) -> Option<String>;
+}
+
+impl DIWrite for Stderr {
+    fn get_buffer(&self) -> Option<String> {
+        None
+    }
+}
+
+impl DIWrite for Stdout {
+    fn get_buffer(&self) -> Option<String> {
+        None
+    }
+}
+
+impl DIWrite for Vec<u8> {
+    fn get_buffer(&self) -> Option<String> {
+        Some(String::from_utf8(self.clone()).unwrap())
+    }
+}
+
 pub struct Opts {
     pub config: String,
+    pub err_stream: Box<dyn DIWrite>,
+    pub in_stream: Box<dyn Read>,
+    pub out_stream: Box<dyn DIWrite>,
 }

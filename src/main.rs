@@ -20,6 +20,11 @@ mod lib;
 mod review;
 mod sr_yaml;
 
+#[cfg(test)]
+mod tests;
+
+use lib::Opts;
+
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 /// Sysrev version control CLI
@@ -72,19 +77,33 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
     }
 }
 
-fn version() -> () {
-    println!("srvc {}", VERSION)
+fn version(opts: &mut Opts) -> Result<()> {
+    write!(opts.out_stream, "srvc {}", VERSION)
+        .chain_err(|| "Failed to write to opts.out_stream")?;
+    Ok(())
+}
+
+fn opts(cli: &Cli) -> Opts {
+    Opts {
+        config: cli.config.to_owned(),
+        err_stream: Box::new(std::io::stderr()),
+        in_stream: Box::new(std::io::stdin()),
+        out_stream: Box::new(std::io::stdout()),
+    }
+}
+
+fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
+    match cli.command {
+        Commands::Review { name } => review::run(opts, name),
+        Commands::RunEmbeddedStep { name } => run_embedded_step(name),
+        Commands::Version {} => version(opts),
+    }
 }
 
 fn run() -> Result<()> {
     let cli = Cli::parse();
-    let opts = lib::Opts { config: cli.config };
-
-    match cli.command {
-        Commands::Review { name } => review::run(opts, name),
-        Commands::RunEmbeddedStep { name } => run_embedded_step(name),
-        Commands::Version {} => Ok(version()),
-    }
+    let mut opts = opts(&cli);
+    run_command(cli, &mut opts)
 }
 
 quick_main!(run);
