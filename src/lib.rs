@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::io::{Read, Stderr, Stdout, Write};
+use std::path::PathBuf;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -72,6 +73,7 @@ impl DIWrite for Vec<u8> {
 
 pub struct Opts {
     pub config: String,
+    pub dir: PathBuf,
     pub err_stream: Box<dyn DIWrite>,
     pub in_stream: Box<dyn Read>,
     pub out_stream: Box<dyn DIWrite>,

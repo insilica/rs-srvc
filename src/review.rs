@@ -9,14 +9,14 @@ use uuid::Uuid;
 
 use crate::errors::*;
 
-use crate::lib;
+use crate::lib::{Config, Flow, Opts, Step};
 use crate::sr_yaml;
 pub struct StepProcess {
     output: Option<PathBuf>,
     process: process::Child,
 }
 
-pub fn make_config(config: &lib::Config, dir: &tempfile::TempDir) -> Result<PathBuf> {
+pub fn make_config(config: &Config, dir: &tempfile::TempDir) -> Result<PathBuf> {
     let mut filename = String::from("config-");
     filename.push_str(&Uuid::new_v4().to_string());
     filename.push_str(".json");
@@ -36,7 +36,7 @@ pub fn make_fifo(dir: &tempfile::TempDir) -> Result<PathBuf> {
     Ok(path)
 }
 
-pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> {
+pub fn step_config(config: Config, step: Step) -> Result<Config> {
     let mut labels = Vec::new();
     for label_id in &step.labels {
         let label = config
@@ -45,7 +45,7 @@ pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> 
             .ok_or(format!("Label not defined: {}", label_id))?;
         labels.push(label.to_owned());
     }
-    Ok(lib::Config {
+    Ok(Config {
         current_labels: Some(labels),
         current_step: Some(step),
         ..config
@@ -59,7 +59,7 @@ pub fn get_exe_path() -> Result<PathBuf> {
         .chain_err(|| "Failed to canonicalize current exe path")?)
 }
 
-pub fn get_run_command(step: &lib::Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<String>)> {
+pub fn get_run_command(step: &Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<String>)> {
     Ok(match step.run_embedded.clone() {
         Some(embedded) => {
             let mut runcmd = "run-embedded-step ".to_string();
@@ -79,9 +79,10 @@ pub fn get_run_command(step: &lib::Step, exe_path: PathBuf) -> Result<(PathBuf, 
 }
 
 pub fn run_step(
-    config: &lib::Config,
+    opts: &Opts,
+    config: &Config,
     dir: &tempfile::TempDir,
-    step: &lib::Step,
+    step: &Step,
     input: Option<PathBuf>,
     output: bool,
     exe_path: PathBuf,
@@ -92,6 +93,7 @@ pub fn run_step(
     let empty_path = PathBuf::new();
     let (program, args) = get_run_command(step, exe_path)?;
     let process = process::Command::new(program)
+        .current_dir(&opts.dir)
         .args(args)
         .env("SR_CONFIG", config_path)
         .env(
@@ -113,7 +115,7 @@ pub fn run_step(
     Ok(StepProcess { output, process })
 }
 
-pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitStatus> {
+pub fn run_flow(opts: &Opts, flow: &Flow, config: &Config) -> Result<process::ExitStatus> {
     let dir = tempfile::Builder::new()
         .prefix("srvc-")
         .tempdir()
@@ -128,6 +130,7 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
             .map(|x: StepProcess| x.output.ok_or("None"))
             .transpose()?;
         let process = run_step(
+            opts,
             config,
             &dir,
             step,
@@ -147,8 +150,8 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
     Ok(process)
 }
 
-pub fn run(opts: &lib::Opts, flow_name: String) -> Result<()> {
-    let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
+pub fn run(opts: &Opts, flow_name: String) -> Result<()> {
+    let yaml_config = sr_yaml::get_config(opts, &PathBuf::from(&opts.config))?;
     let config = sr_yaml::parse_config(yaml_config)?;
     let flow = config.flows.get(&flow_name);
     let flow = match flow {
@@ -158,6 +161,6 @@ pub fn run(opts: &lib::Opts, flow_name: String) -> Result<()> {
             flow_name, &opts.config
         )),
     }?;
-    run_flow(flow, &config)?;
+    run_flow(opts, flow, &config)?;
     Ok(())
 }

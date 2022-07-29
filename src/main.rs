@@ -83,13 +83,14 @@ fn version(opts: &mut Opts) -> Result<()> {
     Ok(())
 }
 
-fn opts(cli: &Cli) -> Opts {
-    Opts {
+fn opts(cli: &Cli) -> Result<Opts> {
+    Ok(Opts {
         config: cli.config.to_owned(),
+        dir: std::env::current_dir().chain_err(|| "Failed to get current working directory")?,
         err_stream: Box::new(std::io::stderr()),
         in_stream: Box::new(std::io::stdin()),
         out_stream: Box::new(std::io::stdout()),
-    }
+    })
 }
 
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
@@ -102,7 +103,7 @@ fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
 
 fn run() -> Result<()> {
     let cli = Cli::parse();
-    let mut opts = opts(&cli);
+    let mut opts = opts(&cli)?;
     run_command(cli, &mut opts)
 }
 

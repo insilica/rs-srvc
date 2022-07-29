@@ -151,14 +151,16 @@ pub fn parse_config(config: Config) -> Result<lib::Config> {
     })
 }
 
-pub fn get_config(filename: PathBuf) -> Result<Config> {
-    let file = File::open(filename.clone())
-        .chain_err(|| format!("Failed to open config file: {}", filename.to_string_lossy()))?;
+pub fn get_config(opts: &lib::Opts, filename: &PathBuf) -> Result<Config> {
+    let mut full_name = opts.dir.clone();
+    full_name.push(filename);
+    let file = File::open(&full_name)
+        .chain_err(|| format!("Failed to open config file: {}", full_name.to_string_lossy()))?;
     let reader = BufReader::new(file);
     serde_yaml::from_reader(reader).chain_err(|| {
         format!(
             "Failed to parse config file as YAML: {}",
-            filename.to_string_lossy()
+            full_name.to_string_lossy()
         )
     })
 }
