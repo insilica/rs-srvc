@@ -20,14 +20,17 @@ fn test_cmd(args: Vec<&str>) -> Result<Opts> {
     Ok(opts)
 }
 
-fn cmd_out(args: Vec<&str>) -> Result<String> {
-    Ok(test_cmd(args)?.out_stream.get_buffer().unwrap())
+fn cmd_out(args: Vec<&str>) -> Result<(String, String)> {
+    let opts = test_cmd(args)?;
+    let err = opts.err_stream.get_buffer().unwrap();
+    let out = opts.out_stream.get_buffer().unwrap();
+    Ok((out, err))
 }
 
 #[test]
 fn test_version() -> Result<()> {
     assert_eq!(
-        format!("srvc {}", VERSION),
+        (format!("srvc {}", VERSION), String::from("")),
         cmd_out(["sr", "version"].into())?
     );
     Ok(())
