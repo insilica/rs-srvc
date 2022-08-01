@@ -9,7 +9,7 @@ use serde_with::skip_serializing_none;
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Step {
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_yaml::Value>,
+    pub extra: HashMap<String, serde_json::Value>,
     pub labels: Vec<String>,
     pub run: Option<String>,
     pub run_embedded: Option<String>,
@@ -19,14 +19,15 @@ pub struct Step {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Flow {
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_yaml::Value>,
+    pub extra: HashMap<String, serde_json::Value>,
     pub steps: Vec<Step>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Label {
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_yaml::Value>,
+    pub extra: HashMap<String, serde_json::Value>,
+    pub hash: Option<String>,
     pub id: String,
     pub question: String,
     pub required: bool,

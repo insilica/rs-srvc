@@ -8,6 +8,7 @@ use serde::Serialize;
 use serde_with::skip_serializing_none;
 
 use crate::errors::*;
+use crate::event;
 use crate::lib;
 
 #[skip_serializing_none]
@@ -63,9 +64,16 @@ pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
     }
 }
 
+pub fn yaml_to_json(
+    val: &HashMap<String, serde_yaml::Value>,
+) -> Result<HashMap<String, serde_json::Value>> {
+    serde_yaml::from_str(&serde_yaml::to_string(val).chain_err(|| "Serialization failed")?)
+        .chain_err(|| "Deserialization failed")
+}
+
 pub fn parse_step(step: Step) -> Result<lib::Step> {
     Ok(lib::Step {
-        extra: step.extra,
+        extra: yaml_to_json(&step.extra)?,
         labels: step.labels.unwrap_or(Vec::new()),
         run: step.run,
         run_embedded: step.run_embedded,
@@ -98,7 +106,7 @@ pub fn parse_flow(flow: Flow) -> Result<lib::Flow> {
         run_embedded: Some(String::from("sink")),
     });
     Ok(lib::Flow {
-        extra: flow.extra,
+        extra: yaml_to_json(&flow.extra)?,
         steps: vec,
     })
 }
@@ -114,13 +122,24 @@ pub fn parse_flows(flows: Option<HashMap<String, Flow>>) -> Result<HashMap<Strin
 }
 
 pub fn parse_label(id: &str, label: &Label) -> Result<lib::Label> {
-    Ok(lib::Label {
-        extra: label.extra.to_owned(),
+    let mut label = lib::Label {
+        extra: yaml_to_json(&label.extra)?,
+        hash: None,
         id: id.to_string(),
         question: non_blank(id, "question", &label.question)?.to_lowercase(),
         required: true,
         r#type: non_blank(id, "type", &label.r#type)?.to_lowercase(),
-    })
+    };
+    let data_s = serde_json::to_string(&label).chain_err(|| "Serialization failed")?;
+    let data = serde_json::from_str(&data_s).chain_err(|| "Deserialization failed")?;
+    let event = event::Event {
+        data: data,
+        extra: HashMap::new(),
+        hash: None,
+        r#type: String::from("label"),
+    };
+    label.hash = Some(event::event_hash(event)?);
+    Ok(label)
 }
 
 pub fn parse_labels(

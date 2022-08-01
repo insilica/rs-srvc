@@ -4,22 +4,15 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::path::PathBuf;
 
-use serde::Deserialize;
-use serde::Serialize;
-
 use crate::errors::*;
 use crate::event::Event;
+use crate::lib::Config;
 
 pub mod add_hashes;
 pub mod generator_file;
+pub mod label;
 pub mod remove_reviewed;
 pub mod sink;
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Config {
-    db: String,
-    reviewer: String,
-}
 
 #[derive(Debug)]
 pub struct Env {

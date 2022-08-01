@@ -62,16 +62,19 @@ enum EmbeddedSteps {
     AddHashes {},
     /// Source review events from a file
     GeneratorFile { filename: PathBuf },
+    /// Label documents
+    Label {},
     /// Remove documents that have already been reviewed
     RemoveReviewed {},
     /// Store review events in a file
     Sink {},
 }
 
-fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
+fn run_embedded_step(opts: &mut Opts, name: EmbeddedSteps) -> Result<()> {
     match name {
         EmbeddedSteps::AddHashes {} => embedded::add_hashes::run(),
         EmbeddedSteps::GeneratorFile { filename } => embedded::generator_file::run(filename),
+        EmbeddedSteps::Label {} => embedded::label::run(opts),
         EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),
         EmbeddedSteps::Sink {} => embedded::sink::run(),
     }
@@ -95,7 +98,7 @@ fn opts(cli: &Cli) -> Opts {
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
         Commands::Review { name } => review::run(opts, name),
-        Commands::RunEmbeddedStep { name } => run_embedded_step(name),
+        Commands::RunEmbeddedStep { name } => run_embedded_step(opts, name),
         Commands::Version {} => version(opts),
     }
 }
