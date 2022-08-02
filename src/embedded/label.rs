@@ -23,11 +23,11 @@ fn answer_data(label: &Label, doc: &Event, reviewer: String) -> HashMap<String, 
     let mut data: HashMap<String, serde_json::Value> = HashMap::new();
     data.insert(
         String::from("document"),
-        json!(doc.hash.as_ref().expect("Document mush have a hash")),
+        json!(doc.hash.as_ref().expect("Document must have a hash")),
     );
     data.insert(
         String::from("label"),
-        json!(label.hash.as_ref().expect("Label mush have a hash")),
+        json!(label.hash.as_ref().expect("Label must have a hash")),
     );
     data.insert(String::from("reviewer"), json!(reviewer));
     data
