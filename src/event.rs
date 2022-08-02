@@ -15,6 +15,7 @@ pub struct Event {
     pub extra: HashMap<String, serde_json::Value>,
     pub hash: Option<String>,
     pub r#type: String,
+    pub uri: Option<String>,
 }
 
 pub fn event_hash(mut event: Event) -> Result<String> {

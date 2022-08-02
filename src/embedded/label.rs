@@ -44,6 +44,7 @@ fn read_boolean(opts: &mut Opts, label: &Label, doc: &Event, reviewer: String) -
         extra: HashMap::new(),
         hash: None,
         r#type: String::from("label-answer"),
+        uri: None,
     };
     loop {
         if label.required {
@@ -106,6 +107,7 @@ fn read_categorical(
         extra: HashMap::new(),
         hash: None,
         r#type: String::from("label-answer"),
+        uri: None,
     };
     loop {
         write!(out, "? ").chain_err(|| "Write failed")?;
@@ -146,6 +148,7 @@ fn read_string(opts: &mut Opts, label: &Label, doc: &Event, reviewer: String) ->
         extra: HashMap::new(),
         hash: None,
         r#type: String::from("label-answer"),
+        uri: None,
     };
     loop {
         let mut line = String::new();
@@ -178,6 +181,18 @@ fn read_answer(opts: &mut Opts, label: &Label, doc: &Event, reviewer: String) ->
     }
 }
 
+fn print_doc(opts: &mut Opts, doc: &Event) -> Result<()> {
+    serde_json::to_writer_pretty(&mut opts.out_stream, &doc.data)
+        .chain_err(|| "Document write failed")?;
+    match &doc.uri {
+        Some(s) => write!(opts.out_stream, "\n{}", s).chain_err(|| "Document write failed")?,
+        None => {}
+    }
+    write!(opts.out_stream, "\n\n").chain_err(|| "Document write failed")?;
+    opts.out_stream.flush().chain_err(|| "Flush failed")?;
+    Ok(())
+}
+
 pub fn run(opts: &mut Opts) -> Result<()> {
     let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
     let config = embedded::get_config(env.config)?;
@@ -199,6 +214,7 @@ pub fn run(opts: &mut Opts) -> Result<()> {
         writer.write(b"\n").chain_err(|| "Buffer write failed")?;
 
         if event.r#type == "document" {
+            print_doc(opts, &event)?;
             for label in &labels {
                 let mut answer = read_answer(opts, label, &event, reviewer.clone())?;
                 answer.hash = Some(event::event_hash(answer.clone())?);

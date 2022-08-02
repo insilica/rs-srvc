@@ -137,6 +137,7 @@ pub fn parse_label(id: &str, label: &Label) -> Result<lib::Label> {
         extra: HashMap::new(),
         hash: None,
         r#type: String::from("label"),
+        uri: None,
     };
     label.hash = Some(event::event_hash(event)?);
     Ok(label)
