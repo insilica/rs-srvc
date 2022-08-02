@@ -116,7 +116,8 @@ fn read_categorical(
             .chain_err(|| "read_line failed")?;
         match line.trim().parse::<usize>() {
             Ok(n) => {
-                if n < i {
+                if n == 0 {
+                } else if n < i {
                     let cat = &categories[n - 1];
                     data.insert(String::from("answer"), json!(cat));
                     data.insert(String::from("timestamp"), json!(get_epoch_sec()?));
