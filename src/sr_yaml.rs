@@ -15,7 +15,7 @@ use crate::lib;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Step {
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_yaml::Value>,
+    pub extra: HashMap<String, serde_json::Value>,
     pub labels: Option<Vec<String>>,
     pub run: Option<String>,
     pub run_embedded: Option<String>,
@@ -25,7 +25,7 @@ pub struct Step {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Flow {
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_yaml::Value>,
+    pub extra: HashMap<String, serde_json::Value>,
     pub steps: Option<Vec<Step>>,
 }
 
@@ -33,7 +33,7 @@ pub struct Flow {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Label {
     #[serde(flatten)]
-    extra: HashMap<String, serde_yaml::Value>,
+    extra: HashMap<String, serde_json::Value>,
     question: Option<String>,
     required: Option<bool>,
     r#type: Option<String>,
@@ -44,7 +44,7 @@ pub struct Label {
 pub struct Config {
     pub db: Option<String>,
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_yaml::Value>,
+    pub extra: HashMap<String, serde_json::Value>,
     pub flows: Option<HashMap<String, Flow>>,
     pub labels: Option<HashMap<String, Label>>,
     pub reviewer: Option<String>,
@@ -64,16 +64,9 @@ pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
     }
 }
 
-pub fn yaml_to_json(
-    val: &HashMap<String, serde_yaml::Value>,
-) -> Result<HashMap<String, serde_json::Value>> {
-    serde_yaml::from_str(&serde_yaml::to_string(val).chain_err(|| "Serialization failed")?)
-        .chain_err(|| "Deserialization failed")
-}
-
 pub fn parse_step(step: Step) -> Result<lib::Step> {
     Ok(lib::Step {
-        extra: yaml_to_json(&step.extra)?,
+        extra: step.extra,
         labels: step.labels.unwrap_or(Vec::new()),
         run: step.run,
         run_embedded: step.run_embedded,
@@ -106,7 +99,7 @@ pub fn parse_flow(flow: Flow) -> Result<lib::Flow> {
         run_embedded: Some(String::from("sink")),
     });
     Ok(lib::Flow {
-        extra: yaml_to_json(&flow.extra)?,
+        extra: flow.extra,
         steps: vec,
     })
 }
@@ -123,7 +116,7 @@ pub fn parse_flows(flows: Option<HashMap<String, Flow>>) -> Result<HashMap<Strin
 
 pub fn parse_label(id: &str, label: &Label) -> Result<lib::Label> {
     let mut label = lib::Label {
-        extra: yaml_to_json(&label.extra)?,
+        extra: label.extra.clone(),
         hash: None,
         id: id.to_string(),
         question: non_blank(id, "question", &label.question)?.to_lowercase(),
