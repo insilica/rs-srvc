@@ -21,7 +21,7 @@ pub struct Env {
     output: Option<PathBuf>,
 }
 
-pub fn get_config(filename: PathBuf) -> Result<Config> {
+pub fn get_config(filename: &PathBuf) -> Result<Config> {
     let file = File::open(filename).chain_err(|| "Cannot open config file")?;
     let reader = BufReader::new(file);
     serde_json::from_reader(reader).chain_err(|| "Cannot parse config as JSON")
@@ -48,4 +48,18 @@ pub fn events(reader: BufReader<File>) -> impl Iterator<Item = Result<Event>> {
     reader
         .lines()
         .map(|line| parse_event(line.chain_err(|| "Failed to read line")?.as_str()))
+}
+
+pub fn is_remote_target(db: &str) -> bool {
+    let target = db.to_lowercase();
+    target.starts_with("http://") || target.starts_with("https://")
+}
+
+pub fn api_route(remote: &str, path: &str) -> String {
+    format!(
+        "{}{}api/v1/{}",
+        remote,
+        if remote.ends_with("/") { "" } else { "/" },
+        path,
+    )
 }

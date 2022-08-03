@@ -195,7 +195,7 @@ fn print_doc(opts: &mut Opts, doc: &Event) -> Result<()> {
 
 pub fn run(opts: &mut Opts) -> Result<()> {
     let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
-    let config = embedded::get_config(env.config)?;
+    let config = embedded::get_config(&env.config)?;
     let labels = config.current_labels.unwrap_or(Vec::new());
     let reviewer = config.reviewer;
     let input = File::open(env.input.unwrap()).chain_err(|| "Cannot open SR_INPUT")?;

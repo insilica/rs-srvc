@@ -5,12 +5,14 @@ use std::io::BufReader;
 use std::io::LineWriter;
 use std::io::Write;
 
+use reqwest::blocking::Client;
 use serde::Serialize;
 
 use crate::embedded;
 use crate::errors::*;
+use crate::event::Event;
 
-pub fn read_reviewed_docs(file: File, reviewer: String) -> Result<HashSet<String>> {
+pub fn read_reviewed_docs(file: File, reviewer: &str) -> Result<HashSet<String>> {
     let reader = BufReader::new(file);
     let events = embedded::events(reader);
     let mut hashes = HashSet::new();
@@ -21,7 +23,9 @@ pub fn read_reviewed_docs(file: File, reviewer: String) -> Result<HashSet<String
             let data = event.data.unwrap_or(serde_json::Value::Null);
             let document = data["document"].as_str();
             let rvwr = data["reviewer"].as_str();
-            if document.and(rvwr).is_some() && rvwr.unwrap() == reviewer {
+            if document.and(rvwr).is_some()
+                && rvwr.expect("label-answer must have a reviewer") == reviewer
+            {
                 hashes.insert(document.unwrap().to_string());
             }
         }
@@ -30,15 +34,68 @@ pub fn read_reviewed_docs(file: File, reviewer: String) -> Result<HashSet<String
     Ok(hashes)
 }
 
+pub fn remote_reviewed(
+    client: &Client,
+    remote: &str,
+    event: &Event,
+    reviewer: &str,
+) -> Result<bool> {
+    let mut path = String::from("document/");
+    path.push_str(event.hash.as_ref().expect("Event must have hash"));
+    path.push_str("/label-answers");
+    let url = embedded::api_route(remote, &path);
+    let response = client
+        .get(&url)
+        .send()
+        .chain_err(|| "Error checking hash existence at remote")?;
+    let status = response.status().as_u16();
+    if status == 200 {
+        let text = response
+            .text()
+            .chain_err(|| "Error getting response text")?;
+        for line in text.lines() {
+            let answer: Event =
+                serde_json::from_str(line).chain_err(|| "Error deserializing label-answer")?;
+            match answer
+                .data
+                .expect("label-answer must have data")
+                .get("reviewer")
+                .unwrap_or(&serde_json::Value::Null)
+                .as_str()
+            {
+                Some(answer_reviewer) => {
+                    if reviewer == answer_reviewer {
+                        return Ok(true);
+                    }
+                }
+                None => {}
+            }
+        }
+        Ok(false)
+    } else if status == 204 || status == 404 {
+        Ok(false)
+    } else {
+        let text = response
+            .text()
+            .chain_err(|| "Error getting response text")?;
+        Err(format!("Unexpected {} response at {} ({})", status, &url, text).into())
+    }
+}
+
 pub fn run() -> Result<()> {
     let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
-    let config = embedded::get_config(env.config)?;
+    let config = embedded::get_config(&env.config)?;
     let reviewer = config.reviewer;
-    let db_file = File::open(config.db);
-    let reviewed_docs = match db_file {
-        Err(_) => HashSet::new(), // The file may not exist yet
-        Ok(file) => read_reviewed_docs(file, reviewer)?,
-    };
+    let mut reviewed_docs = HashSet::new();
+    let is_remote = embedded::is_remote_target(&config.db);
+    let client = Client::new();
+    if is_remote {
+        let db_file = File::open(&config.db);
+        reviewed_docs = match db_file {
+            Err(_) => reviewed_docs, // The file may not exist yet
+            Ok(file) => read_reviewed_docs(file, &reviewer)?,
+        };
+    }
     let input = File::open(env.input.unwrap()).chain_err(|| "Cannot open SR_INPUT")?;
     let reader = BufReader::new(input);
     let in_events = embedded::events(reader);
@@ -51,6 +108,12 @@ pub fn run() -> Result<()> {
     for result in in_events {
         let event = result.chain_err(|| "Cannot parse line as JSON")?;
         let hash = event.hash.clone().unwrap_or("".to_string());
+        if is_remote
+            && !reviewed_docs.contains(&hash)
+            && remote_reviewed(&client, &config.db, &event, &reviewer)?
+        {
+            reviewed_docs.insert(hash.clone());
+        }
         if !reviewed_docs.contains(&hash) {
             event
                 .serialize(&mut serde_json::Serializer::new(&mut writer))
