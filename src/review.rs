@@ -111,11 +111,22 @@ pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> 
     })
 }
 
+#[cfg(unix)]
 pub fn get_exe_path() -> Result<PathBuf> {
     Ok(std::env::current_exe()
         .chain_err(|| "Failed to get current exe path")?
         .canonicalize()
         .chain_err(|| "Failed to canonicalize current exe path")?)
+}
+
+// std::env::current_exe() returns paths like "\\\\?\\C:\\Users\\"
+// We want just the path from C:\ onwards
+#[cfg(windows)]
+pub fn get_exe_path() -> Result<PathBuf> {
+    let handle = windows_win::raw::process::get_current_handle();
+    let path = windows_win::raw::process::get_exe_path(handle)
+        .chain_err(|| "Failed to get current exe path")?;
+    Ok(PathBuf::from(path))
 }
 
 pub fn get_run_command(step: &lib::Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<String>)> {
