@@ -89,7 +89,8 @@ pub fn run() -> Result<()> {
     let mut reviewed_docs = HashSet::new();
     let is_remote = embedded::is_remote_target(&config.db);
     let client = Client::new();
-    if is_remote {
+
+    if !is_remote {
         let db_file = File::open(&config.db);
         reviewed_docs = match db_file {
             Err(_) => reviewed_docs, // The file may not exist yet
