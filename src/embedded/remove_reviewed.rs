@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 use std::fs::File;
-use std::fs::OpenOptions;
 use std::io::BufReader;
-use std::io::LineWriter;
 use std::io::Write;
 
 use reqwest::blocking::Client;
@@ -97,14 +95,10 @@ pub fn run() -> Result<()> {
             Ok(file) => read_reviewed_docs(file, &reviewer)?,
         };
     }
-    let input = File::open(env.input.unwrap()).chain_err(|| "Cannot open SR_INPUT")?;
-    let reader = BufReader::new(input);
-    let in_events = embedded::events(reader);
-    let output = OpenOptions::new()
-        .write(true)
-        .open(env.output.unwrap())
-        .chain_err(|| "Cannot open SR_OUTPUT")?;
-    let mut writer = LineWriter::new(output);
+    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
+    let in_events = embedded::input_events(&input_addr)?;
+    let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
+    let mut writer = embedded::output_writer(&output_addr)?;
 
     for result in in_events {
         let event = result.chain_err(|| "Cannot parse line as JSON")?;

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, LineWriter, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
@@ -198,14 +197,11 @@ pub fn run(opts: &mut Opts) -> Result<()> {
     let config = embedded::get_config(&env.config)?;
     let labels = config.current_labels.unwrap_or(Vec::new());
     let reviewer = config.reviewer;
-    let input = File::open(env.input.unwrap()).chain_err(|| "Cannot open SR_INPUT")?;
-    let reader = BufReader::new(input);
-    let in_events = embedded::events(reader);
-    let output = OpenOptions::new()
-        .write(true)
-        .open(env.output.unwrap())
-        .chain_err(|| "Cannot open SR_OUTPUT")?;
-    let mut writer = LineWriter::new(output);
+    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
+    let in_events = embedded::input_events(&input_addr)?;
+    let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
+    let mut writer = embedded::output_writer(&output_addr)?;
+
     for result in in_events {
         let event = result.chain_err(|| "Cannot parse line as JSON")?;
         event

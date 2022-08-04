@@ -1,19 +1,87 @@
 use std::fs::File;
-use std::io::BufWriter;
+use std::io::{BufRead, BufReader, BufWriter, LineWriter, Write};
+use std::net::{SocketAddr, TcpListener};
 use std::path::PathBuf;
 use std::process;
+use std::str::FromStr;
+use std::thread;
 
-use nix::sys::stat;
-use nix::unistd;
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::errors::*;
 
+use crate::event::Event;
 use crate::lib;
 use crate::sr_yaml;
+
+#[derive(Debug)]
 pub struct StepProcess {
-    output: Option<PathBuf>,
     process: process::Child,
+    step_server: Option<StepServer>,
+}
+
+#[derive(Debug)]
+pub struct StepServer {
+    input_port: u16,
+    output_port: u16,
+}
+
+fn parse_event(s: &str) -> Result<Event> {
+    serde_json::from_str(s).chain_err(|| "Cannot parse event")
+}
+
+fn run_step_server(input_listener: TcpListener, output_listener: TcpListener) -> Result<()> {
+    let (input, _) = input_listener.accept().chain_err(|| "Listen error")?;
+    let (output, _) = output_listener.accept().chain_err(|| "Listen error")?;
+    let reader = BufReader::new(input);
+    let mut writer = LineWriter::new(output);
+
+    let events = reader
+        .lines()
+        .map(|line| parse_event(line.chain_err(|| "Failed to read line")?.as_str()));
+    for result in events {
+        let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
+        let expected_hash = crate::event::event_hash(event.clone())?;
+        let hash = event.hash.clone().unwrap_or("".to_string());
+        if hash == "" {
+            event.hash = Some(expected_hash);
+        } else if expected_hash != hash {
+            return Err(format!(
+                "Incorrect event hash. Expected: \"{}\". Found: \"{}\".",
+                expected_hash, hash
+            )
+            .into());
+        }
+        event
+            .serialize(&mut serde_json::Serializer::new(&mut writer))
+            .chain_err(|| "Event serialization failed")?;
+        writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+    }
+    Ok(())
+}
+
+fn make_step_server() -> Result<StepServer> {
+    let addr = SocketAddr::from_str("127.0.0.1:0").chain_err(|| "Failed to create SocketAddr")?;
+    let input_listener =
+        TcpListener::bind(&addr).chain_err(|| format!("Failed to open TpcListener on {}", addr))?;
+    let output_listener =
+        TcpListener::bind(&addr).chain_err(|| format!("Failed to open TpcListener on {}", addr))?;
+    let input_port = input_listener
+        .local_addr()
+        .chain_err(|| "Failed to get local SocketAddr")?
+        .port();
+    let output_port = output_listener
+        .local_addr()
+        .chain_err(|| "Failed to get local SocketAddr")?
+        .port();
+
+    thread::spawn(|| run_step_server(input_listener, output_listener));
+
+    Ok(StepServer {
+        input_port,
+        output_port,
+    })
 }
 
 pub fn make_config(config: &lib::Config, dir: &tempfile::TempDir) -> Result<PathBuf> {
@@ -24,15 +92,6 @@ pub fn make_config(config: &lib::Config, dir: &tempfile::TempDir) -> Result<Path
     let file = File::create(&path).chain_err(|| "Failed to create config file for step")?;
     let writer = BufWriter::new(file);
     serde_json::to_writer(writer, config).chain_err(|| "Failed to write config for step")?;
-    Ok(path)
-}
-
-pub fn make_fifo(dir: &tempfile::TempDir) -> Result<PathBuf> {
-    let mut filename = String::from("fifo-");
-    filename.push_str(&Uuid::new_v4().to_string());
-    let path = dir.path().join(filename);
-    unistd::mkfifo(&path, stat::Mode::S_IRUSR | stat::Mode::S_IWUSR)
-        .chain_err(|| "Failed to create named pipe (mkfifo)")?;
     Ok(path)
 }
 
@@ -82,35 +141,38 @@ pub fn run_step(
     config: &lib::Config,
     dir: &tempfile::TempDir,
     step: &lib::Step,
-    input: Option<PathBuf>,
+    input_port: Option<u16>,
     output: bool,
     exe_path: PathBuf,
 ) -> Result<StepProcess> {
     let step_config = step_config(config.to_owned(), step.to_owned())?;
     let config_path = make_config(&step_config, dir)?;
-    let output = if output { Some(make_fifo(dir)) } else { None }.transpose()?;
-    let empty_path = PathBuf::new();
+    let step_server = if output {
+        Some(make_step_server()?)
+    } else {
+        None
+    };
     let (program, args) = get_run_command(step, exe_path)?;
+    let sr_input = match input_port {
+        Some(port) => port.to_string(),
+        None => "".into(),
+    };
+    let sr_output = match &step_server {
+        Some(ss) => ss.input_port.to_string(),
+        None => "".into(),
+    };
+
     let process = process::Command::new(program)
         .args(args)
         .env("SR_CONFIG", config_path)
-        .env(
-            "SR_INPUT",
-            match input {
-                Some(path) => path,
-                None => PathBuf::new(),
-            },
-        )
-        .env(
-            "SR_OUTPUT",
-            match &output {
-                Some(path) => path,
-                None => &empty_path,
-            },
-        )
+        .env("SR_INPUT", sr_input)
+        .env("SR_OUTPUT", sr_output)
         .spawn()
         .chain_err(|| "Failed to start step sub-process")?;
-    Ok(StepProcess { output, process })
+    Ok(StepProcess {
+        step_server,
+        process,
+    })
 }
 
 pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitStatus> {
@@ -124,14 +186,12 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
     let mut last_process = None;
     for step in &flow.steps {
         let is_last_step = last_step.filter(|x| x.to_owned() == step).is_some();
-        let last_output = last_process
-            .map(|x: StepProcess| x.output.ok_or("None"))
-            .transpose()?;
+        let last_ss = last_process.map(|x: StepProcess| x.step_server).flatten();
         let process = run_step(
             config,
             &dir,
             step,
-            last_output,
+            last_ss.map(|x| x.output_port),
             !is_last_step,
             exe_path.clone(),
         )?;

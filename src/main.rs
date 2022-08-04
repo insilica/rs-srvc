@@ -58,8 +58,6 @@ enum Commands {
 
 #[derive(Subcommand, Debug)]
 enum EmbeddedSteps {
-    /// Add hashes to events
-    AddHashes {},
     /// Source review events from a file
     GeneratorFile { filename: PathBuf },
     /// Label documents
@@ -72,7 +70,6 @@ enum EmbeddedSteps {
 
 fn run_embedded_step(opts: &mut Opts, name: EmbeddedSteps) -> Result<()> {
     match name {
-        EmbeddedSteps::AddHashes {} => embedded::add_hashes::run(),
         EmbeddedSteps::GeneratorFile { filename } => embedded::generator_file::run(filename),
         EmbeddedSteps::Label {} => embedded::label::run(opts),
         EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),

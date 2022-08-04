@@ -44,9 +44,8 @@ pub fn ensure_hash(event: &mut Event) -> Result<()> {
 
 pub fn run_remote(env: Env, config: Config) -> Result<()> {
     let mut hashes = HashSet::new();
-    let input = File::open(env.input.unwrap()).chain_err(|| "Cannot open SR_INPUT")?;
-    let reader = BufReader::new(input);
-    let in_events = embedded::events(reader);
+    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
+    let in_events = embedded::input_events(&input_addr)?;
     let client = Client::new();
     let url = embedded::api_route(&config.db, "upload");
 
@@ -88,9 +87,8 @@ pub fn run_local(env: Env, config: Config) -> Result<()> {
         .append(true)
         .open(&config.db)
         .chain_err(|| format!("Failed to open db: \"{}\"", config.db))?;
-    let input = File::open(env.input.unwrap()).chain_err(|| "Cannot open SR_INPUT")?;
-    let reader = BufReader::new(input);
-    let in_events = embedded::events(reader);
+    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
+    let in_events = embedded::input_events(&input_addr)?;
     let mut writer = LineWriter::new(db_file);
 
     for result in in_events {

@@ -79,18 +79,10 @@ pub fn parse_flow(flow: Flow) -> Result<lib::Flow> {
         return Err("No steps in flow".into());
     }
 
-    let add_hashes_step = lib::Step {
-        extra: HashMap::new(),
-        labels: Vec::new(),
-        run: None,
-        run_embedded: Some(String::from("add-hashes")),
-    };
-
     let mut vec = Vec::new();
     for step in steps {
         let step = parse_step(step.to_owned())?;
         vec.push(step);
-        vec.push(add_hashes_step.clone());
     }
     vec.push(lib::Step {
         extra: HashMap::new(),
