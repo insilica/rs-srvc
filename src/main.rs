@@ -39,6 +39,13 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Print the full, canonicalized config in JSON format
+    PrintConfig {
+        /// Whether to pretty-print the JSON
+        #[clap(long)]
+        pretty: bool,
+    },
+
     /// Run a review flow
     Review {
         /// The name of the review flow
@@ -68,6 +75,19 @@ enum EmbeddedSteps {
     Sink {},
 }
 
+fn print_config(opts: &mut Opts, pretty: bool) -> Result<()> {
+    let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
+    let config = sr_yaml::parse_config(yaml_config)?;
+    if pretty {
+        serde_json::to_writer_pretty(&mut opts.out_stream, &config)
+    } else {
+        serde_json::to_writer(&mut opts.out_stream, &config)
+    }
+    .chain_err(|| "Failed to serialize config")?;
+    writeln!(opts.out_stream, "").chain_err(|| "Failed to write newline")?;
+    Ok(())
+}
+
 fn run_embedded_step(opts: &mut Opts, name: EmbeddedSteps) -> Result<()> {
     match name {
         EmbeddedSteps::GeneratorFile { filename } => embedded::generator_file::run(filename),
@@ -94,6 +114,7 @@ fn opts(cli: &Cli) -> Opts {
 
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
+        Commands::PrintConfig { pretty } => print_config(opts, pretty),
         Commands::Review { name } => review::run(opts, name),
         Commands::RunEmbeddedStep { name } => run_embedded_step(opts, name),
         Commands::Version {} => version(opts),
