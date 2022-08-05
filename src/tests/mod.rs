@@ -30,7 +30,7 @@ fn cmd_out(args: Vec<&str>) -> Result<(String, String)> {
 #[test]
 fn test_version() -> Result<()> {
     assert_eq!(
-        (format!("srvc {}", VERSION), String::from("")),
+        (format!("srvc {}\n", VERSION), String::from("")),
         cmd_out(["sr", "version"].into())?
     );
     Ok(())

@@ -78,7 +78,7 @@ fn run_embedded_step(opts: &mut Opts, name: EmbeddedSteps) -> Result<()> {
 }
 
 fn version(opts: &mut Opts) -> Result<()> {
-    write!(opts.out_stream, "srvc {}", VERSION)
+    writeln!(opts.out_stream, "srvc {}", VERSION)
         .chain_err(|| "Failed to write to opts.out_stream")?;
     Ok(())
 }

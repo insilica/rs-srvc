@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add a linebreak to the output of `sr version`
+
 ## v0.2.0 (2022-08-05)
 - Add `sr version` command
 - Add label embedded step for simple CLI labelling
