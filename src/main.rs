@@ -38,6 +38,7 @@ struct Cli {
 }
 
 #[derive(Subcommand)]
+#[clap(version)]
 enum Commands {
     /// Print the full, canonicalized config in JSON format
     PrintConfig {
