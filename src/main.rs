@@ -50,6 +50,7 @@ enum Commands {
     /// Run a review flow
     Review {
         /// The name of the review flow
+        #[clap(forbid_empty_values = true)]
         name: String,
     },
 
@@ -67,7 +68,11 @@ enum Commands {
 #[derive(Subcommand, Debug)]
 enum EmbeddedSteps {
     /// Source review events from a file
-    GeneratorFile { filename: PathBuf },
+    GeneratorFile {
+        /// Path to a file containing review events
+        #[clap(forbid_empty_values = true)]
+        filename: PathBuf,
+    },
     /// Label documents
     Label {},
     /// Remove documents that have already been reviewed
