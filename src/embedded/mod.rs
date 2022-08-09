@@ -1,7 +1,7 @@
 use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader, LineWriter, Read};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 
 use crate::errors::*;
@@ -27,13 +27,10 @@ pub fn get_config(filename: &PathBuf) -> Result<Config> {
 }
 
 fn local_addr(s: &str) -> Result<SocketAddr> {
-    let port = s
-        .parse::<u16>()
-        .chain_err(|| format!("Invalid port: \"{}\"", s))?;
-    Ok(SocketAddr::new(
-        IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-        port,
-    ))
+    s.to_socket_addrs()
+        .chain_err(|| format!("Unable to parse as SocketAddrs: {}", s))?
+        .next()
+        .ok_or("No SocketAddr found".into())
 }
 
 pub fn get_env_addr(key: &str) -> Result<Option<SocketAddr>> {

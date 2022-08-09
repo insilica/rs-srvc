@@ -165,11 +165,11 @@ pub fn run_step(
     };
     let (program, args) = get_run_command(step, exe_path)?;
     let sr_input = match input_port {
-        Some(port) => port.to_string(),
+        Some(port) => format!("127.0.0.1:{}", port.to_string()),
         None => "".into(),
     };
     let sr_output = match &step_server {
-        Some(ss) => ss.input_port.to_string(),
+        Some(ss) => format!("127.0.0.1:{}", ss.input_port.to_string()),
         None => "".into(),
     };
 

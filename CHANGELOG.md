@@ -4,6 +4,7 @@
 - Add `print-config` command
 - Add the version to the `help` command output
 - Improve error messages when an empty value is supplied for a filename or review name
+- Pass a host:port pair for `SR_OUTPUT` and `SR_INPUT` instead of just a port
 
 ## v0.2.0 (2022-08-05)
 - Add `sr version` command
