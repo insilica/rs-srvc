@@ -61,20 +61,23 @@ fn run_step_server(input_listener: TcpListener, output_listener: TcpListener) ->
     Ok(())
 }
 
+fn make_listener(addr: &SocketAddr) -> Result<TcpListener> {
+    TcpListener::bind(&addr).chain_err(|| format!("Failed to open TcpListener on {}", addr))
+}
+
+fn get_port(listener: &TcpListener) -> Result<u16> {
+    Ok(listener
+        .local_addr()
+        .chain_err(|| "Failed to get local SocketAddr")?
+        .port())
+}
+
 fn make_step_server() -> Result<StepServer> {
     let addr = SocketAddr::from_str("127.0.0.1:0").chain_err(|| "Failed to create SocketAddr")?;
-    let input_listener =
-        TcpListener::bind(&addr).chain_err(|| format!("Failed to open TpcListener on {}", addr))?;
-    let output_listener =
-        TcpListener::bind(&addr).chain_err(|| format!("Failed to open TpcListener on {}", addr))?;
-    let input_port = input_listener
-        .local_addr()
-        .chain_err(|| "Failed to get local SocketAddr")?
-        .port();
-    let output_port = output_listener
-        .local_addr()
-        .chain_err(|| "Failed to get local SocketAddr")?
-        .port();
+    let input_listener = make_listener(&addr)?;
+    let output_listener = make_listener(&addr)?;
+    let input_port = get_port(&input_listener)?;
+    let output_port = get_port(&output_listener)?;
 
     thread::spawn(|| run_step_server(input_listener, output_listener));
 
