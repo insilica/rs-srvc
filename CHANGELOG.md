@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.3.0 (2022-08-09)
+
 - Add a linebreak to the output of `sr version`
 - Add `print-config` command
 - Add the version to the `help` command output
