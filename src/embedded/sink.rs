@@ -54,7 +54,7 @@ pub fn run_remote(env: Env, config: Config) -> Result<()> {
         ensure_hash(&mut event)?;
         let hash = event.hash.clone().expect("Hash not set");
 
-        if !hashes.contains(&hash) && event.r#type != "control" {
+        if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
             let json = serde_json::to_string(&event).chain_err(|| "Serialization failed")?;
             let response = client
                 .post(&url)
@@ -96,7 +96,7 @@ pub fn run_local(env: Env, config: Config) -> Result<()> {
         ensure_hash(&mut event)?;
         let hash = event.hash.clone().expect("Hash not set");
 
-        if !hashes.contains(&hash) && event.r#type != "control" {
+        if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
             event
                 .serialize(&mut serde_json::Serializer::new(&mut writer))
                 .chain_err(|| "Event serialization failed")?;

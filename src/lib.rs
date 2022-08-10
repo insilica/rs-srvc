@@ -45,6 +45,7 @@ pub struct Config {
     pub flows: HashMap<String, Flow>,
     pub labels: HashMap<String, Label>,
     pub reviewer: String,
+    pub sink_all_events: bool,
 }
 
 // Dependency-Injection supporting Write trait

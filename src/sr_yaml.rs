@@ -48,6 +48,7 @@ pub struct Config {
     pub flows: Option<HashMap<String, Flow>>,
     pub labels: Option<HashMap<String, Label>>,
     pub reviewer: Option<String>,
+    pub sink_all_events: Option<bool>,
 }
 
 pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
@@ -153,6 +154,7 @@ pub fn parse_config(config: Config) -> Result<lib::Config> {
         flows: parse_flows(config.flows)?,
         labels: parse_labels(&config.labels)?,
         reviewer: config.reviewer.ok_or("\"reviewer\" not set in config")?,
+        sink_all_events: config.sink_all_events.unwrap_or(false),
     })
 }
 

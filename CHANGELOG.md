@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add `sink_all_events` option to force recording of all events
+
 ## v0.3.0 (2022-08-09)
 
 - Add a linebreak to the output of `sr version`
