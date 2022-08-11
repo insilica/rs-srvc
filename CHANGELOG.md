@@ -2,6 +2,7 @@
 
 - Make labels not required by default
 - Don't include `"hash": null` when hashing labels
+- Add labels to events in `generator-file` embedded step
 
 ## v0.4.0 (2022-08-11)
 
