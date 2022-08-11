@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Make labels not required by default
+
 ## v0.4.0 (2022-08-11)
 
 - Add `sink_all_events` option to force recording of all events

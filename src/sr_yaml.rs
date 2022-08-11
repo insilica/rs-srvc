@@ -113,7 +113,7 @@ pub fn parse_label(id: &str, label: &Label) -> Result<lib::Label> {
         hash: None,
         id: id.to_string(),
         question: non_blank(id, "question", &label.question)?.to_lowercase(),
-        required: true,
+        required: label.required.unwrap_or(false),
         r#type: non_blank(id, "type", &label.r#type)?.to_lowercase(),
     };
     let data_s = serde_json::to_string(&label).chain_err(|| "Serialization failed")?;
