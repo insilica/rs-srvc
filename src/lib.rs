@@ -23,6 +23,7 @@ pub struct Flow {
     pub steps: Vec<Step>,
 }
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Label {
     #[serde(flatten)]

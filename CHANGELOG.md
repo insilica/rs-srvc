@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Make labels not required by default
+- Don't include `"hash": null` when hashing labels
 
 ## v0.4.0 (2022-08-11)
 
