@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.4.0 (2022-08-11)
+
 - Add `sink_all_events` option to force recording of all events
 
 ## v0.3.0 (2022-08-09)
