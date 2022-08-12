@@ -10,6 +10,7 @@ use serde_json::{json, Value};
 use crate::embedded;
 use crate::errors::*;
 use crate::event::Event;
+use crate::lib::Label;
 
 pub fn run(filename: PathBuf) -> Result<()> {
     let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
@@ -20,8 +21,10 @@ pub fn run(filename: PathBuf) -> Result<()> {
     let in_events = embedded::events(reader);
     let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
     let mut writer = embedded::output_writer(&output_addr)?;
+    let mut labels: Vec<&Label> = config.labels.values().collect();
+    labels.sort_by(|a, b| a.id.cmp(&b.id));
 
-    for (_id, label) in config.labels {
+    for label in labels {
         let data: Value = serde_json::from_str(
             &serde_json::to_string(&label).chain_err(|| "Serialization failure")?,
         )
