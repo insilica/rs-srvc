@@ -3,6 +3,7 @@
 - Make labels not required by default
 - Don't include `"hash": null` when hashing labels
 - Add labels to events in `generator-file` embedded step
+- Include filename in error message when generator-file step can't open the file
 
 ## v0.4.0 (2022-08-11)
 

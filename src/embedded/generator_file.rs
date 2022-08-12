@@ -14,7 +14,8 @@ use crate::event::Event;
 pub fn run(filename: PathBuf) -> Result<()> {
     let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
     let config = embedded::get_config(&env.config)?;
-    let input = File::open(filename).chain_err(|| "Cannot open generator file")?;
+    let input = File::open(&filename)
+        .chain_err(|| format!("Cannot open generator file: {:?}", filename))?;
     let reader = BufReader::new(input);
     let in_events = embedded::events(reader);
     let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
