@@ -13,6 +13,7 @@ use crate::errors::*;
 
 use crate::event::Event;
 use crate::lib;
+use crate::lib::Opts;
 use crate::sr_yaml;
 
 #[derive(Debug)]
@@ -25,6 +26,15 @@ pub struct StepProcess {
 pub struct StepServer {
     input_port: u16,
     output_port: u16,
+}
+
+fn write_str_pretty(v: &impl serde::Serialize) -> Result<String> {
+    serde_json::to_string_pretty(v).chain_err(|| "Serialization failed")
+}
+
+fn writeln_err(opts: &mut Opts, s: &str) -> Result<()> {
+    writeln!(opts.err_stream, "{}", s).chain_err(|| "Failed to write to err_stream")?;
+    Ok(())
 }
 
 fn parse_event(s: &str) -> Result<Event> {
@@ -152,6 +162,7 @@ pub fn get_run_command(step: &lib::Step, exe_path: PathBuf) -> Result<(PathBuf, 
 }
 
 pub fn run_step(
+    opts: &mut Opts,
     config: &lib::Config,
     dir: &tempfile::TempDir,
     step: &lib::Step,
@@ -176,20 +187,30 @@ pub fn run_step(
         None => "".into(),
     };
 
-    let process = process::Command::new(program)
+    match process::Command::new(program)
         .args(args)
         .env("SR_CONFIG", config_path)
         .env("SR_INPUT", sr_input)
         .env("SR_OUTPUT", sr_output)
         .spawn()
-        .chain_err(|| "Failed to start step sub-process")?;
-    Ok(StepProcess {
-        step_server,
-        process,
-    })
+        .chain_err(|| "Failed to start step sub-process")
+    {
+        Ok(process) => Ok(StepProcess {
+            step_server,
+            process: process,
+        }),
+        Err(e) => {
+            writeln_err(opts, &format!("Step failed:\n{}", write_str_pretty(step)?))?;
+            Err(e)
+        }
+    }
 }
 
-pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitStatus> {
+pub fn run_flow(
+    opts: &mut Opts,
+    flow: &lib::Flow,
+    config: &lib::Config,
+) -> Result<process::ExitStatus> {
     let dir = tempfile::Builder::new()
         .prefix("srvc-")
         .tempdir()
@@ -202,6 +223,7 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
         let is_last_step = last_step.filter(|x| x.to_owned() == step).is_some();
         let last_ss = last_process.map(|x: StepProcess| x.step_server).flatten();
         let process = run_step(
+            opts,
             config,
             &dir,
             step,
@@ -221,7 +243,7 @@ pub fn run_flow(flow: &lib::Flow, config: &lib::Config) -> Result<process::ExitS
     Ok(process)
 }
 
-pub fn run(opts: &lib::Opts, flow_name: String) -> Result<()> {
+pub fn run(opts: &mut Opts, flow_name: String) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
     let config = sr_yaml::parse_config(yaml_config)?;
     let flow = config.flows.get(&flow_name);
@@ -232,6 +254,6 @@ pub fn run(opts: &lib::Opts, flow_name: String) -> Result<()> {
             flow_name, &opts.config
         )),
     }?;
-    run_flow(flow, &config)?;
+    run_flow(opts, flow, &config)?;
     Ok(())
 }

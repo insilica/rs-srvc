@@ -4,6 +4,7 @@
 - Don't include `"hash": null` when hashing labels
 - Add labels to events in `generator-file` embedded step
 - Include filename in error message when generator-file step can't open the file
+- Pretty-print a step when it fails to start
 
 ## v0.4.0 (2022-08-11)
 
