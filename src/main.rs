@@ -20,9 +20,6 @@ mod lib;
 mod review;
 mod sr_yaml;
 
-#[cfg(test)]
-mod tests;
-
 use lib::Opts;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
