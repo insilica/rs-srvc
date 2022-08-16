@@ -1,5 +1,7 @@
 # srvc
 
+[![CodeScene Code Health](https://codescene.io/projects/28736/status-badges/code-health)](https://codescene.io/projects/28736)
+
 Sysrev version control
 
 ## Install
