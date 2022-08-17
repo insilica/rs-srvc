@@ -3,10 +3,10 @@
 Release Checklist
 -----------------
 * Ensure local `master` is up to date with respect to `origin/master`.
+* Edit the `Cargo.toml` to set the new version.
 * Run `cargo update` and review dependency updates. Commit updated
   `Cargo.lock`.
 * Update the CHANGELOG as appropriate.
-* Edit the `Cargo.toml` to set the new version.
 * Push changes to GitHub, NOT including the tag.
 * Once CI for `master` finishes successfully, push the version tag.
 * Wait for CI to finish creating the release. If the release build fails, then

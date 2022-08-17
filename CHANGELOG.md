@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.5.0 (2022-08-17)
+
 - Make labels not required by default
 - Don't include `"hash": null` when hashing labels
 - Add labels to events in `generator-file` embedded step
