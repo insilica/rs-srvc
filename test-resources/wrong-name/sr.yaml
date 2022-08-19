@@ -1,0 +1,50 @@
+db: "sink.jsonl"
+
+reviewer: mailto:user@example.com
+
+labels:
+  acute_tox:
+    type: boolean
+    question: Acute toxicity?
+  annotation:
+    type: webannotation
+    question: Annotation
+  eye_irrit:
+    type: boolean
+    question: Eye irritation?
+  substance:
+    type: categorical
+    categories:
+      - sodium laureth sulfate
+      - sodium lauryl sulfoacetate
+      - sodium cocoyl glycinate
+      - disodium cocoyl glutamate
+      - decyl glucoside
+      - lauryl glucoside
+    inclusion_values:
+      - sodium laureth sulfate
+      - sodium lauryl sulfoacetate
+      - sodium cocoyl glycinate
+      - disodium cocoyl glutamate
+      - decyl glucoside
+      - lauryl glucoside
+    question: Substance
+
+flows:
+  label:
+    steps:
+      - run_embedded: "generator-file docs.jsonl"
+
+      - run_embedded: "remove-reviewed"
+
+      - run_embedded: "label"
+        labels:
+          - acute_tox
+          - eye_irrit
+          - substance
+
+  simple:
+    steps:
+      - run_embedded: "generator-file docs.jsonl"
+
+      - run_embedded: "remove-reviewed"
