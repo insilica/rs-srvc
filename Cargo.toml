@@ -20,3 +20,6 @@ shell-words = "1.0"
 tempfile = "3.0"
 uuid = { version = "1.0", features = ["v4", "fast-rng"] }
 windows-win = "2.0"
+
+[dev-dependencies]
+assert_cli = "0.6"

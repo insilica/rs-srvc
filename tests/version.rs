@@ -1,16 +1,21 @@
-mod common;
-use common::cmd_out;
+use assert_cli::Assert;
 
 #[test]
 fn test_version() -> Result<(), std::io::Error> {
-    assert_eq!(
-        (
-            Some(0),
-            format!("srvc {}\n", env!("CARGO_PKG_VERSION")),
-            String::from("")
-        ),
-        cmd_out(&vec!["version"], "test-resources/simple")?,
-        "version command works",
-    );
+    Assert::main_binary()
+        .with_args(&["version"])
+        .stdout()
+        .is(&*format!("srvc {}\n", env!("CARGO_PKG_VERSION")))
+        .stderr()
+        .is("")
+        .unwrap();
+    Assert::main_binary()
+        .current_dir("test-resources/simple")
+        .with_args(&["version"])
+        .stdout()
+        .is(&*format!("srvc {}\n", env!("CARGO_PKG_VERSION")))
+        .stderr()
+        .is("")
+        .unwrap();
     Ok(())
 }
