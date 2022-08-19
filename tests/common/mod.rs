@@ -1,36 +1,29 @@
 #![allow(dead_code)]
 
+use std::fs::File;
 use std::io::Read;
-use std::process::{Command, Stdio};
+use std::path::PathBuf;
 use std::time::Duration;
 
-pub fn cmd(timeout_millis: u64) -> assert_cmd::Command {
-    let mut cmd = assert_cmd::Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
+use assert_cmd::Command;
+
+pub fn cmd(timeout_millis: u64) -> Command {
+    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
     cmd.timeout(Duration::from_millis(timeout_millis));
     cmd
 }
 
-pub fn delete(dir: &str, filename: &str) -> () {
-    let mut path = dir.to_owned();
-    path.push_str(filename);
-    match std::fs::remove_file(path) {
-        Ok(_) => (),
-        Err(_) => (),
-    };
-}
-
-pub fn file_diff(dir: &str, file_a: &str, file_b: &str) -> Result<(i32, String), std::io::Error> {
-    let mut cmd = Command::new("git")
-        .args(["diff", file_a, file_b])
+pub fn check_sink(dir: &str) -> Result<(), std::io::Error> {
+    let mut sink = String::new();
+    File::open(PathBuf::from(dir).join("sink.jsonl"))?.read_to_string(&mut sink)?;
+    Command::new("git")
+        .arg("diff")
+        .arg("expected.jsonl")
+        .arg("sink.jsonl")
         .current_dir(dir)
-        .stdout(Stdio::piped())
-        .spawn()?;
-    match cmd.wait()?.code() {
-        Some(code) => {
-            let mut stdout = String::new();
-            cmd.stdout.expect("stdout").read_to_string(&mut stdout)?;
-            Ok((code, stdout))
-        }
-        None => panic!("diff process exited early"),
-    }
+        .assert()
+        .success()
+        .stderr("")
+        .stdout("");
+    Ok(())
 }

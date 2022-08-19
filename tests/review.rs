@@ -16,10 +16,7 @@ fn test_simple() -> Result<(), std::io::Error> {
         .success()
         .stdout("")
         .stderr("");
-    assert_eq!(
-        (0, String::from("")),
-        common::file_diff(dir, "sink.jsonl", "expected.jsonl")?
-    );
+    common::check_sink(dir)?;
     Ok(())
 }
 
