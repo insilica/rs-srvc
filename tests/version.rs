@@ -2,7 +2,7 @@ mod common;
 
 #[test]
 fn test_version() -> Result<(), std::io::Error> {
-    common::cmd()
+    common::cmd(100)
         .args(&["version"])
         .assert()
         .success()

@@ -4,7 +4,7 @@ mod common;
 fn test_simple() -> Result<(), std::io::Error> {
     let dir = "test-resources/simple";
     common::delete(dir, "sink.jsonl");
-    common::cmd()
+    common::cmd(200)
         .current_dir(dir)
         .args(&["review", "simple"])
         .assert()

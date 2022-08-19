@@ -2,9 +2,12 @@
 
 use std::io::Read;
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
-pub fn cmd() -> assert_cmd::Command {
-    assert_cmd::Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap()
+pub fn cmd(timeout_millis: u64) -> assert_cmd::Command {
+    let mut cmd = assert_cmd::Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
+    cmd.timeout(Duration::from_millis(timeout_millis));
+    cmd
 }
 
 pub fn delete(dir: &str, filename: &str) -> () {
