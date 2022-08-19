@@ -36,8 +36,8 @@ pub fn delete(dir: &str, filename: &str) -> () {
 }
 
 pub fn file_diff(dir: &str, file_a: &str, file_b: &str) -> Result<(i32, String), std::io::Error> {
-    let mut cmd = Command::new("diff")
-        .args([file_a, file_b])
+    let mut cmd = Command::new("git")
+        .args(["diff", file_a, file_b])
         .current_dir(dir)
         .stdout(Stdio::piped())
         .spawn()?;
