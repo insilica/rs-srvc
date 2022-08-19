@@ -3,6 +3,10 @@
 use std::io::Read;
 use std::process::{Command, Stdio};
 
+pub fn cmd() -> assert_cmd::Command {
+    assert_cmd::Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap()
+}
+
 pub fn delete(dir: &str, filename: &str) -> () {
     let mut path = dir.to_owned();
     path.push_str(filename);

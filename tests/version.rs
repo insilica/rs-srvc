@@ -1,21 +1,12 @@
-use assert_cli::Assert;
+mod common;
 
 #[test]
 fn test_version() -> Result<(), std::io::Error> {
-    Assert::main_binary()
-        .with_args(&["version"])
-        .stdout()
-        .is(&*format!("srvc {}\n", env!("CARGO_PKG_VERSION")))
-        .stderr()
-        .is("")
-        .unwrap();
-    Assert::main_binary()
-        .current_dir("test-resources/simple")
-        .with_args(&["version"])
-        .stdout()
-        .is(&*format!("srvc {}\n", env!("CARGO_PKG_VERSION")))
-        .stderr()
-        .is("")
-        .unwrap();
+    common::cmd()
+        .args(&["version"])
+        .assert()
+        .success()
+        .stdout(format!("srvc {}\n", env!("CARGO_PKG_VERSION")))
+        .stderr("");
     Ok(())
 }
