@@ -13,8 +13,7 @@ srvc is supported on macOS and Linux.
 [Install homebrew](https://brew.sh/), and run:
 
 ```
-brew tap insilica/srvc
-brew install srvc
+brew install insilica/srvc/srvc
 ```
 
 ### Binary
