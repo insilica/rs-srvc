@@ -1,12 +1,11 @@
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufReader;
-use std::io::Write;
 
 use reqwest::blocking::Client;
-use serde::Serialize;
 
 use crate::embedded;
+use crate::embedded::MapContext;
 use crate::errors::*;
 use crate::event::Event;
 
@@ -81,8 +80,11 @@ pub fn remote_reviewed(
 }
 
 pub fn run() -> Result<()> {
-    let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
-    let config = embedded::get_config(&env.config)?;
+    let MapContext {
+        config,
+        in_events,
+        mut writer,
+    } = embedded::get_map_context()?;
     let reviewer = config.reviewer;
     let mut reviewed_docs = HashSet::new();
     let is_remote = embedded::is_remote_target(&config.db);
@@ -95,13 +97,9 @@ pub fn run() -> Result<()> {
             Ok(file) => read_reviewed_docs(file, &reviewer)?,
         };
     }
-    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
-    let in_events = embedded::input_events(&input_addr)?;
-    let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
-    let mut writer = embedded::output_writer(&output_addr)?;
 
     for result in in_events {
-        let event = result.chain_err(|| "Cannot parse line as JSON")?;
+        let event = result?;
         let hash = event.hash.clone().unwrap_or("".to_string());
         if is_remote
             && !reviewed_docs.contains(&hash)
@@ -110,10 +108,7 @@ pub fn run() -> Result<()> {
             reviewed_docs.insert(hash.clone());
         }
         if !reviewed_docs.contains(&hash) {
-            event
-                .serialize(&mut serde_json::Serializer::new(&mut writer))
-                .chain_err(|| "Event serialization failed")?;
-            writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+            embedded::write_event(&mut writer, &event)?;
         }
     }
 

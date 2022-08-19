@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use serde::Serialize;
 use serde_json::json;
 
 use crate::embedded;
+use crate::embedded::MapContext;
 use crate::errors::*;
 use crate::event;
 use crate::event::Event;
@@ -193,31 +193,24 @@ fn print_doc(opts: &mut Opts, doc: &Event) -> Result<()> {
 }
 
 pub fn run(opts: &mut Opts) -> Result<()> {
-    let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
-    let config = embedded::get_config(&env.config)?;
+    let MapContext {
+        config,
+        in_events,
+        mut writer,
+    } = embedded::get_map_context()?;
     let labels = config.current_labels.unwrap_or(Vec::new());
     let reviewer = config.reviewer;
-    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
-    let in_events = embedded::input_events(&input_addr)?;
-    let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
-    let mut writer = embedded::output_writer(&output_addr)?;
 
     for result in in_events {
-        let event = result.chain_err(|| "Cannot parse line as JSON")?;
-        event
-            .serialize(&mut serde_json::Serializer::new(&mut writer))
-            .chain_err(|| "Event serialization failed")?;
-        writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+        let event = result?;
+        embedded::write_event(&mut writer, &event)?;
 
         if event.r#type == "document" {
             print_doc(opts, &event)?;
             for label in &labels {
                 let mut answer = read_answer(opts, label, &event, reviewer.clone())?;
                 answer.hash = Some(event::event_hash(answer.clone())?);
-                answer
-                    .serialize(&mut serde_json::Serializer::new(&mut writer))
-                    .chain_err(|| "Event serialization failed")?;
-                writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+                embedded::write_event(&mut writer, &answer)?;
             }
         }
     }
