@@ -3,6 +3,19 @@ use std::path::PathBuf;
 mod common;
 
 #[test]
+fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
+    let dir = "test-resources/label-boolean";
+    common::remove_sink(dir).unwrap();
+    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
+    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.send_line("y")?;
+    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.send_line("n")?;
+    common::check_sink(dir).unwrap();
+    Ok(())
+}
+
+#[test]
 fn test_simple() -> Result<(), std::io::Error> {
     let dir = "test-resources/simple";
     common::remove_sink(dir)?;
