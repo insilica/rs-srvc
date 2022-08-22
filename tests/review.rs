@@ -9,7 +9,7 @@ fn test_simple() -> Result<(), std::io::Error> {
     if sink.exists() {
         std::fs::remove_file(&sink)?;
     };
-    common::cmd(200)
+    common::cmd(400)
         .current_dir(dir)
         .args(&["review", "simple"])
         .assert()
@@ -27,7 +27,7 @@ fn test_wrong_name() -> Result<(), std::io::Error> {
     if sink.exists() {
         std::fs::remove_file(&sink)?;
     };
-    common::cmd(100)
+    common::cmd(200)
         .current_dir(dir)
         .args(&["review", "simpel"])
         .assert()
