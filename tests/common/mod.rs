@@ -10,6 +10,7 @@ use assert_cmd::Command;
 pub fn cmd(timeout_millis: u64) -> Command {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
     cmd.timeout(Duration::from_millis(timeout_millis));
+    cmd.env_remove("RUST_BACKTRACE");
     cmd
 }
 
