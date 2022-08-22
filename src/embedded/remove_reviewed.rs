@@ -83,6 +83,7 @@ pub fn run() -> Result<()> {
     let MapContext {
         config,
         in_events,
+        timestamp_override: _,
         mut writer,
     } = embedded::get_map_context()?;
     let reviewer = config.reviewer;

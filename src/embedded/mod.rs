@@ -4,6 +4,7 @@ use std::io::{BufRead, BufReader, LineWriter, Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 
+use crate::common;
 use crate::errors::*;
 use crate::event::Event;
 use crate::lib::Config;
@@ -18,11 +19,13 @@ pub struct Env {
     config: PathBuf,
     input: Option<SocketAddr>,
     output: Option<SocketAddr>,
+    timestamp_override: Option<u64>,
 }
 
 pub struct MapContext {
     config: Config,
     in_events: Box<dyn Iterator<Item = Result<Event>>>,
+    timestamp_override: Option<u64>,
     writer: Box<dyn Write>,
 }
 
@@ -58,11 +61,13 @@ pub fn get_env() -> Result<Env> {
         PathBuf::from(env::var("SR_CONFIG").chain_err(|| "SR_CONFIG is not a valid file path")?);
     let input = get_env_addr("SR_INPUT")?;
     let output = get_env_addr("SR_OUTPUT")?;
+    let timestamp_override = common::get_timestamp_override()?;
 
     Ok(Env {
         config,
         input,
         output,
+        timestamp_override,
     })
 }
 
@@ -112,6 +117,7 @@ pub fn get_map_context() -> Result<MapContext> {
     Ok(MapContext {
         config,
         in_events,
+        timestamp_override: env.timestamp_override,
         writer,
     })
 }

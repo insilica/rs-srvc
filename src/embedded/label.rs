@@ -18,6 +18,18 @@ fn get_epoch_sec() -> Result<u64> {
         .as_secs())
 }
 
+fn insert_timestamp(
+    data: &mut HashMap<String, serde_json::Value>,
+    timestamp_override: Option<u64>,
+) -> Result<()> {
+    let timestamp = match timestamp_override {
+        Some(v) => v,
+        None => get_epoch_sec()?,
+    };
+    data.insert(String::from("timestamp"), json!(timestamp));
+    Ok(())
+}
+
 fn answer_data(label: &Label, doc: &Event, reviewer: String) -> HashMap<String, serde_json::Value> {
     let mut data: HashMap<String, serde_json::Value> = HashMap::new();
     data.insert(
@@ -32,7 +44,13 @@ fn answer_data(label: &Label, doc: &Event, reviewer: String) -> HashMap<String, 
     data
 }
 
-fn read_boolean(opts: &mut Opts, label: &Label, doc: &Event, reviewer: String) -> Result<Event> {
+fn read_boolean(
+    opts: &mut Opts,
+    label: &Label,
+    doc: &Event,
+    reviewer: String,
+    timestamp_override: Option<u64>,
+) -> Result<Event> {
     let out = &mut opts.out_stream;
     let mut reader = BufReader::new(&mut opts.in_stream);
     write!(out, "{} ", label.question).chain_err(|| "Write failed")?;
@@ -60,16 +78,16 @@ fn read_boolean(opts: &mut Opts, label: &Label, doc: &Event, reviewer: String) -
         if s.is_empty() {
         } else if "yes".starts_with(&s) {
             data.insert(String::from("answer"), json!(true));
-            data.insert(String::from("timestamp"), json!(get_epoch_sec()?));
+            insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         } else if "no".starts_with(&s) {
             data.insert(String::from("answer"), json!(false));
-            data.insert(String::from("timestamp"), json!(get_epoch_sec()?));
+            insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         } else if !label.required && "skip".starts_with(&s) {
-            data.insert(String::from("timestamp"), json!(get_epoch_sec()?));
+            insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         }
@@ -81,6 +99,7 @@ fn read_categorical(
     label: &Label,
     doc: &Event,
     reviewer: String,
+    timestamp_override: Option<u64>,
 ) -> Result<Event> {
     let out = &mut opts.out_stream;
     let mut reader = BufReader::new(&mut opts.in_stream);
@@ -121,11 +140,11 @@ fn read_categorical(
                 } else if n < i {
                     let cat = &categories[n - 1];
                     data.insert(String::from("answer"), json!(cat));
-                    data.insert(String::from("timestamp"), json!(get_epoch_sec()?));
+                    insert_timestamp(&mut data, timestamp_override)?;
                     event.data = Some(json!(data));
                     break Ok(event);
                 } else if !label.required && i == n {
-                    data.insert(String::from("timestamp"), json!(get_epoch_sec()?));
+                    insert_timestamp(&mut data, timestamp_override)?;
                     event.data = Some(json!(data));
                     break Ok(event);
                 }
@@ -135,7 +154,13 @@ fn read_categorical(
     }
 }
 
-fn read_string(opts: &mut Opts, label: &Label, doc: &Event, reviewer: String) -> Result<Event> {
+fn read_string(
+    opts: &mut Opts,
+    label: &Label,
+    doc: &Event,
+    reviewer: String,
+    timestamp_override: Option<u64>,
+) -> Result<Event> {
     let out = &mut opts.out_stream;
     let mut reader = BufReader::new(&mut opts.in_stream);
     write!(out, "{}? ", label.question).chain_err(|| "Write failed")?;
@@ -157,24 +182,30 @@ fn read_string(opts: &mut Opts, label: &Label, doc: &Event, reviewer: String) ->
         let s = line.trim();
         if !s.is_empty() {
             data.insert(String::from("answer"), json!(s));
-            data.insert(String::from("timestamp"), json!(get_epoch_sec()?));
+            insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         } else if !label.required {
-            data.insert(String::from("timestamp"), json!(get_epoch_sec()?));
+            insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         }
     }
 }
 
-fn read_answer(opts: &mut Opts, label: &Label, doc: &Event, reviewer: String) -> Result<Event> {
+fn read_answer(
+    opts: &mut Opts,
+    label: &Label,
+    doc: &Event,
+    reviewer: String,
+    timestamp_override: Option<u64>,
+) -> Result<Event> {
     if "boolean" == label.r#type {
-        read_boolean(opts, label, doc, reviewer)
+        read_boolean(opts, label, doc, reviewer, timestamp_override)
     } else if "categorical" == label.r#type {
-        read_categorical(opts, label, doc, reviewer)
+        read_categorical(opts, label, doc, reviewer, timestamp_override)
     } else if "string" == label.r#type {
-        read_string(opts, label, doc, reviewer)
+        read_string(opts, label, doc, reviewer, timestamp_override)
     } else {
         Err(format!("Unknown label type: {}", label.r#type).into())
     }
@@ -196,6 +227,7 @@ pub fn run(opts: &mut Opts) -> Result<()> {
     let MapContext {
         config,
         in_events,
+        timestamp_override,
         mut writer,
     } = embedded::get_map_context()?;
     let labels = config.current_labels.unwrap_or(Vec::new());
@@ -208,7 +240,8 @@ pub fn run(opts: &mut Opts) -> Result<()> {
         if event.r#type == "document" {
             print_doc(opts, &event)?;
             for label in &labels {
-                let mut answer = read_answer(opts, label, &event, reviewer.clone())?;
+                let mut answer =
+                    read_answer(opts, label, &event, reviewer.clone(), timestamp_override)?;
                 answer.hash = Some(event::event_hash(answer.clone())?);
                 embedded::write_event(&mut writer, &answer)?;
             }

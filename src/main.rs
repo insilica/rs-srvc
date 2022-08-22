@@ -14,6 +14,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
+mod common;
 mod embedded;
 mod event;
 mod lib;
