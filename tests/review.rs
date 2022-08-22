@@ -5,10 +5,7 @@ mod common;
 #[test]
 fn test_simple() -> Result<(), std::io::Error> {
     let dir = "test-resources/simple";
-    let sink = PathBuf::from(dir).join("sink.jsonl");
-    if sink.exists() {
-        std::fs::remove_file(&sink)?;
-    };
+    common::remove_sink(dir)?;
     common::cmd(400)
         .current_dir(dir)
         .args(&["review", "simple"])

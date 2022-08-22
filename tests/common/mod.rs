@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 
-use std::fs::File;
-use std::io::Read;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -14,17 +12,24 @@ pub fn cmd(timeout_millis: u64) -> Command {
     cmd
 }
 
+pub fn remove_sink(dir: &str) -> Result<(), std::io::Error> {
+    let sink = PathBuf::from(dir).join("sink.jsonl");
+    if sink.exists() {
+        std::fs::remove_file(&sink)
+    } else {
+        Ok(())
+    }
+}
+
 pub fn check_sink(dir: &str) -> Result<(), std::io::Error> {
-    let mut sink = String::new();
-    File::open(PathBuf::from(dir).join("sink.jsonl"))?.read_to_string(&mut sink)?;
     Command::new("git")
-        .arg("diff")
-        .arg("expected.jsonl")
-        .arg("sink.jsonl")
+        .args(["diff", "--no-index", "expected.jsonl", "sink.jsonl"])
         .current_dir(dir)
         .assert()
+        .code(0)
         .success()
         .stderr("")
         .stdout("");
+    remove_sink(dir)?;
     Ok(())
 }
