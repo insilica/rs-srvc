@@ -12,6 +12,8 @@ fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
     p.send_line("y")?;
     p.exp_string("eye irritation? [Yes/No/Skip]")?;
     p.send_line("n")?;
+    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())
 }
