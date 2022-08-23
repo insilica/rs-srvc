@@ -100,7 +100,12 @@ pub fn run_local(env: Env, config: Config) -> Result<()> {
             event
                 .serialize(&mut serde_json::Serializer::new(&mut writer))
                 .chain_err(|| "Event serialization failed")?;
-            writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+
+            #[cfg(unix)]
+            let newline = b"\n";
+            #[cfg(windows)]
+            let newline = b"\r\n";
+            writer.write(newline).chain_err(|| "Buffer write failed")?;
             hashes.insert(hash);
         };
     }
