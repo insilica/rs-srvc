@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 mod common;
 
+#[cfg(unix)]
 #[test]
 fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-boolean";

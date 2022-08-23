@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use assert_cmd::Command;
+#[cfg(unix)]
 use rexpect::session::PtySession;
 
 pub fn cmd(timeout_millis: u64) -> Command {
@@ -13,6 +14,7 @@ pub fn cmd(timeout_millis: u64) -> Command {
     cmd
 }
 
+#[cfg(unix)]
 pub fn spawn(
     dir: &str,
     args: Vec<&str>,
