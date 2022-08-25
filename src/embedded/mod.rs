@@ -22,6 +22,10 @@ pub struct Env {
     timestamp_override: Option<u64>,
 }
 
+pub struct GeneratorContext {
+    config: Config,
+    writer: Box<dyn Write>,
+}
 pub struct MapContext {
     config: Config,
     in_events: Box<dyn Iterator<Item = Result<Event>>>,
@@ -104,6 +108,18 @@ pub fn api_route(remote: &str, path: &str) -> String {
 pub fn output_writer(addr: &SocketAddr) -> Result<LineWriter<TcpStream>> {
     let stream = TcpStream::connect(addr).chain_err(|| format!("Failed to connect to {}", addr))?;
     Ok(LineWriter::new(stream))
+}
+
+pub fn get_generator_context() -> Result<GeneratorContext> {
+    let env = get_env()?;
+    let config = get_config(&env.config)?;
+    let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
+    let writer = Box::new(output_writer(&output_addr)?);
+
+    Ok(GeneratorContext {
+        config,
+        writer,
+    })
 }
 
 pub fn get_map_context() -> Result<MapContext> {
