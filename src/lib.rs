@@ -30,6 +30,7 @@ pub struct Label {
     pub extra: HashMap<String, serde_json::Value>,
     pub hash: Option<String>,
     pub id: String,
+    pub json_schema: Option<serde_json::Value>,
     pub question: String,
     pub required: bool,
     pub r#type: String,

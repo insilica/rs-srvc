@@ -3,6 +3,10 @@
 
 #[macro_use]
 extern crate error_chain;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate maplit;
 
 mod errors {
     error_chain! {}
@@ -17,6 +21,7 @@ use clap::{Parser, Subcommand};
 mod common;
 mod embedded;
 mod event;
+mod json_schema;
 mod lib;
 mod review;
 mod sr_yaml;

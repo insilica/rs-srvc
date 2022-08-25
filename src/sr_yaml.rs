@@ -3,12 +3,14 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 
+use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
 use crate::errors::*;
 use crate::event;
+use crate::json_schema;
 use crate::lib;
 
 #[skip_serializing_none]
@@ -34,6 +36,7 @@ pub struct Flow {
 pub struct Label {
     #[serde(flatten)]
     extra: HashMap<String, serde_json::Value>,
+    json_schema_url: Option<String>,
     question: Option<String>,
     required: Option<bool>,
     r#type: Option<String>,
@@ -107,11 +110,16 @@ pub fn parse_flows(flows: Option<HashMap<String, Flow>>) -> Result<HashMap<Strin
     Ok(m)
 }
 
-pub fn parse_label(id: &str, label: &Label) -> Result<lib::Label> {
+pub fn parse_label(
+    id: &str,
+    label: &Label,
+    json_schema: Option<serde_json::Value>,
+) -> Result<lib::Label> {
     let mut label = lib::Label {
         extra: label.extra.clone(),
         hash: None,
         id: id.to_string(),
+        json_schema,
         question: non_blank(id, "question", &label.question)?.to_lowercase(),
         required: label.required.unwrap_or(false),
         r#type: non_blank(id, "type", &label.r#type)?.to_lowercase(),
@@ -129,14 +137,30 @@ pub fn parse_label(id: &str, label: &Label) -> Result<lib::Label> {
     Ok(label)
 }
 
+pub fn get_label_schema(client: &Client, label: &Label) -> Result<Option<serde_json::Value>> {
+    let json = label
+        .json_schema_url
+        .as_ref()
+        .map(|url| json_schema::get_schema_for_url(client, &url))
+        .transpose()?;
+    // Fail fast if an invalid schema is supplied
+    match json.as_ref() {
+        Some(v) => Some(json_schema::compile(v)?),
+        None => None,
+    };
+    Ok(json)
+}
+
 pub fn parse_labels(
     labels: &Option<HashMap<String, Label>>,
 ) -> Result<HashMap<String, lib::Label>> {
     match labels {
         Some(labels) => {
+            let client = Client::new();
             let mut m = HashMap::new();
             for (id, label) in labels {
-                let parsed = parse_label(&id, label)?;
+                let json_schema = get_label_schema(&client, &label)?;
+                let parsed = parse_label(&id, label, json_schema)?;
                 m.insert(id.to_owned(), parsed);
             }
             Ok(m)

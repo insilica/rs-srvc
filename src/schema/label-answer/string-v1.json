@@ -1,0 +1,9 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/insilica/rs-srvc/master/src/schema/label-answer/string-v1.json",
+    "title": "String answer",
+    "description": "A string label answer up to 1 MB in size",
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 1048576
+}
