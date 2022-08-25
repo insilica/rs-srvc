@@ -18,6 +18,26 @@ fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
     Ok(())
 }
 
+#[cfg(unix)]
+#[test]
+fn test_label_json_schema() -> Result<(), rexpect::errors::Error> {
+    let dir = "test-resources/label-json-schema";
+    common::remove_sink(dir).unwrap();
+    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
+    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.send_line("yes")?;
+    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.send_line("no")?;
+    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.send_line("skip")?;
+    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.send_line("yes")?;
+    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.send_control('c')?;
+    common::check_sink(dir).unwrap();
+    Ok(())
+}
+
 #[test]
 fn test_simple() -> Result<(), std::io::Error> {
     let dir = "test-resources/simple";

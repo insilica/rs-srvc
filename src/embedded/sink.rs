@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::BufReader;
@@ -12,6 +12,7 @@ use crate::embedded;
 use crate::embedded::Env;
 use crate::errors::*;
 use crate::event::Event;
+use crate::json_schema;
 use crate::lib::Config;
 
 pub fn read_hashes(file: File) -> Result<HashSet<String>> {
@@ -42,16 +43,85 @@ pub fn ensure_hash(event: &mut Event) -> Result<()> {
     Ok(())
 }
 
+fn validation_error_message(e: jsonschema::ValidationError) -> String {
+    // Work around lifetime complications caused by jsonschema's
+    // ValidationError referencing the schema data
+    let instance_path = e.instance_path.to_string();
+    let path = if instance_path.is_empty() {
+        String::from("root")
+    } else {
+        instance_path
+    };
+    format!(
+        "JSON schema validation failed at {}: {}",
+        path,
+        e.to_string()
+    )
+}
+
+fn validate_answer(
+    answer: &Event,
+    data: &serde_json::Value,
+    schema: &serde_json::Value,
+) -> Result<()> {
+    let event_hash = answer.hash.as_ref().unwrap();
+    match data.get("answer") {
+        Some(answer) => {
+            let schema = json_schema::compile(schema)?;
+            match schema.validate(answer) {
+                Ok(_) => (),
+                Err(errs) => {
+                    for e in errs {
+                        Err(format!(
+                            "label-answer {} failed JSON schema validation: {}",
+                            event_hash,
+                            validation_error_message(e)
+                        ))?
+                    }
+                }
+            };
+        }
+        None => (),
+    }
+    Ok(())
+}
+
+fn prep_event(labels: &mut HashMap<String, Event>, result: Result<Event>) -> Result<Event> {
+    let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
+    ensure_hash(&mut event)?;
+    if event.r#type == "label" {
+        labels.insert(event.hash.as_ref().unwrap().to_string(), event.clone());
+    } else if event.r#type == "label-answer" {
+        let data = event.data.as_ref().expect("data");
+        let label_hash = data.get("label").expect("label").as_str().expect("string");
+        let label = labels
+            .get(label_hash)
+            .ok_or_else(|| format!("Label not found with hash: {}", label_hash))?;
+        match label
+            .data
+            .as_ref()
+            .expect("data")
+            .as_object()
+            .expect("object")
+            .get("json_schema")
+        {
+            Some(val) => validate_answer(&event, data, val)?,
+            None => (),
+        }
+    }
+    Ok(event)
+}
+
 pub fn run_remote(env: Env, config: Config) -> Result<()> {
     let mut hashes = HashSet::new();
+    let mut labels = HashMap::new();
     let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
     let in_events = embedded::input_events(&input_addr)?;
     let client = Client::new();
     let url = embedded::api_route(&config.db, "upload");
 
     for result in in_events {
-        let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
-        ensure_hash(&mut event)?;
+        let event = prep_event(&mut labels, result)?;
         let hash = event.hash.clone().expect("Hash not set");
 
         if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
@@ -82,6 +152,7 @@ pub fn run_local(env: Env, config: Config) -> Result<()> {
         Err(_) => HashSet::new(), // The file may not exist yet
         Ok(file) => read_hashes(file)?,
     };
+    let mut labels = HashMap::new();
     let db_file = OpenOptions::new()
         .create(true)
         .append(true)
@@ -92,8 +163,7 @@ pub fn run_local(env: Env, config: Config) -> Result<()> {
     let mut writer = LineWriter::new(db_file);
 
     for result in in_events {
-        let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
-        ensure_hash(&mut event)?;
+        let event = prep_event(&mut labels, result)?;
         let hash = event.hash.clone().expect("Hash not set");
 
         if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
