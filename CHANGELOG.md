@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.6.0 (2022-08-30)
+
 - Allow forcing a specific timestamp value via `SR_TIMESTAMP_OVERRIDE` env var. This helps with reproducibility and testing.
 - Use CRLF line endings for text files on Windows
 - Add json_schema_url property to label definitions
