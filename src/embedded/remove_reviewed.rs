@@ -7,11 +7,12 @@ use reqwest::blocking::Client;
 use crate::embedded;
 use crate::embedded::MapContext;
 use crate::errors::*;
+use crate::event;
 use crate::event::Event;
 
 pub fn read_reviewed_docs(file: File, reviewer: &str) -> Result<HashSet<String>> {
     let reader = BufReader::new(file);
-    let events = embedded::events(reader);
+    let events = event::events(reader);
     let mut hashes = HashSet::new();
 
     for result in events {

@@ -10,18 +10,16 @@ use serde_json::{json, Value};
 use crate::embedded;
 use crate::embedded::GeneratorContext;
 use crate::errors::*;
+use crate::event;
 use crate::event::Event;
 use crate::lib::Label;
 
 pub fn run(filename: PathBuf) -> Result<()> {
-    let GeneratorContext {
-        config,
-        mut writer,
-    } = embedded::get_generator_context()?;
+    let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
     let input = File::open(&filename)
         .chain_err(|| format!("Cannot open generator file: {:?}", filename))?;
     let reader = BufReader::new(input);
-    let in_events = embedded::events(reader);
+    let in_events = event::events(reader);
     let mut labels: Vec<&Label> = config.labels.values().collect();
     labels.sort_by(|a, b| a.id.cmp(&b.id));
 

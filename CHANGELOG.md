@@ -4,6 +4,7 @@
 - Use CRLF line endings for text files on Windows
 - Add json_schema_url property to label definitions
 - Validate label answers against the label's JSON schema
+- Add `hash` command to add hashes to an event stream
 
 ## v0.5.0 (2022-08-17)
 

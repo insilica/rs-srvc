@@ -1,11 +1,12 @@
 use std::env;
 use std::fs::File;
-use std::io::{BufRead, BufReader, LineWriter, Read, Write};
+use std::io::{BufReader, LineWriter, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 
 use crate::common;
 use crate::errors::*;
+use crate::event;
 use crate::event::Event;
 use crate::lib::Config;
 
@@ -26,6 +27,7 @@ pub struct GeneratorContext {
     config: Config,
     writer: Box<dyn Write>,
 }
+
 pub struct MapContext {
     config: Config,
     in_events: Box<dyn Iterator<Item = Result<Event>>>,
@@ -75,20 +77,10 @@ pub fn get_env() -> Result<Env> {
     })
 }
 
-pub fn parse_event(s: &str) -> Result<Event> {
-    serde_json::from_str(s).chain_err(|| "Event deserialization failed")
-}
-
-pub fn events(reader: BufReader<impl Read>) -> impl Iterator<Item = Result<Event>> {
-    reader
-        .lines()
-        .map(|line| parse_event(line.chain_err(|| "Failed to read line")?.as_str()))
-}
-
 pub fn input_events(addr: &SocketAddr) -> Result<impl Iterator<Item = Result<Event>>> {
     let stream = TcpStream::connect(addr).chain_err(|| format!("Failed to connect to {}", addr))?;
     let reader = BufReader::new(stream);
-    Ok(events(reader))
+    Ok(event::events(reader))
 }
 
 pub fn is_remote_target(db: &str) -> bool {
@@ -116,10 +108,7 @@ pub fn get_generator_context() -> Result<GeneratorContext> {
     let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
     let writer = Box::new(output_writer(&output_addr)?);
 
-    Ok(GeneratorContext {
-        config,
-        writer,
-    })
+    Ok(GeneratorContext { config, writer })
 }
 
 pub fn get_map_context() -> Result<MapContext> {

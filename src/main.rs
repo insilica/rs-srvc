@@ -21,6 +21,7 @@ use clap::{Parser, Subcommand};
 mod common;
 mod embedded;
 mod event;
+mod hash;
 mod json_schema;
 mod lib;
 mod review;
@@ -43,6 +44,9 @@ struct Cli {
 #[derive(Subcommand)]
 #[clap(version)]
 enum Commands {
+    /// Add hashes to a stream of events
+    Hash {},
+
     /// Print the full, canonicalized config in JSON format
     PrintConfig {
         /// Whether to pretty-print the JSON
@@ -123,6 +127,7 @@ fn opts(cli: &Cli) -> Opts {
 
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
+        Commands::Hash {} => hash::run(opts),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
         Commands::Review { name } => review::run(opts, name),
         Commands::RunEmbeddedStep { name } => run_embedded_step(opts, name),
