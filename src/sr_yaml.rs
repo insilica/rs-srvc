@@ -7,6 +7,7 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::skip_serializing_none;
+use url::Url;
 
 use crate::errors::*;
 use crate::event;
@@ -170,16 +171,30 @@ pub fn parse_labels(
 }
 
 pub fn parse_config(config: Config) -> Result<lib::Config> {
-    Ok(lib::Config {
-        current_labels: None,
-        current_step: None,
-        db: config.db.ok_or("\"db\" not set in config")?,
-        extra: config.extra,
-        flows: parse_flows(config.flows)?,
-        labels: parse_labels(&config.labels)?,
-        reviewer: config.reviewer.ok_or("\"reviewer\" not set in config")?,
-        sink_all_events: config.sink_all_events.unwrap_or(false),
-    })
+    let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
+    let mut reviewer_err = String::from("\"reviewer\" is not a valid URI: ");
+    reviewer_err.push_str(&format!("{:?}", reviewer));
+    let reviewer_uri = Url::parse(&reviewer);
+    match reviewer_uri {
+        Ok(_) => Ok(lib::Config {
+            current_labels: None,
+            current_step: None,
+            db: config.db.ok_or("\"db\" not set in config")?,
+            extra: config.extra,
+            flows: parse_flows(config.flows)?,
+            labels: parse_labels(&config.labels)?,
+            reviewer,
+            sink_all_events: config.sink_all_events.unwrap_or(false),
+        }),
+        Err(_) => {
+            if !reviewer.contains(":") && reviewer.contains("@") && reviewer.contains(".") {
+                let mut try_reviewer = String::from("mailto:");
+                try_reviewer.push_str(&reviewer);
+                reviewer_err.push_str(&format!("\n  Try {:?}", try_reviewer));
+            }
+            Err(reviewer_err.into())
+        }
+    }
 }
 
 pub fn get_config(filename: PathBuf) -> Result<Config> {

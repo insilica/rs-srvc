@@ -75,6 +75,42 @@ fn test_simple() -> Result<(), std::io::Error> {
 }
 
 #[test]
+fn test_reviewer_uri_domain() -> Result<(), std::io::Error> {
+    let dir = "test-resources/reviewer-uri-domain";
+    let sink = PathBuf::from(dir).join("sink.jsonl");
+    if sink.exists() {
+        std::fs::remove_file(&sink)?;
+    };
+    common::cmd(200)
+        .current_dir(dir)
+        .args(&["review", "simple"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr("Error: \"reviewer\" is not a valid URI: \"example.com\"\n");
+    assert_eq!(false, sink.exists());
+    Ok(())
+}
+
+#[test]
+fn test_reviewer_uri_email() -> Result<(), std::io::Error> {
+    let dir = "test-resources/reviewer-uri-email";
+    let sink = PathBuf::from(dir).join("sink.jsonl");
+    if sink.exists() {
+        std::fs::remove_file(&sink)?;
+    };
+    common::cmd(200)
+        .current_dir(dir)
+        .args(&["review", "simple"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr("Error: \"reviewer\" is not a valid URI: \"user@example.com\"\n  Try \"mailto:user@example.com\"\n");
+    assert_eq!(false, sink.exists());
+    Ok(())
+}
+
+#[test]
 fn test_wrong_name() -> Result<(), std::io::Error> {
     let dir = "test-resources/wrong-name";
     let sink = PathBuf::from(dir).join("sink.jsonl");

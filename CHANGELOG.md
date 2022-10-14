@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Show an error message at the start of review when reviewer is not a
+  valid URL.
+
 ## v0.6.0 (2022-08-30)
 
 - Allow forcing a specific timestamp value via `SR_TIMESTAMP_OVERRIDE` env var. This helps with reproducibility and testing.
