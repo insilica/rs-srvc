@@ -1,16 +1,15 @@
+use std::io;
 use std::io::{BufReader, BufWriter, Write};
 
 use serde::Serialize;
 
-use lib_sr::Opts;
-
 use crate::errors::*;
 use crate::event;
 
-pub fn run(opts: &mut Opts) -> Result<()> {
-    let reader = BufReader::new(&mut opts.in_stream);
+pub fn run() -> Result<()> {
+    let reader = BufReader::new(io::stdin());
     let in_events = event::events(reader);
-    let mut writer = BufWriter::new(&mut opts.out_stream);
+    let mut writer = BufWriter::new(io::stdout());
 
     for result in in_events {
         let mut event = result.chain_err(|| "Cannot parse line as JSON")?;

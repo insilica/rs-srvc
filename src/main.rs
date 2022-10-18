@@ -14,6 +14,8 @@ mod errors {
 
 use errors::*;
 
+use std::io;
+use std::io::Write;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
@@ -91,46 +93,42 @@ fn print_config(opts: &mut Opts, pretty: bool) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
     let config = sr_yaml::parse_config(yaml_config)?;
     if pretty {
-        serde_json::to_writer_pretty(&mut opts.out_stream, &config)
+        serde_json::to_writer_pretty(&mut io::stdout(), &config)
     } else {
-        serde_json::to_writer(&mut opts.out_stream, &config)
+        serde_json::to_writer(&mut io::stdout(), &config)
     }
     .chain_err(|| "Failed to serialize config")?;
-    writeln!(opts.out_stream, "").chain_err(|| "Failed to write newline")?;
+    writeln!(io::stdout(), "").chain_err(|| "Failed to write newline")?;
     Ok(())
 }
 
-fn run_embedded_step(opts: &mut Opts, name: EmbeddedSteps) -> Result<()> {
+fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
     match name {
         EmbeddedSteps::GeneratorFile { filename } => embedded::generator_file::run(filename),
-        EmbeddedSteps::Label {} => embedded::label::run(opts),
+        EmbeddedSteps::Label {} => embedded::label::run(),
         EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),
         EmbeddedSteps::Sink {} => embedded::sink::run(),
     }
 }
 
-fn version(opts: &mut Opts) -> Result<()> {
-    writeln!(opts.out_stream, "srvc {}", VERSION)
-        .chain_err(|| "Failed to write to opts.out_stream")?;
+fn version() -> Result<()> {
+    writeln!(io::stdout(), "srvc {}", VERSION).chain_err(|| "Failed to write to stdout")?;
     Ok(())
 }
 
 fn opts(cli: &Cli) -> Opts {
     Opts {
         config: cli.config.to_owned(),
-        err_stream: Box::new(std::io::stderr()),
-        in_stream: Box::new(std::io::stdin()),
-        out_stream: Box::new(std::io::stdout()),
     }
 }
 
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
-        Commands::Hash {} => hash::run(opts),
+        Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
         Commands::Review { name } => review::run(opts, name),
-        Commands::RunEmbeddedStep { name } => run_embedded_step(opts, name),
-        Commands::Version {} => version(opts),
+        Commands::RunEmbeddedStep { name } => run_embedded_step(name),
+        Commands::Version {} => version(),
     }
 }
 

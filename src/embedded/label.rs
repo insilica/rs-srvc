@@ -1,10 +1,11 @@
 use std::collections::HashMap;
+use std::io;
 use std::io::{BufRead, BufReader, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
 
-use lib_sr::{Label, Opts};
+use lib_sr::Label;
 
 use crate::embedded;
 use crate::embedded::MapContext;
@@ -46,14 +47,13 @@ fn answer_data(label: &Label, doc: &Event, reviewer: String) -> HashMap<String, 
 }
 
 fn read_boolean(
-    opts: &mut Opts,
     label: &Label,
     doc: &Event,
     reviewer: String,
     timestamp_override: Option<u64>,
 ) -> Result<Event> {
-    let out = &mut opts.out_stream;
-    let mut reader = BufReader::new(&mut opts.in_stream);
+    let out = &mut io::stdout();
+    let mut reader = BufReader::new(io::stdin());
     write!(out, "{} ", label.question).chain_err(|| "Write failed")?;
 
     let mut data = answer_data(label, doc, reviewer);
@@ -96,14 +96,13 @@ fn read_boolean(
 }
 
 fn read_categorical(
-    opts: &mut Opts,
     label: &Label,
     doc: &Event,
     reviewer: String,
     timestamp_override: Option<u64>,
 ) -> Result<Event> {
-    let out = &mut opts.out_stream;
-    let mut reader = BufReader::new(&mut opts.in_stream);
+    let out = &mut io::stdout();
+    let mut reader = BufReader::new(io::stdin());
     writeln!(out, "{}", label.question).chain_err(|| "Write failed")?;
 
     let empty_vec = Vec::new();
@@ -156,14 +155,13 @@ fn read_categorical(
 }
 
 fn read_string(
-    opts: &mut Opts,
     label: &Label,
     doc: &Event,
     reviewer: String,
     timestamp_override: Option<u64>,
 ) -> Result<Event> {
-    let out = &mut opts.out_stream;
-    let mut reader = BufReader::new(&mut opts.in_stream);
+    let out = &mut io::stdout();
+    let mut reader = BufReader::new(io::stdin());
     write!(out, "{}? ", label.question).chain_err(|| "Write failed")?;
     out.flush().chain_err(|| "Flush failed")?;
 
@@ -195,36 +193,35 @@ fn read_string(
 }
 
 fn read_answer(
-    opts: &mut Opts,
     label: &Label,
     doc: &Event,
     reviewer: String,
     timestamp_override: Option<u64>,
 ) -> Result<Event> {
     if "boolean" == label.r#type {
-        read_boolean(opts, label, doc, reviewer, timestamp_override)
+        read_boolean(label, doc, reviewer, timestamp_override)
     } else if "categorical" == label.r#type {
-        read_categorical(opts, label, doc, reviewer, timestamp_override)
+        read_categorical(label, doc, reviewer, timestamp_override)
     } else if "string" == label.r#type {
-        read_string(opts, label, doc, reviewer, timestamp_override)
+        read_string(label, doc, reviewer, timestamp_override)
     } else {
         Err(format!("Unknown label type: {}", label.r#type).into())
     }
 }
 
-fn print_doc(opts: &mut Opts, doc: &Event) -> Result<()> {
-    serde_json::to_writer_pretty(&mut opts.out_stream, &doc.data)
+fn print_doc(doc: &Event) -> Result<()> {
+    serde_json::to_writer_pretty(&mut io::stdout(), &doc.data)
         .chain_err(|| "Document write failed")?;
     match &doc.uri {
-        Some(s) => write!(opts.out_stream, "\n{}", s).chain_err(|| "Document write failed")?,
+        Some(s) => write!(io::stdout(), "\n{}", s).chain_err(|| "Document write failed")?,
         None => {}
     }
-    write!(opts.out_stream, "\n\n").chain_err(|| "Document write failed")?;
-    opts.out_stream.flush().chain_err(|| "Flush failed")?;
+    write!(io::stdout(), "\n\n").chain_err(|| "Document write failed")?;
+    io::stdout().flush().chain_err(|| "Flush failed")?;
     Ok(())
 }
 
-pub fn run(opts: &mut Opts) -> Result<()> {
+pub fn run() -> Result<()> {
     let MapContext {
         config,
         in_events,
@@ -239,10 +236,9 @@ pub fn run(opts: &mut Opts) -> Result<()> {
         embedded::write_event(&mut writer, &event)?;
 
         if event.r#type == "document" {
-            print_doc(opts, &event)?;
+            print_doc(&event)?;
             for label in &labels {
-                let mut answer =
-                    read_answer(opts, label, &event, reviewer.clone(), timestamp_override)?;
+                let mut answer = read_answer(label, &event, reviewer.clone(), timestamp_override)?;
                 answer.hash = Some(event::event_hash(answer.clone())?);
                 embedded::write_event(&mut writer, &answer)?;
             }

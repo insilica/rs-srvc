@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::io;
 use std::io::{BufRead, BufReader, BufWriter, LineWriter, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::path::PathBuf;
@@ -32,8 +33,8 @@ fn write_str_pretty(v: &impl serde::Serialize) -> Result<String> {
     serde_json::to_string_pretty(v).chain_err(|| "Serialization failed")
 }
 
-fn writeln_err(opts: &mut Opts, s: &str) -> Result<()> {
-    writeln!(opts.err_stream, "{}", s).chain_err(|| "Failed to write to err_stream")?;
+fn writeln_err(s: &str) -> Result<()> {
+    writeln!(io::stderr(), "{}", s).chain_err(|| "Failed to write to stderr")?;
     Ok(())
 }
 
@@ -162,7 +163,6 @@ pub fn get_run_command(step: &Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<S
 }
 
 pub fn run_step(
-    opts: &mut Opts,
     config: &Config,
     dir: &tempfile::TempDir,
     step: &Step,
@@ -200,13 +200,13 @@ pub fn run_step(
             process: process,
         }),
         Err(e) => {
-            writeln_err(opts, &format!("Step failed:\n{}", write_str_pretty(step)?))?;
+            writeln_err(&format!("Step failed:\n{}", write_str_pretty(step)?))?;
             Err(e)
         }
     }
 }
 
-pub fn run_flow(opts: &mut Opts, flow: &Flow, config: &Config) -> Result<process::ExitStatus> {
+pub fn run_flow(flow: &Flow, config: &Config) -> Result<process::ExitStatus> {
     let dir = tempfile::Builder::new()
         .prefix("srvc-")
         .tempdir()
@@ -219,7 +219,6 @@ pub fn run_flow(opts: &mut Opts, flow: &Flow, config: &Config) -> Result<process
         let is_last_step = last_step.filter(|x| x.to_owned() == step).is_some();
         let last_ss = last_process.map(|x: StepProcess| x.step_server).flatten();
         let process = run_step(
-            opts,
             config,
             &dir,
             step,
@@ -250,6 +249,6 @@ pub fn run(opts: &mut Opts, flow_name: String) -> Result<()> {
             flow_name, &opts.config
         )),
     }?;
-    run_flow(opts, flow, &config)?;
+    run_flow(flow, &config)?;
     Ok(())
 }
