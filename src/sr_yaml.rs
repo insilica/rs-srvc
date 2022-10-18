@@ -9,10 +9,11 @@ use serde::Serialize;
 use serde_with::skip_serializing_none;
 use url::Url;
 
+use lib_sr;
+
 use crate::errors::*;
 use crate::event;
 use crate::json_schema;
-use crate::lib;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -69,8 +70,8 @@ pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
     }
 }
 
-pub fn parse_step(step: Step) -> Result<lib::Step> {
-    Ok(lib::Step {
+pub fn parse_step(step: Step) -> Result<lib_sr::Step> {
+    Ok(lib_sr::Step {
         extra: step.extra,
         labels: step.labels.unwrap_or(Vec::new()),
         run: step.run,
@@ -78,7 +79,7 @@ pub fn parse_step(step: Step) -> Result<lib::Step> {
     })
 }
 
-pub fn parse_flow(flow: Flow) -> Result<lib::Flow> {
+pub fn parse_flow(flow: Flow) -> Result<lib_sr::Flow> {
     let steps = &mut flow.steps.unwrap_or(Vec::new());
     if steps.len() == 0 {
         return Err("No steps in flow".into());
@@ -89,19 +90,19 @@ pub fn parse_flow(flow: Flow) -> Result<lib::Flow> {
         let step = parse_step(step.to_owned())?;
         vec.push(step);
     }
-    vec.push(lib::Step {
+    vec.push(lib_sr::Step {
         extra: HashMap::new(),
         labels: Vec::new(),
         run: None,
         run_embedded: Some(String::from("sink")),
     });
-    Ok(lib::Flow {
+    Ok(lib_sr::Flow {
         extra: flow.extra,
         steps: vec,
     })
 }
 
-pub fn parse_flows(flows: Option<HashMap<String, Flow>>) -> Result<HashMap<String, lib::Flow>> {
+pub fn parse_flows(flows: Option<HashMap<String, Flow>>) -> Result<HashMap<String, lib_sr::Flow>> {
     let flows = flows.unwrap_or(HashMap::new());
     let mut m = HashMap::new();
     for (flow_name, flow) in flows {
@@ -115,8 +116,8 @@ pub fn parse_label(
     id: &str,
     label: &Label,
     json_schema: Option<serde_json::Value>,
-) -> Result<lib::Label> {
-    let mut label = lib::Label {
+) -> Result<lib_sr::Label> {
+    let mut label = lib_sr::Label {
         extra: label.extra.clone(),
         hash: None,
         id: id.to_string(),
@@ -154,7 +155,7 @@ pub fn get_label_schema(client: &Client, label: &Label) -> Result<Option<serde_j
 
 pub fn parse_labels(
     labels: &Option<HashMap<String, Label>>,
-) -> Result<HashMap<String, lib::Label>> {
+) -> Result<HashMap<String, lib_sr::Label>> {
     match labels {
         Some(labels) => {
             let client = Client::new();
@@ -170,13 +171,13 @@ pub fn parse_labels(
     }
 }
 
-pub fn parse_config(config: Config) -> Result<lib::Config> {
+pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
     let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
     let mut reviewer_err = String::from("\"reviewer\" is not a valid URI: ");
     reviewer_err.push_str(&format!("{:?}", reviewer));
     let reviewer_uri = Url::parse(&reviewer);
     match reviewer_uri {
-        Ok(_) => Ok(lib::Config {
+        Ok(_) => Ok(lib_sr::Config {
             current_labels: None,
             current_step: None,
             db: config.db.ok_or("\"db\" not set in config")?,

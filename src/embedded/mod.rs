@@ -4,11 +4,12 @@ use std::io::{BufReader, LineWriter, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 
+use lib_sr::Config;
+
 use crate::common;
 use crate::errors::*;
 use crate::event;
 use crate::event::Event;
-use crate::lib::Config;
 
 pub mod generator_file;
 pub mod label;

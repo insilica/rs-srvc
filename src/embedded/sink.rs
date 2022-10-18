@@ -8,13 +8,14 @@ use std::io::Write;
 use reqwest::blocking::Client;
 use serde::Serialize;
 
+use lib_sr::Config;
+
 use crate::embedded;
 use crate::embedded::Env;
 use crate::errors::*;
 use crate::event;
 use crate::event::Event;
 use crate::json_schema;
-use crate::lib::Config;
 
 pub fn read_hashes(file: File) -> Result<HashSet<String>> {
     let reader = BufReader::new(file);

@@ -7,12 +7,13 @@ use std::path::PathBuf;
 use serde::Serialize;
 use serde_json::{json, Value};
 
+use lib_sr::Label;
+
 use crate::embedded;
 use crate::embedded::GeneratorContext;
 use crate::errors::*;
 use crate::event;
 use crate::event::Event;
-use crate::lib::Label;
 
 pub fn run(filename: PathBuf) -> Result<()> {
     let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;

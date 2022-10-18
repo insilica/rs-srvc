@@ -4,12 +4,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
 
+use lib_sr::{Label, Opts};
+
 use crate::embedded;
 use crate::embedded::MapContext;
 use crate::errors::*;
 use crate::event;
 use crate::event::Event;
-use crate::lib::{Label, Opts};
 
 fn get_epoch_sec() -> Result<u64> {
     Ok(SystemTime::now()

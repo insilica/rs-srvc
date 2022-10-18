@@ -9,11 +9,11 @@ use std::thread;
 use serde::Serialize;
 use uuid::Uuid;
 
+use lib_sr::{Config, Flow, Opts, Step};
+
 use crate::errors::*;
 
 use crate::event::Event;
-use crate::lib;
-use crate::lib::Opts;
 use crate::sr_yaml;
 
 #[derive(Debug)]
@@ -97,7 +97,7 @@ fn make_step_server() -> Result<StepServer> {
     })
 }
 
-pub fn make_config(config: &lib::Config, dir: &tempfile::TempDir) -> Result<PathBuf> {
+pub fn make_config(config: &Config, dir: &tempfile::TempDir) -> Result<PathBuf> {
     let mut filename = String::from("config-");
     filename.push_str(&Uuid::new_v4().to_string());
     filename.push_str(".json");
@@ -108,7 +108,7 @@ pub fn make_config(config: &lib::Config, dir: &tempfile::TempDir) -> Result<Path
     Ok(path)
 }
 
-pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> {
+pub fn step_config(config: Config, step: Step) -> Result<Config> {
     let mut labels = Vec::new();
     for label_id in &step.labels {
         let label = config
@@ -117,7 +117,7 @@ pub fn step_config(config: lib::Config, step: lib::Step) -> Result<lib::Config> 
             .ok_or(format!("Label not defined: {}", label_id))?;
         labels.push(label.to_owned());
     }
-    Ok(lib::Config {
+    Ok(Config {
         current_labels: Some(labels),
         current_step: Some(step),
         ..config
@@ -142,7 +142,7 @@ pub fn get_exe_path() -> Result<PathBuf> {
     Ok(PathBuf::from(path))
 }
 
-pub fn get_run_command(step: &lib::Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<String>)> {
+pub fn get_run_command(step: &Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<String>)> {
     Ok(match step.run_embedded.clone() {
         Some(embedded) => {
             let mut runcmd = "run-embedded-step ".to_string();
@@ -163,9 +163,9 @@ pub fn get_run_command(step: &lib::Step, exe_path: PathBuf) -> Result<(PathBuf, 
 
 pub fn run_step(
     opts: &mut Opts,
-    config: &lib::Config,
+    config: &Config,
     dir: &tempfile::TempDir,
-    step: &lib::Step,
+    step: &Step,
     input_port: Option<u16>,
     output: bool,
     exe_path: PathBuf,
@@ -206,11 +206,7 @@ pub fn run_step(
     }
 }
 
-pub fn run_flow(
-    opts: &mut Opts,
-    flow: &lib::Flow,
-    config: &lib::Config,
-) -> Result<process::ExitStatus> {
+pub fn run_flow(opts: &mut Opts, flow: &Flow, config: &Config) -> Result<process::ExitStatus> {
     let dir = tempfile::Builder::new()
         .prefix("srvc-")
         .tempdir()

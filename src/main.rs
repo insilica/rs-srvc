@@ -23,11 +23,10 @@ mod embedded;
 mod event;
 mod hash;
 mod json_schema;
-mod lib;
 mod review;
 mod sr_yaml;
 
-use lib::Opts;
+use lib_sr::Opts;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 

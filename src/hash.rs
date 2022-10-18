@@ -2,9 +2,10 @@ use std::io::{BufReader, BufWriter, Write};
 
 use serde::Serialize;
 
+use lib_sr::Opts;
+
 use crate::errors::*;
 use crate::event;
-use crate::lib::Opts;
 
 pub fn run(opts: &mut Opts) -> Result<()> {
     let reader = BufReader::new(&mut opts.in_stream);
