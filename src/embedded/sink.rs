@@ -8,13 +8,13 @@ use std::io::Write;
 use reqwest::blocking::Client;
 use serde::Serialize;
 
+use lib_sr::errors::*;
+use lib_sr::event;
+use lib_sr::event::Event;
 use lib_sr::Config;
 
 use crate::embedded;
 use crate::embedded::Env;
-use crate::errors::*;
-use crate::event;
-use crate::event::Event;
 use crate::json_schema;
 
 pub fn read_hashes(file: File) -> Result<HashSet<String>> {
@@ -31,7 +31,7 @@ pub fn read_hashes(file: File) -> Result<HashSet<String>> {
 }
 
 pub fn ensure_hash(event: &mut Event) -> Result<()> {
-    let expected_hash = crate::event::event_hash(event.clone())?;
+    let expected_hash = lib_sr::event::event_hash(event.clone())?;
     let hash = event.hash.clone().unwrap_or("".to_string());
     if hash == "" {
         event.hash = Some(expected_hash);

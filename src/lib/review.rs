@@ -4,16 +4,12 @@ use std::io::{BufReader, LineWriter, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 
-use lib_sr::common;
-use lib_sr::errors::*;
-use lib_sr::event;
-use lib_sr::event::Event;
-use lib_sr::Config;
+use crate::errors::*;
 
-pub mod generator_file;
-pub mod label;
-pub mod remove_reviewed;
-pub mod sink;
+use crate::common;
+use crate::event;
+use crate::event::Event;
+use crate::Config;
 
 #[derive(Debug)]
 pub struct Env {

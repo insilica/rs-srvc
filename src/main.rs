@@ -1,6 +1,3 @@
-// `error_chain!` can recurse deeply
-#![recursion_limit = "1024"]
-
 #[macro_use]
 extern crate error_chain;
 #[macro_use]
@@ -8,27 +5,20 @@ extern crate lazy_static;
 #[macro_use]
 extern crate maplit;
 
-mod errors {
-    error_chain! {}
-}
-
-use errors::*;
-
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
-mod common;
+use lib_sr::errors::*;
+use lib_sr::Opts;
+
 mod embedded;
-mod event;
 mod hash;
 mod json_schema;
 mod review;
 mod sr_yaml;
-
-use lib_sr::Opts;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 

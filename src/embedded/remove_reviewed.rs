@@ -4,11 +4,12 @@ use std::io::BufReader;
 
 use reqwest::blocking::Client;
 
+use lib_sr::errors::*;
+use lib_sr::event;
+use lib_sr::event::Event;
+
 use crate::embedded;
 use crate::embedded::MapContext;
-use crate::errors::*;
-use crate::event;
-use crate::event::Event;
 
 pub fn read_reviewed_docs(file: File, reviewer: &str) -> Result<HashSet<String>> {
     let reader = BufReader::new(file);

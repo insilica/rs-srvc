@@ -3,8 +3,8 @@ use std::io::{BufReader, BufWriter, Write};
 
 use serde::Serialize;
 
-use crate::errors::*;
-use crate::event;
+use lib_sr::errors::*;
+use lib_sr::event;
 
 pub fn run() -> Result<()> {
     let reader = BufReader::new(io::stdin());
@@ -13,7 +13,7 @@ pub fn run() -> Result<()> {
 
     for result in in_events {
         let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
-        let expected_hash = crate::event::event_hash(event.clone())?;
+        let expected_hash = lib_sr::event::event_hash(event.clone())?;
         let hash = event.hash.clone().unwrap_or("".to_string());
         if hash == "" {
             event.hash = Some(expected_hash);

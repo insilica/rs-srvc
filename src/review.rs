@@ -10,11 +10,10 @@ use std::thread;
 use serde::Serialize;
 use uuid::Uuid;
 
+use lib_sr::errors::*;
+use lib_sr::event::Event;
 use lib_sr::{Config, Flow, Opts, Step};
 
-use crate::errors::*;
-
-use crate::event::Event;
 use crate::sr_yaml;
 
 #[derive(Debug)]
@@ -53,7 +52,7 @@ fn run_step_server(input_listener: TcpListener, output_listener: TcpListener) ->
         .map(|line| parse_event(line.chain_err(|| "Failed to read line")?.as_str()));
     for result in events {
         let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
-        let expected_hash = crate::event::event_hash(event.clone())?;
+        let expected_hash = lib_sr::event::event_hash(event.clone())?;
         let hash = event.hash.clone().unwrap_or("".to_string());
         if hash == "" {
             event.hash = Some(expected_hash);

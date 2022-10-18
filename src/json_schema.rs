@@ -4,7 +4,7 @@ use jsonschema::{CompilationOptions, Draft, JSONSchema};
 use reqwest::blocking::Client;
 use serde_json::json;
 
-use crate::errors::*;
+use lib_sr::errors::*;
 
 lazy_static! {
     static ref EMBEDDED_DOCUMENTS: HashMap<&'static str, &'static str> = {

@@ -10,9 +10,9 @@ use serde_with::skip_serializing_none;
 use url::Url;
 
 use lib_sr;
+use lib_sr::errors::*;
+use lib_sr::event;
 
-use crate::errors::*;
-use crate::event;
 use crate::json_schema;
 
 #[skip_serializing_none]

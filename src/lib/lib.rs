@@ -1,8 +1,23 @@
+// `error_chain!` can recurse deeply
+#![recursion_limit = "1024"]
+#![allow(dead_code)]
+
+#[macro_use]
+extern crate error_chain;
+
+pub mod errors {
+    error_chain! {}
+}
+
 use std::collections::HashMap;
 
 use serde::Deserialize;
 use serde::Serialize;
 use serde_with::skip_serializing_none;
+
+pub mod common;
+pub mod event;
+pub mod review;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
