@@ -11,6 +11,7 @@ use lib_sr::event::Event;
 use lib_sr::Config;
 
 pub mod generator_file;
+pub mod html;
 pub mod label;
 pub mod remove_reviewed;
 pub mod sink;
@@ -30,9 +31,9 @@ pub struct GeneratorContext {
 
 pub struct MapContext {
     config: Config,
-    in_events: Box<dyn Iterator<Item = Result<Event>>>,
+    in_events: Box<dyn Iterator<Item = Result<Event>> + Send + Sync>,
     timestamp_override: Option<u64>,
-    writer: Box<dyn Write>,
+    writer: Box<dyn Write + Send + Sync>,
 }
 
 pub fn get_config(filename: &PathBuf) -> Result<Config> {
@@ -127,7 +128,7 @@ pub fn get_map_context() -> Result<MapContext> {
     })
 }
 
-pub fn write_event(mut writer: &mut Box<dyn Write>, event: &Event) -> Result<()> {
+pub fn write_event(mut writer: &mut Box<dyn Write + Send + Sync>, event: &Event) -> Result<()> {
     serde_json::to_writer(&mut writer, event).chain_err(|| "Event serialization failed")?;
     writer.write(b"\n").chain_err(|| "Buffer write failed")?;
     Ok(())

@@ -71,6 +71,12 @@ enum EmbeddedSteps {
         #[clap(forbid_empty_values = true)]
         filename: PathBuf,
     },
+    /// Serve an HTML file as a map step
+    Html {
+        /// Path to a file or URL containing an HTML review step
+        #[clap(forbid_empty_values = true)]
+        file_or_url: String,
+    },
     /// Label documents
     Label {},
     /// Remove documents that have already been reviewed
@@ -95,6 +101,7 @@ fn print_config(opts: &mut Opts, pretty: bool) -> Result<()> {
 fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
     match name {
         EmbeddedSteps::GeneratorFile { filename } => embedded::generator_file::run(filename),
+        EmbeddedSteps::Html { file_or_url } => embedded::html::run(&file_or_url),
         EmbeddedSteps::Label {} => embedded::label::run(),
         EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),
         EmbeddedSteps::Sink {} => embedded::sink::run(),
