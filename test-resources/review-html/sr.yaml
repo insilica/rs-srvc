@@ -1,0 +1,80 @@
+db: "sink.jsonl"
+
+reviewer: mailto:user@example.com
+
+labels:
+  acute_tox:
+    type: boolean
+    question: Acute toxicity?
+  annotation:
+    type: webannotation
+    question: Annotation
+  eye_irrit:
+    type: boolean
+    question: Eye irritation?
+  substance:
+    type: categorical
+    categories:
+      - sodium laureth sulfate
+      - sodium lauryl sulfoacetate
+      - sodium cocoyl glycinate
+      - disodium cocoyl glutamate
+      - decyl glucoside
+      - lauryl glucoside
+    inclusion_values:
+      - sodium laureth sulfate
+      - sodium lauryl sulfoacetate
+      - sodium cocoyl glycinate
+      - disodium cocoyl glutamate
+      - decyl glucoside
+      - lauryl glucoside
+    question: Substance
+
+flows:
+  html_file:
+    steps:
+      - run_embedded: "generator-file docs.jsonl"
+
+      - run_embedded: "remove-reviewed"
+
+      - run_embedded: "html label.html"
+        labels:
+          - acute_tox
+          - eye_irrit
+          - substance
+
+  html_url:
+    steps:
+      - run_embedded: "generator-file docs.jsonl"
+
+      - run_embedded: "remove-reviewed"
+
+      - run_embedded: "html https://raw.githubusercontent.com/sysrev/srvc-hello/2dd9e98e28f7006c08f37c36ed591f8043aa3196/src/resources/public/label.html"
+        labels:
+          - acute_tox
+          - eye_irrit
+          - substance
+
+  html_wrong_file:
+    steps:
+      - run_embedded: "generator-file docs.jsonl"
+
+      - run_embedded: "remove-reviewed"
+
+      - run_embedded: "html does-not-exist.html"
+        labels:
+          - acute_tox
+          - eye_irrit
+          - substance
+
+  html_wrong_url:
+    steps:
+      - run_embedded: "generator-file docs.jsonl"
+
+      - run_embedded: "remove-reviewed"
+
+      - run_embedded: "html https://raw.githubusercontent.com/sysrev/srvc-hello/2dd9e98e28f7006c08f37c36ed591f8043aa3196/src/resources/public/does-not-exist.html"
+        labels:
+          - acute_tox
+          - eye_irrit
+          - substance

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::io;
 use std::io::{BufRead, BufReader, Write};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
 
@@ -12,25 +11,6 @@ use lib_sr::Label;
 
 use crate::embedded;
 use crate::embedded::MapContext;
-
-fn get_epoch_sec() -> Result<u64> {
-    Ok(SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .chain_err(|| "Failed to calculate timestamp")?
-        .as_secs())
-}
-
-fn insert_timestamp(
-    data: &mut HashMap<String, serde_json::Value>,
-    timestamp_override: Option<u64>,
-) -> Result<()> {
-    let timestamp = match timestamp_override {
-        Some(v) => v,
-        None => get_epoch_sec()?,
-    };
-    data.insert(String::from("timestamp"), json!(timestamp));
-    Ok(())
-}
 
 fn answer_data(label: &Label, doc: &Event, reviewer: String) -> HashMap<String, serde_json::Value> {
     let mut data: HashMap<String, serde_json::Value> = HashMap::new();
@@ -79,16 +59,16 @@ fn read_boolean(
         if s.is_empty() {
         } else if "yes".starts_with(&s) {
             data.insert(String::from("answer"), json!(true));
-            insert_timestamp(&mut data, timestamp_override)?;
+            embedded::insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         } else if "no".starts_with(&s) {
             data.insert(String::from("answer"), json!(false));
-            insert_timestamp(&mut data, timestamp_override)?;
+            embedded::insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         } else if !label.required && "skip".starts_with(&s) {
-            insert_timestamp(&mut data, timestamp_override)?;
+            embedded::insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         }
@@ -140,11 +120,11 @@ fn read_categorical(
                 } else if n < i {
                     let cat = &categories[n - 1];
                     data.insert(String::from("answer"), json!(cat));
-                    insert_timestamp(&mut data, timestamp_override)?;
+                    embedded::insert_timestamp(&mut data, timestamp_override)?;
                     event.data = Some(json!(data));
                     break Ok(event);
                 } else if !label.required && i == n {
-                    insert_timestamp(&mut data, timestamp_override)?;
+                    embedded::insert_timestamp(&mut data, timestamp_override)?;
                     event.data = Some(json!(data));
                     break Ok(event);
                 }
@@ -181,11 +161,11 @@ fn read_string(
         let s = line.trim();
         if !s.is_empty() {
             data.insert(String::from("answer"), json!(s));
-            insert_timestamp(&mut data, timestamp_override)?;
+            embedded::insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         } else if !label.required {
-            insert_timestamp(&mut data, timestamp_override)?;
+            embedded::insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
             break Ok(event);
         }

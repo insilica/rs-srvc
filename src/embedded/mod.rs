@@ -1,14 +1,16 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{BufReader, LineWriter, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-use lib_sr::common;
+use serde_json::json;
+
 use lib_sr::errors::*;
-use lib_sr::event;
 use lib_sr::event::Event;
-use lib_sr::Config;
+use lib_sr::{common, event, Config};
 
 pub mod generator_file;
 pub mod html;
@@ -131,5 +133,24 @@ pub fn get_map_context() -> Result<MapContext> {
 pub fn write_event(mut writer: &mut Box<dyn Write + Send + Sync>, event: &Event) -> Result<()> {
     serde_json::to_writer(&mut writer, event).chain_err(|| "Event serialization failed")?;
     writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+    Ok(())
+}
+
+fn get_epoch_sec() -> Result<u64> {
+    Ok(SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .chain_err(|| "Failed to calculate timestamp")?
+        .as_secs())
+}
+
+pub fn insert_timestamp(
+    data: &mut HashMap<String, serde_json::Value>,
+    timestamp_override: Option<u64>,
+) -> Result<()> {
+    let timestamp = match timestamp_override {
+        Some(v) => v,
+        None => get_epoch_sec()?,
+    };
+    data.insert(String::from("timestamp"), json!(timestamp));
     Ok(())
 }

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>html, body {
+  padding:10px 20px;
+  margin:0;
+}
+
+h1 {
+  font-size:22px;
+  margin-top:30px;
+  margin-bottom:20px;
+}
+
+#outer-container {
+  position:relative;
+}
+
+#content {
+  max-width:920px;
+  font-size:17px;
+  line-height:27px;
+}
+</style>
+</head>
+<body>
+<div id="outer-container">
+  <form id="labels-form">
+    <div>
+      <table id="labels"></table>
+    </div>
+    <div>
+      <button id="submit-labels" type="submit">Submit</button>
+    </div>
+  </form>
+  <hr>
+  <div>
+    <p><a id="document-uri" target="_blank"></a></p>
+    <h2 id="document-title"></h2>
+    <div id="document-abstract"></div>
+  </div>
+</div>
+<script type="text/javascript">
+    (function() {
+      var config = null
+      var currentDocEvents = null
+      var labels = null
+      var docUriEl = document.getElementById('document-uri')
+      var docTitleEl = document.getElementById('document-title')
+      var docAbstractEl = document.getElementById('document-abstract')
+      var formEl = document.getElementById('labels-form')
+      var labelsEl = document.getElementById('labels')
+      var submitEl = document.getElementById('submit-labels')
+
+      var booleanInput = function (label) {
+        var el = document.createElement('input')
+        el.id = label['hash'];
+        el.type = 'checkbox'
+        return el
+      }
+
+      var categoricalInput = function (label) {
+        var el = document.createElement('select');
+        el.id = label['hash'];
+        el.appendChild(document.createElement('option'));
+        (label['categories'] || []).forEach(function (category) {
+          var option = document.createElement('option')
+          option.innerText = category
+          el.append(option)
+        })
+        return el
+      }
+
+      var labelInput = function (label) {
+        var tr = document.createElement('tr')
+        var questionTd = document.createElement('td')
+        questionTd.innerText = label['question'];
+        var inputTd = document.createElement('td')
+        if ( 'boolean' == label.type ) {
+          inputTd.appendChild(booleanInput(label))
+        } else if ( 'categorical' == label.type ) {
+          inputTd.appendChild(categoricalInput(label))
+        } else {
+          throw Error("Unknown label type: " + label.type)
+        }
+        tr.appendChild(questionTd)
+        tr.appendChild(inputTd)
+        return tr
+      }
+
+      var loadConfig = function () {
+        var req = new XMLHttpRequest()
+        req.addEventListener("load", function (resp) {
+          config = JSON.parse(req.response)
+          labels = config['current_labels'] || []
+          labels.forEach(function (label) {
+            labelsEl.appendChild(labelInput(label))
+          })
+        })
+        req.open("GET", "/config")
+        req.send()
+      }
+
+      var loadCurrentDocEvents = function () {
+        var req = new XMLHttpRequest()
+        req.addEventListener("load", function (resp) {
+          formEl.reset()
+          currentDocEvents = JSON.parse(req.response) || []
+          var doc = currentDocEvents.length ? currentDocEvents[0] : {}
+          docUriEl.setAttribute('href', doc['uri'])
+          docUriEl.innerText = doc['uri'] || ""
+          docTitleEl.innerText = (doc['data'] || {})['title'] || ""
+          docAbstractEl.innerText = (doc['data'] || {})['abstract'] || ""
+          currentDocEvents.forEach(function (event) {
+            if ( 'label-answer' == event['type']
+                 && doc['hash'] == (event['data'] || {})['document']) {
+              // TODO: Add pre-existing answers
+            }
+          })
+        })
+        req.open("GET", "/current-doc-events")
+        req.send()
+      }
+
+      var labelAnswer = function(label) {
+        var answer
+        var el = document.getElementById(label.hash)
+        if ( 'boolean' == label.type ) {
+          answer = el.checked || false
+        } else if ( 'categorical' == label.type ) {
+          answer = el.value || null
+        } else {
+          throw Error("Unknown label type: " + label.type)
+        }
+        return {"data": {"answer": answer,
+                         "document": currentDocEvents[0].hash,
+                         "label": label.hash,
+                         "reviewer": config.reviewer,
+                         "timestamp": Math.floor(Date.now() / 1000)},
+                "type": "label-answer"}
+      }
+
+      var labelAnswers = function() {
+        return (labels || []).map(labelAnswer)
+      }
+
+      var submitDoc = function(event) {
+        event.preventDefault();
+        var req = new XMLHttpRequest();
+        req.addEventListener("load", function (resp) {
+          loadCurrentDocEvents();
+        })
+        req.open("POST", "/submit-label-answers");
+        req.setRequestHeader("Content-Type", "application/json");
+        req.send(JSON.stringify({"answers": labelAnswers()}));
+      }
+
+      submitEl.addEventListener("click", submitDoc)
+
+      loadConfig()
+      loadCurrentDocEvents()
+    })();
+  </script>
+</body>
+</html>
