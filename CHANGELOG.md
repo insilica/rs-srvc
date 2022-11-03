@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.7.0 (2022-11-03)
+
 - Show an error message at the start of review when reviewer is not a
   valid URL.
 - Add embedded `html` step to serve HTML5 files or URLs.
