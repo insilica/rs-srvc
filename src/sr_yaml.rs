@@ -38,6 +38,7 @@ pub struct Flow {
 pub struct Label {
     #[serde(flatten)]
     extra: HashMap<String, serde_json::Value>,
+    json_schema: Option<serde_json::Value>,
     json_schema_url: Option<String>,
     question: Option<String>,
     required: Option<bool>,
@@ -140,14 +141,18 @@ pub fn parse_label(
 }
 
 pub fn get_label_schema(client: &Client, label: &Label) -> Result<Option<serde_json::Value>> {
-    let json = label
-        .json_schema_url
-        .as_ref()
-        .map(|url| json_schema::get_schema_for_url(client, &url))
-        .transpose()?;
+    let json = if label.json_schema.is_some() {
+        label.json_schema.to_owned()
+    } else {
+        label
+            .json_schema_url
+            .as_ref()
+            .map(|url| json_schema::get_schema_for_url(client, &url))
+            .transpose()?
+    };
     // Fail fast if an invalid schema is supplied
-    match json.as_ref() {
-        Some(v) => Some(json_schema::compile(v)?),
+    match json.clone() {
+        Some(v) => Some(json_schema::compile(&v)?),
         None => None,
     };
     Ok(json)
