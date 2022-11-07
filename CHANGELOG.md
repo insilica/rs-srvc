@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.8.0 (2022-11-07)
+
 - Add a `port` config option for the embedded `html` step.
 
 ## v0.7.0 (2022-11-03)
