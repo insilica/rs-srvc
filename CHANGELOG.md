@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add a `port` config option for the embedded `html` step.
+
 ## v0.7.0 (2022-11-03)
 
 - Show an error message at the start of review when reviewer is not a

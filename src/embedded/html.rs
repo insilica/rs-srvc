@@ -182,6 +182,7 @@ fn write_port_event(app_ctx_mutex: Data<Mutex<AppContext>>, port: u16) -> std::i
 
 #[actix_web::main]
 async fn serve(
+    port: u16,
     map_ctx: MapContext,
     html: String,
     html_file_path: Option<PathBuf>,
@@ -213,7 +214,7 @@ async fn serve(
             .service(post_submit_label_answers)
     })
     .workers(4)
-    .bind(("127.0.0.1", 0))?;
+    .bind(("127.0.0.1", port))?;
 
     let addr = server.addrs().first().unwrap().to_owned();
     println!("Listening on http://{:?}", addr);
@@ -262,6 +263,14 @@ fn get_file_or_url(file_or_url: &str) -> Result<(String, Option<PathBuf>)> {
 pub fn run(file_or_url: &str) -> Result<()> {
     let map_ctx = embedded::get_map_context()?;
     let (html, path) = get_file_or_url(file_or_url)?;
+    let port = map_ctx
+        .config
+        .to_owned()
+        .current_step
+        .map(|step| step.extra.get("port").map(|x| x.as_u64()))
+        .flatten()
+        .flatten()
+        .unwrap_or(0) as u16;
 
-    serve(map_ctx, html, path).chain_err(|| "Error starting server")
+    serve(port, map_ctx, html, path).chain_err(|| "Error starting server")
 }
