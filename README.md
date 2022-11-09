@@ -14,6 +14,14 @@ Sysrev version control
 brew install insilica/srvc/srvc
 ```
 
+### Nix (macOS and Linux)
+
+[Install Nix](https://nixos.org/), and run:
+
+```
+nix-shell -p srvc
+```
+
 ### Binary (macOS, Linux, and Windows)
 
 Download the binary for your platform from the [releases page](https://github.com/insilica/rs-srvc/releases). Extract it, make sure it is executable, and place it on your PATH.
