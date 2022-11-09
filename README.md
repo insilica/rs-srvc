@@ -6,9 +6,7 @@ Sysrev version control
 
 ## Install
 
-srvc is supported on macOS and Linux.
-
-### Homebrew (recommended)
+### Homebrew (macOS and Linux)
 
 [Install homebrew](https://brew.sh/), and run:
 
@@ -16,7 +14,7 @@ srvc is supported on macOS and Linux.
 brew install insilica/srvc/srvc
 ```
 
-### Binary
+### Binary (macOS, Linux, and Windows)
 
 Download the binary for your platform from the [releases page](https://github.com/insilica/rs-srvc/releases). Extract it, make sure it is executable, and place it on your PATH.
 
