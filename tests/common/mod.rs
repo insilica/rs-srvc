@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -9,7 +10,9 @@ use rexpect::session::PtySession;
 
 pub fn cmd(timeout_millis: u64) -> Command {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    cmd.timeout(Duration::from_millis(timeout_millis));
+    if env::var("TEST_SRVC_DISABLE_TIMEOUT").is_err() {
+        cmd.timeout(Duration::from_millis(timeout_millis));
+    }
     cmd.env_remove("RUST_BACKTRACE");
     cmd
 }
@@ -26,7 +29,12 @@ pub fn spawn(
     cmd.current_dir(dir);
     cmd.env("SR_TIMESTAMP_OVERRIDE", timestamp_override.to_string());
     cmd.env_remove("RUST_BACKTRACE");
-    Ok(rexpect::session::spawn_command(cmd, Some(timeout_millis))?)
+    let timeout = if env::var("TEST_SRVC_DISABLE_TIMEOUT").is_ok() {
+        None
+    } else {
+        Some(timeout_millis)
+    };
+    Ok(rexpect::session::spawn_command(cmd, timeout)?)
 }
 
 pub fn remove_sink(dir: &str) -> Result<(), std::io::Error> {
