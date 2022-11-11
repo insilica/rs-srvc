@@ -140,20 +140,11 @@ pub fn parse_flows(flows: Option<HashMap<String, Flow>>) -> Result<HashMap<Strin
     Ok(m)
 }
 
-pub fn parse_label(
-    client: &Client,
+pub fn parse_label_data(
     id: &str,
     label: &Label,
     json_schema: Option<serde_json::Value>,
 ) -> Result<lib_sr::Label> {
-    match &label.uri {
-        Some(uri) => {
-            let lbl: Label = get_object(client, uri)?;
-            return parse_label(client, id, &lbl, json_schema);
-        }
-        None => {}
-    }
-
     let mut label = lib_sr::Label {
         extra: label.extra.clone(),
         hash: None,
@@ -174,6 +165,21 @@ pub fn parse_label(
     };
     label.hash = Some(event::event_hash(event)?);
     Ok(label)
+}
+
+pub fn parse_label(
+    client: &Client,
+    id: &str,
+    label: &Label,
+    json_schema: Option<serde_json::Value>,
+) -> Result<lib_sr::Label> {
+    match &label.uri {
+        Some(uri) => {
+            let lbl: Label = get_object(client, uri)?;
+            parse_label_data(id, &lbl, json_schema)
+        }
+        None => parse_label_data(id, label, json_schema),
+    }
 }
 
 pub fn get_label_schema(client: &Client, label: &Label) -> Result<Option<serde_json::Value>> {
