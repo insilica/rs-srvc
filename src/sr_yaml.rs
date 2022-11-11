@@ -32,6 +32,8 @@ pub struct Flow {
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
     pub steps: Option<Vec<Step>>,
+    #[serde(alias = "url")]
+    uri: Option<String>,
 }
 
 #[skip_serializing_none]
@@ -107,7 +109,7 @@ pub fn parse_step(step: Step) -> Result<lib_sr::Step> {
     })
 }
 
-pub fn parse_flow(flow: Flow) -> Result<lib_sr::Flow> {
+pub fn parse_flow_data(flow: Flow) -> Result<lib_sr::Flow> {
     let steps = &mut flow.steps.unwrap_or(Vec::new());
     if steps.len() == 0 {
         return Err("No steps in flow".into());
@@ -130,11 +132,24 @@ pub fn parse_flow(flow: Flow) -> Result<lib_sr::Flow> {
     })
 }
 
-pub fn parse_flows(flows: Option<HashMap<String, Flow>>) -> Result<HashMap<String, lib_sr::Flow>> {
+pub fn parse_flow(client: &Client, flow: Flow) -> Result<lib_sr::Flow> {
+    match &flow.uri {
+        Some(uri) => {
+            let flw: Flow = get_object(client, uri)?;
+            parse_flow_data(flw)
+        }
+        None => parse_flow_data(flow),
+    }
+}
+
+pub fn parse_flows(
+    client: &Client,
+    flows: Option<HashMap<String, Flow>>,
+) -> Result<HashMap<String, lib_sr::Flow>> {
     let flows = flows.unwrap_or(HashMap::new());
     let mut m = HashMap::new();
     for (flow_name, flow) in flows {
-        let flow = parse_flow(flow)?;
+        let flow = parse_flow(client, flow)?;
         m.insert(flow_name, flow);
     }
     Ok(m)
@@ -201,11 +216,11 @@ pub fn get_label_schema(client: &Client, label: &Label) -> Result<Option<serde_j
 }
 
 pub fn parse_labels(
+    client: &Client,
     labels: &Option<HashMap<String, Label>>,
 ) -> Result<HashMap<String, lib_sr::Label>> {
     match labels {
         Some(labels) => {
-            let client = Client::new();
             let mut m = HashMap::new();
             for (id, label) in labels {
                 let json_schema = get_label_schema(&client, &label)?;
@@ -219,6 +234,7 @@ pub fn parse_labels(
 }
 
 pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
+    let client = Client::new();
     let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
     let mut reviewer_err = String::from("\"reviewer\" is not a valid URI: ");
     reviewer_err.push_str(&format!("{:?}", reviewer));
@@ -229,8 +245,8 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
             current_step: None,
             db: config.db.ok_or("\"db\" not set in config")?,
             extra: config.extra,
-            flows: parse_flows(config.flows)?,
-            labels: parse_labels(&config.labels)?,
+            flows: parse_flows(&client, config.flows)?,
+            labels: parse_labels(&client, &config.labels)?,
             reviewer,
             sink_all_events: config.sink_all_events.unwrap_or(false),
         }),
