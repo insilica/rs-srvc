@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add `uri` property (alias `url`) to labels in `sr.yaml`. The label definition will be retrieved from the URI.
+
 ## v0.8.0 (2022-11-07)
 
 - Add a `port` config option for the embedded `html` step.
