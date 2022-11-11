@@ -1,0 +1,16 @@
+type: categorical
+categories:
+  - sodium laureth sulfate
+  - sodium lauryl sulfoacetate
+  - sodium cocoyl glycinate
+  - disodium cocoyl glutamate
+  - decyl glucoside
+  - lauryl glucoside
+inclusion_values:
+  - sodium laureth sulfate
+  - sodium lauryl sulfoacetate
+  - sodium cocoyl glycinate
+  - disodium cocoyl glutamate
+  - decyl glucoside
+  - lauryl glucoside
+question: Substance
