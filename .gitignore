@@ -1,3 +1,5 @@
 .*
+!.editorconfig
+
 sink.jsonl
 target/
