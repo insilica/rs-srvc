@@ -1,0 +1,5 @@
+run_embedded: "label"
+labels:
+  - acute_tox
+  - eye_irrit
+  - substance
