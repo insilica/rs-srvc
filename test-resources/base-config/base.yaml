@@ -1,5 +1,7 @@
 db: "sink.jsonl"
 
+reviewer: mailto:user2@example.com
+
 labels:
   acute_tox:
     type: boolean

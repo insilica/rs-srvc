@@ -190,3 +190,24 @@ fn test_flow_uri() -> Result<(), rexpect::errors::Error> {
     common::check_sink(dir).unwrap();
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn test_base_uri() -> Result<(), rexpect::errors::Error> {
+    let dir = "test-resources/base-config";
+    common::remove_sink(dir).unwrap();
+    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
+    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.send_line("y")?;
+    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.send_line("n")?;
+    p.exp_string("substance")?;
+    p.exp_string("1. \"sodium laureth sulfate\"")?;
+    p.exp_string("7. Skip Question")?;
+    p.exp_string("?")?;
+    p.send_line("1")?;
+    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.send_control('c')?;
+    common::check_sink(dir).unwrap();
+    Ok(())
+}

@@ -1,0 +1,3 @@
+base_uri: https://raw.githubusercontent.com/insilica/rs-srvc/master/test-resources/base-config/base.yaml
+
+reviewer: mailto:user@example.com

@@ -55,6 +55,8 @@ pub struct Label {
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
+    #[serde(alias = "base_url")]
+    pub base_uri: Option<String>,
     pub db: Option<String>,
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
@@ -62,6 +64,21 @@ pub struct Config {
     pub labels: Option<HashMap<String, Label>>,
     pub reviewer: Option<String>,
     pub sink_all_events: Option<bool>,
+}
+
+impl Config {
+    fn merge(mut self, other: Config) -> Self {
+        self.extra.extend(other.extra.into_iter());
+        Self {
+            base_uri: other.base_uri.or(self.base_uri),
+            db: other.db.or(self.db),
+            extra: self.extra,
+            flows: other.flows.or(self.flows),
+            labels: other.labels.or(self.labels),
+            reviewer: other.reviewer.or(self.reviewer),
+            sink_all_events: other.sink_all_events.or(self.sink_all_events),
+        }
+    }
 }
 
 pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
@@ -247,6 +264,13 @@ pub fn parse_labels(
 
 pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
     let client = Client::new();
+    let config = match &config.base_uri {
+        Some(uri) => {
+            let cfg: Config = get_object(&client, uri)?;
+            cfg.merge(config)
+        }
+        None => config,
+    };
     let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
     let mut reviewer_err = String::from("\"reviewer\" is not a valid URI: ");
     reviewer_err.push_str(&format!("{:?}", reviewer));
