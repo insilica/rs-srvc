@@ -1,7 +1,7 @@
 ## Unreleased
 
 - Add `uri` property (alias `url`) to labels in `sr.yaml`. The label definition will be retrieved from the URI.
-- Add `uri`/`url` property to flows in `sr.yaml`.
+- Add `uri`/`url` property to steps and flows in `sr.yaml`.
 
 ## v0.8.0 (2022-11-07)
 

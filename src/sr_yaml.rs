@@ -24,6 +24,8 @@ pub struct Step {
     pub labels: Option<Vec<String>>,
     pub run: Option<String>,
     pub run_embedded: Option<String>,
+    #[serde(alias = "url")]
+    uri: Option<String>,
 }
 
 #[skip_serializing_none]
@@ -100,7 +102,7 @@ pub fn get_object<T: DeserializeOwned>(client: &Client, url: &str) -> Result<T> 
     }
 }
 
-pub fn parse_step(step: Step) -> Result<lib_sr::Step> {
+pub fn parse_step_data(step: Step) -> Result<lib_sr::Step> {
     Ok(lib_sr::Step {
         extra: step.extra,
         labels: step.labels.unwrap_or(Vec::new()),
@@ -109,7 +111,17 @@ pub fn parse_step(step: Step) -> Result<lib_sr::Step> {
     })
 }
 
-pub fn parse_flow_data(flow: Flow) -> Result<lib_sr::Flow> {
+pub fn parse_step(client: &Client, step: Step) -> Result<lib_sr::Step> {
+    match &step.uri {
+        Some(uri) => {
+            let stp: Step = get_object(client, uri)?;
+            parse_step_data(stp)
+        }
+        None => parse_step_data(step),
+    }
+}
+
+pub fn parse_flow_data(client: &Client, flow: Flow) -> Result<lib_sr::Flow> {
     let steps = &mut flow.steps.unwrap_or(Vec::new());
     if steps.len() == 0 {
         return Err("No steps in flow".into());
@@ -117,7 +129,7 @@ pub fn parse_flow_data(flow: Flow) -> Result<lib_sr::Flow> {
 
     let mut vec = Vec::new();
     for step in steps {
-        let step = parse_step(step.to_owned())?;
+        let step = parse_step(client, step.to_owned())?;
         vec.push(step);
     }
     vec.push(lib_sr::Step {
@@ -136,9 +148,9 @@ pub fn parse_flow(client: &Client, flow: Flow) -> Result<lib_sr::Flow> {
     match &flow.uri {
         Some(uri) => {
             let flw: Flow = get_object(client, uri)?;
-            parse_flow_data(flw)
+            parse_flow_data(client, flw)
         }
-        None => parse_flow_data(flow),
+        None => parse_flow_data(client, flow),
     }
 }
 
