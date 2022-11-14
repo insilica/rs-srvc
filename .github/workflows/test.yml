@@ -45,6 +45,7 @@ jobs:
         fetch-depth: 1
 
     - name: Install Nix
+      if: matrix.os != 'windows-2019'
       uses: cachix/install-nix-action@v18
 
     - name: Install packages (Ubuntu)
@@ -72,5 +73,10 @@ jobs:
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
         echo "target dir is: ${{ env.TARGET_DIR }}"
 
-    - name: Test release binary
+    - name: Test release binary (Unix)
+      if: matrix.os != 'windows-2019'
       run: nix-shell -p httplz --run "${{ env.CARGO }} test --verbose --release ${{ env.TARGET_FLAGS }}"
+
+    - name: Test release binary (Windows)
+      if: matrix.os == 'windows-2019'
+      run: ${{ env.CARGO }} test --verbose --release ${{ env.TARGET_FLAGS }}

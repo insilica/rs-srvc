@@ -9,6 +9,7 @@ use assert_cmd::Command;
 #[cfg(unix)]
 use rexpect::session::PtySession;
 
+#[cfg(unix)]
 #[ctor::ctor]
 static STATIC_CTOR: process::Child = {
     process::Command::new("httplz")
