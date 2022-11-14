@@ -47,6 +47,8 @@ jobs:
     - name: Install Nix
       if: matrix.os != 'windows-2019'
       uses: cachix/install-nix-action@v18
+      with:
+        nix_path: nixpkgs=channel:nixos-22.05
 
     - name: Install packages (Ubuntu)
       if: matrix.os == 'ubuntu-20.04'
