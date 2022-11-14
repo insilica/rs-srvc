@@ -12,8 +12,8 @@ use rexpect::session::PtySession;
 #[cfg(unix)]
 #[ctor::ctor]
 static STATIC_CTOR: process::Child = {
-    process::Command::new("httplz")
-        .args(&["test-resources", "-p", "8877"])
+    process::Command::new("webfsd")
+        .args(&["-4Fp", "8877", "-r", "test-resources"])
         .spawn()
         .expect("Failed to start httplz test-resources server")
 };
