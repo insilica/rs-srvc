@@ -44,6 +44,9 @@ jobs:
       with:
         fetch-depth: 1
 
+    - name: Install Nix
+      uses: cachix/install-nix-action@v18
+
     - name: Install packages (Ubuntu)
       if: matrix.os == 'ubuntu-20.04'
       run: |
@@ -70,4 +73,4 @@ jobs:
         echo "target dir is: ${{ env.TARGET_DIR }}"
 
     - name: Test release binary
-      run: ${{ env.CARGO }} test --verbose --release ${{ env.TARGET_FLAGS }}
+      run: nix-shell -p httplz --run "${{ env.CARGO }} test --verbose --release ${{ env.TARGET_FLAGS }}"

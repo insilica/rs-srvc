@@ -32,7 +32,7 @@ labels:
 
 flows:
   label:
-    uri: https://raw.githubusercontent.com/insilica/rs-srvc/master/test-resources/flow-defs/label.yaml
+    uri: http://127.0.0.1:8877/flow-defs/label.yaml
 
   simple:
     steps:

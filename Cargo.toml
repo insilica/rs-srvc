@@ -36,6 +36,7 @@ windows-win = "2.0"
 
 [dev-dependencies]
 assert_cmd = "2.0"
+ctor = "0.1"
 
 [target.'cfg(unix)'.dev-dependencies]
 rexpect = "0.4"

@@ -2,11 +2,20 @@
 
 use std::env;
 use std::path::PathBuf;
+use std::process;
 use std::time::Duration;
 
 use assert_cmd::Command;
 #[cfg(unix)]
 use rexpect::session::PtySession;
+
+#[ctor::ctor]
+static STATIC_CTOR: process::Child = {
+    process::Command::new("httplz")
+        .args(&["test-resources", "-p", "8877"])
+        .spawn()
+        .expect("Failed to start httplz test-resources server")
+};
 
 pub fn cmd(timeout_millis: u64) -> Command {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();

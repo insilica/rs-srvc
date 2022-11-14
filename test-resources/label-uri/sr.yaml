@@ -6,11 +6,11 @@ reviewer: mailto:user@example.com
 # Both json and yaml work
 labels:
   acute_tox:
-    uri: https://raw.githubusercontent.com/insilica/rs-srvc/master/test-resources/label-defs/acute_tox.yaml
+    uri: http://127.0.0.1:8877/label-defs/acute_tox.yaml
   eye_irrit:
-    url: https://raw.githubusercontent.com/insilica/rs-srvc/master/test-resources/label-defs/eye_irrit.json
+    url: http://127.0.0.1:8877/label-defs/eye_irrit.json
   substance:
-    url: https://raw.githubusercontent.com/insilica/rs-srvc/master/test-resources/label-defs/substance.yaml
+    url: http://127.0.0.1:8877/label-defs/substance.yaml
 
 flows:
   label:
