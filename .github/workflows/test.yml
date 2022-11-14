@@ -56,12 +56,14 @@ jobs:
         ci/ubuntu-install-packages
 
     - name: Install Rust
+      if: matrix.os == 'windows-2019'
       uses: actions-rs/toolchain@v1.0.6
       with:
         toolchain: ${{ matrix.rust }}
         target: ${{ matrix.target }}
 
     - name: Use Cross
+      if: matrix.os == 'windows-2019'
       shell: bash
       run: |
         cargo install cross
@@ -70,6 +72,7 @@ jobs:
         echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
 
     - name: Show command used for Cargo
+      if: matrix.os == 'windows-2019'
       run: |
         echo "cargo command is: ${{ env.CARGO }}"
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
@@ -77,7 +80,7 @@ jobs:
 
     - name: Test release binary (Unix)
       if: matrix.os != 'windows-2019'
-      run: nix-shell -p httplz --run "cargo test --verbose --release"
+      run: nix-shell --run "cargo test --verbose --release"
 
     - name: Test release binary (Windows)
       if: matrix.os == 'windows-2019'
