@@ -15,7 +15,7 @@ static STATIC_CTOR: process::Child = {
     process::Command::new("webfsd")
         .args(&["-4Fp", "8877", "-r", "test-resources"])
         .spawn()
-        .expect("Failed to start httplz test-resources server")
+        .expect("Failed to start webfsd test-resources server")
 };
 
 pub fn cmd(timeout_millis: u64) -> Command {
