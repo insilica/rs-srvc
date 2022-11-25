@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use jsonschema::{CompilationOptions, Draft, JSONSchema};
 use reqwest::blocking::Client;
-use serde_json::json;
 
 use lib_sr::errors::*;
 
@@ -82,7 +81,7 @@ pub fn get_schema_for_url(client: &Client, url: &str) -> Result<serde_json::Valu
                 .text()
                 .chain_err(|| "Error getting response text")?;
             if status == 200 {
-                Ok(json!(text))
+                serde_json::from_str(&text).chain_err(|| "Could not parse reponse as JSON")
             } else {
                 Err(format!(
                     "Unexpected {} status response at {} ({})",

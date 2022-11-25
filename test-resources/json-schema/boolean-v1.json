@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/insilica/rs-srvc/master/src/schema/label-answer/boolean-v1.json",
+  "title": "Boolean answer",
+  "description": "A boolean label answer",
+  "type": "boolean"
+}
