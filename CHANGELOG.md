@@ -4,6 +4,7 @@
 - Add `uri`/`url` property to steps and flows in `sr.yaml`.
 - Add `base_uri`/`base_url` property to sr.yaml. This can be a URI containing a base configuration for the sr.yaml, which is further extended by the contents of sr.yaml.
 - Fix `json_schema_url` not working with arbitrary URLs.
+- Add `json_schema_uri` alias for `json_schema_url`.
 
 ## v0.8.0 (2022-11-07)
 

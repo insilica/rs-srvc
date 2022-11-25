@@ -44,7 +44,8 @@ pub struct Label {
     #[serde(flatten)]
     extra: HashMap<String, serde_json::Value>,
     json_schema: Option<serde_json::Value>,
-    json_schema_url: Option<String>,
+    #[serde(alias = "json_schema_url")]
+    json_schema_uri: Option<String>,
     question: Option<String>,
     required: Option<bool>,
     r#type: Option<String>,
@@ -231,7 +232,7 @@ pub fn get_label_schema(client: &Client, label: &Label) -> Result<Option<serde_j
         label.json_schema.to_owned()
     } else {
         label
-            .json_schema_url
+            .json_schema_uri
             .as_ref()
             .map(|url| json_schema::get_schema_for_url(client, &url))
             .transpose()?

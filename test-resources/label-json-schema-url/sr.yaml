@@ -5,7 +5,7 @@ reviewer: mailto:user@example.com
 labels:
   acute_tox:
     type: boolean
-    json_schema_url: http://127.0.0.1:8877/json-schema/boolean-v1.json
+    json_schema_uri: http://127.0.0.1:8877/json-schema/boolean-v1.json
     question: Acute toxicity?
   eye_irrit:
     type: boolean
