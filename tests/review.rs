@@ -171,7 +171,7 @@ fn test_wrong_name() -> Result<(), std::io::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_step() -> Result<(), rexpect::errors::Error> {
+fn test_step_uri() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/step-uri";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;

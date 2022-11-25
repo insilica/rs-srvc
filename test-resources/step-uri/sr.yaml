@@ -33,18 +33,8 @@ labels:
 flows:
   label:
     steps:
-      - run_embedded: "generator-file docs.jsonl"
+      - uri: http://127.0.0.1:8877/step-defs/generator-file-docs.json
 
-      - run_embedded: "remove-reviewed"
+      - uri: http://127.0.0.1:8877/step-defs/remove-reviewed.yml
 
-      - run_embedded: "label"
-        labels:
-          - acute_tox
-          - eye_irrit
-          - substance
-
-  simple:
-    steps:
-      - run_embedded: "generator-file docs.jsonl"
-
-      - run_embedded: "remove-reviewed"
+      - uri: http://127.0.0.1:8877/step-defs/label.yaml
