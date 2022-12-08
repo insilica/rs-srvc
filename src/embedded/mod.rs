@@ -12,7 +12,7 @@ use lib_sr::errors::*;
 use lib_sr::event::Event;
 use lib_sr::{common, event, Config};
 
-pub mod generator_file;
+pub mod generator;
 pub mod html;
 pub mod label;
 pub mod remove_reviewed;
