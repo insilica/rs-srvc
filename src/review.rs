@@ -211,10 +211,13 @@ pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<Ex
     let exe_path = get_exe_path()?;
 
     let last_step = &flow.steps.last();
-    let mut last_process = None;
+    let mut processes = Vec::new();
     for step in &flow.steps {
         let is_last_step = last_step.filter(|x| x.to_owned() == step).is_some();
-        let last_ss = last_process.map(|x: StepProcess| x.step_server).flatten();
+        let last_ss = processes
+            .last()
+            .map(|x: &StepProcess| x.step_server.as_ref())
+            .flatten();
         let process = run_step(
             config,
             &dir,
@@ -223,14 +226,17 @@ pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<Ex
             !is_last_step,
             exe_path.clone(),
         )?;
-        last_process = Some(process);
+        processes.push(process);
     }
-    let process = last_process
-        .ok_or("No final step in flow")?
-        .process
-        .wait()
-        .chain_err(|| "Error waiting for child process")?;
-    Ok(process)
+    match processes.pop() {
+        Some(mut last_process) => {
+            last_process
+                .process
+                .wait()
+                .chain_err(|| "Error waiting for child process")
+        }
+        None => Err("No steps in flow".into()),
+    }
 }
 
 pub fn run_flow(flow: &Flow, config: &Config) -> Result<ExitStatus> {
