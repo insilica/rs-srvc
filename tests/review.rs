@@ -115,6 +115,7 @@ fn test_simple() -> Result<(), std::io::Error> {
     Ok(())
 }
 
+#[cfg(unix)]
 #[test]
 fn test_generator_url() -> Result<(), std::io::Error> {
     let dir = "test-resources/generator-url";
