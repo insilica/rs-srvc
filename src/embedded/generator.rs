@@ -1,9 +1,8 @@
 use std::collections::HashMap;
-use std::fs::File;
 use std::io::BufReader;
 use std::io::Write;
-use std::path::PathBuf;
 
+use reqwest::blocking::Client;
 use serde::Serialize;
 use serde_json::{json, Value};
 
@@ -15,11 +14,10 @@ use lib_sr::Label;
 use crate::embedded;
 use crate::embedded::GeneratorContext;
 
-pub fn run(filename: PathBuf) -> Result<()> {
+pub fn run(file_or_url: &str) -> Result<()> {
+    let (input, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
     let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
-    let input = File::open(&filename)
-        .chain_err(|| format!("Cannot open generator file: {:?}", filename))?;
-    let reader = BufReader::new(input);
+    let reader = BufReader::new(input.as_bytes());
     let in_events = event::events(reader);
     let mut labels: Vec<&Label> = config.labels.values().collect();
     labels.sort_by(|a, b| a.id.cmp(&b.id));

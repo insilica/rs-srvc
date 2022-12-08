@@ -6,6 +6,7 @@
 - Fix `json_schema_url` not working with arbitrary URLs.
 - Add `json_schema_uri` alias for `json_schema_url`.
 - Rename `generator-file` embedded step to `generator`, making `generator-file` an alias.
+- Support URL arguments to `generator`.
 
 ## v0.8.0 (2022-11-07)
 

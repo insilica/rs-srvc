@@ -10,7 +10,6 @@ use actix_web::{get, middleware, post, App, HttpResponse, HttpServer};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::json;
-use url::Url;
 
 use lib_sr::errors::*;
 use lib_sr::event::Event;
@@ -226,43 +225,9 @@ async fn serve(
     server.run().await
 }
 
-fn get_file_or_url(file_or_url: &str) -> Result<(String, Option<PathBuf>)> {
-    match Url::parse(file_or_url) {
-        Ok(url) => {
-            let client = Client::new();
-            let response = client
-                .get(url.clone())
-                .send()
-                .chain_err(|| format!("Failed to complete HTTP request to {}", url))?;
-            let status = response.status().as_u16();
-            if status == 200 {
-                Ok((
-                    response
-                        .text()
-                        .chain_err(|| "Failed to read response text")?,
-                    None,
-                ))
-            } else {
-                Err(format!("Unexpected {} status for {}", status, url).into())
-            }
-        }
-        Err(_) => {
-            let path = PathBuf::from(file_or_url);
-            let file =
-                File::open(&path).chain_err(|| format!("Failed to open file {}", file_or_url))?;
-            let mut reader = BufReader::new(file);
-            let mut s = String::new();
-            reader
-                .read_to_string(&mut s)
-                .chain_err(|| format!("Buffer read failed for file {}", file_or_url))?;
-            Ok((s, Some(path)))
-        }
-    }
-}
-
 pub fn run(file_or_url: &str) -> Result<()> {
     let map_ctx = embedded::get_map_context()?;
-    let (html, path) = get_file_or_url(file_or_url)?;
+    let (html, path) = embedded::get_file_or_url(Client::new(), file_or_url)?;
     let port = map_ctx
         .config
         .to_owned()

@@ -116,6 +116,21 @@ fn test_simple() -> Result<(), std::io::Error> {
 }
 
 #[test]
+fn test_generator_url() -> Result<(), std::io::Error> {
+    let dir = "test-resources/generator-url";
+    common::remove_sink(dir)?;
+    common::cmd(400)
+        .current_dir(dir)
+        .args(&["review", "generator-url"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(dir)?;
+    Ok(())
+}
+
+#[test]
 fn test_reviewer_uri_domain() -> Result<(), std::io::Error> {
     let dir = "test-resources/reviewer-uri-domain";
     let sink = PathBuf::from(dir).join("sink.jsonl");

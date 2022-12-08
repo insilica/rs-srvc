@@ -66,11 +66,11 @@ enum Commands {
 #[derive(Subcommand, Debug)]
 enum EmbeddedSteps {
     #[clap(alias = "generator-file")]
-    /// Source review events from a file
+    /// Source review events from a file or URL
     Generator {
-        /// Path to a file containing review events
+        /// Path to a file or URL containing review events
         #[clap(forbid_empty_values = true)]
-        filename: PathBuf,
+        file_or_url: String,
     },
     /// Serve an HTML file as a map step
     Html {
@@ -101,7 +101,7 @@ fn print_config(opts: &mut Opts, pretty: bool) -> Result<()> {
 
 fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
     match name {
-        EmbeddedSteps::Generator { filename } => embedded::generator::run(filename),
+        EmbeddedSteps::Generator { file_or_url } => embedded::generator::run(&file_or_url),
         EmbeddedSteps::Html { file_or_url } => embedded::html::run(&file_or_url),
         EmbeddedSteps::Label {} => embedded::label::run(),
         EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),

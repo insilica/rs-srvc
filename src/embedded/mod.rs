@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
-use std::io::{BufReader, LineWriter, Write};
+use std::io::{BufReader, LineWriter, Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use reqwest::blocking::Client;
 use serde_json::json;
+use url::Url;
 
 use lib_sr::errors::*;
 use lib_sr::event::Event;
@@ -153,4 +155,37 @@ pub fn insert_timestamp(
     };
     data.insert(String::from("timestamp"), json!(timestamp));
     Ok(())
+}
+
+fn get_file_or_url(client: Client, file_or_url: &str) -> Result<(String, Option<PathBuf>)> {
+    match Url::parse(file_or_url) {
+        Ok(url) => {
+            let response = client
+                .get(url.clone())
+                .send()
+                .chain_err(|| format!("Failed to complete HTTP request to {}", url))?;
+            let status = response.status().as_u16();
+            if status == 200 {
+                Ok((
+                    response
+                        .text()
+                        .chain_err(|| "Failed to read response text")?,
+                    None,
+                ))
+            } else {
+                Err(format!("Unexpected {} status for {}", status, url).into())
+            }
+        }
+        Err(_) => {
+            let path = PathBuf::from(file_or_url);
+            let file =
+                File::open(&path).chain_err(|| format!("Failed to open file {}", file_or_url))?;
+            let mut reader = BufReader::new(file);
+            let mut s = String::new();
+            reader
+                .read_to_string(&mut s)
+                .chain_err(|| format!("Buffer read failed for file {}", file_or_url))?;
+            Ok((s, Some(path)))
+        }
+    }
 }
