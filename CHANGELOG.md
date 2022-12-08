@@ -7,6 +7,7 @@
 - Add `json_schema_uri` alias for `json_schema_url`.
 - Rename `generator-file` embedded step to `generator`, making `generator-file` an alias.
 - Support URL arguments to `generator`.
+- Clean up temporary directories when a step fails.
 
 ## v0.8.0 (2022-11-07)
 

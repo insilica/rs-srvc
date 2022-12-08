@@ -7,7 +7,9 @@ use std::process;
 use std::str::FromStr;
 use std::thread;
 
+use process::ExitStatus;
 use serde::Serialize;
+use tempfile::TempDir;
 use uuid::Uuid;
 
 use lib_sr::errors::*;
@@ -205,11 +207,7 @@ pub fn run_step(
     }
 }
 
-pub fn run_flow(flow: &Flow, config: &Config) -> Result<process::ExitStatus> {
-    let dir = tempfile::Builder::new()
-        .prefix("srvc-")
-        .tempdir()
-        .chain_err(|| "Failed to create temporary directory")?;
+pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<ExitStatus> {
     let exe_path = get_exe_path()?;
 
     let last_step = &flow.steps.last();
@@ -232,9 +230,18 @@ pub fn run_flow(flow: &Flow, config: &Config) -> Result<process::ExitStatus> {
         .process
         .wait()
         .chain_err(|| "Error waiting for child process")?;
+    Ok(process)
+}
+
+pub fn run_flow(flow: &Flow, config: &Config) -> Result<ExitStatus> {
+    let dir = tempfile::Builder::new()
+        .prefix("srvc-")
+        .tempdir()
+        .chain_err(|| "Failed to create temporary directory")?;
+    let result = run_flow_in_dir(flow, config, &dir);
     dir.close()
         .chain_err(|| "Failed to delete temporary directory")?;
-    Ok(process)
+    return result;
 }
 
 pub fn run(opts: &mut Opts, flow_name: String) -> Result<()> {
