@@ -9,6 +9,7 @@
 - Support URL arguments to `generator`.
 - Clean up temporary directories when a step fails.
 - Cancel the other steps when one step fails.
+- Add a more specific error message for the case that an event can't be parsed because it is a blank line.
 
 ## v0.8.0 (2022-11-07)
 

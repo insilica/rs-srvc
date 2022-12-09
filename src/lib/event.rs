@@ -28,7 +28,16 @@ pub fn event_hash(mut event: Event) -> Result<String> {
 }
 
 pub fn parse_event(s: &str) -> Result<Event> {
-    serde_json::from_str(s).chain_err(|| "Event deserialization failed")
+    match serde_json::from_str(s) {
+        Ok(event) => Ok(event),
+        Err(e) => {
+            if s.len() == 0 {
+                Err(e).chain_err(|| "Event deserialization failed (blank line)")
+            } else {
+                Err(e).chain_err(|| "Event deserialization failed")
+            }
+        }
+    }
 }
 
 pub fn events(reader: BufReader<impl Read>) -> impl Iterator<Item = Result<Event>> {
