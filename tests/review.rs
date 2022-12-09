@@ -131,6 +131,21 @@ fn test_generator_url() -> Result<(), std::io::Error> {
     Ok(())
 }
 
+#[cfg(unix)]
+#[test]
+fn test_generator_url_404() -> Result<(), std::io::Error> {
+    let dir = "test-resources/generator-url-404";
+    common::remove_sink(dir)?;
+    common::cmd(400)
+        .current_dir(dir)
+        .args(&["review", "generator-url"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr("Error: Unexpected 404 status for http://127.0.0.1:8877/generator-url/404.jsonl\nError: Step failed with exit code 1\n");
+    Ok(())
+}
+
 #[test]
 fn test_reviewer_uri_domain() -> Result<(), std::io::Error> {
     let dir = "test-resources/reviewer-uri-domain";

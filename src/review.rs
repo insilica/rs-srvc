@@ -7,7 +7,6 @@ use std::process;
 use std::str::FromStr;
 use std::thread;
 
-use process::ExitStatus;
 use serde::Serialize;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -207,7 +206,70 @@ pub fn run_step(
     }
 }
 
-pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<ExitStatus> {
+fn end_steps(processes: Vec<StepProcess>) -> Result<()> {
+    let mut error = None;
+    for mut process in processes {
+        let result = process.process.try_wait();
+        match result {
+            Ok(Some(status)) => {
+                if status.code().is_none() {
+                    match process.process.kill() {
+                        Ok(_) => {}
+                        Err(e) => error = Some(Err(e).chain_err(|| "Failed to kill child process")),
+                    }
+                }
+            }
+            Ok(None) => match process.process.kill() {
+                Ok(_) => {}
+                Err(e) => error = Some(Err(e).chain_err(|| "Failed to kill child process")),
+            },
+            Err(e) => {
+                let _ = process.process.kill();
+                error = Some(Err(e).chain_err(|| "Failed to read exit status of child process"))
+            }
+        }
+    }
+    match error {
+        Some(e) => e,
+        None => Ok(()),
+    }
+}
+
+fn wait_for_steps(mut processes: Vec<StepProcess>) -> Result<()> {
+    let mut exit_status = None;
+    while processes.len() > 0 && exit_status.is_none() {
+        let mut next_processes = Vec::new();
+        for mut process in processes {
+            match process.process.try_wait() {
+                Ok(Some(status)) => {
+                    if status.code() != Some(0) {
+                        exit_status = Some(status);
+                    }
+                }
+                Ok(None) => next_processes.push(process),
+                Err(e) => return Err(e).chain_err(|| "Error waiting for child process"),
+            }
+        }
+        processes = next_processes;
+    }
+
+    match exit_status {
+        Some(status) => {
+            end_steps(processes)?;
+            Err(format!(
+                "Step failed with exit code {}",
+                status
+                    .code()
+                    .map(|i| i.to_string())
+                    .unwrap_or(String::from("None"))
+            )
+            .into())
+        }
+        None => Ok(()),
+    }
+}
+
+fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()> {
     let exe_path = get_exe_path()?;
 
     let last_step = &flow.steps.last();
@@ -218,28 +280,30 @@ pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<Ex
             .last()
             .map(|x: &StepProcess| x.step_server.as_ref())
             .flatten();
-        let process = run_step(
+        match run_step(
             config,
             &dir,
             step,
             last_ss.map(|x| x.output_port),
             !is_last_step,
             exe_path.clone(),
-        )?;
-        processes.push(process);
-    }
-    match processes.pop() {
-        Some(mut last_process) => {
-            last_process
-                .process
-                .wait()
-                .chain_err(|| "Error waiting for child process")
+        ) {
+            Ok(process) => processes.push(process),
+            Err(e) => {
+                end_steps(processes)?;
+                return Err(e);
+            }
         }
-        None => Err("No steps in flow".into()),
+    }
+
+    if processes.len() == 0 {
+        Err("No steps in flow".into())
+    } else {
+        wait_for_steps(processes)
     }
 }
 
-pub fn run_flow(flow: &Flow, config: &Config) -> Result<ExitStatus> {
+pub fn run_flow(flow: &Flow, config: &Config) -> Result<()> {
     let dir = tempfile::Builder::new()
         .prefix("srvc-")
         .tempdir()

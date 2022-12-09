@@ -1,0 +1,8 @@
+db: "sink.jsonl"
+
+reviewer: mailto:user@example.com
+
+flows:
+  generator-url:
+    steps:
+      - run_embedded: "generator http://127.0.0.1:8877/generator-url/404.jsonl"

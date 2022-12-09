@@ -8,6 +8,7 @@
 - Rename `generator-file` embedded step to `generator`, making `generator-file` an alias.
 - Support URL arguments to `generator`.
 - Clean up temporary directories when a step fails.
+- Cancel the other steps when one step fails.
 
 ## v0.8.0 (2022-11-07)
 
