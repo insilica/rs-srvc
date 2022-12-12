@@ -31,7 +31,7 @@ jobs:
           rust: nightly
           target: x86_64-apple-darwin
         - build: win-msvc
-          os: windows-2019
+          os: windows-2022
           rust: nightly
           target: x86_64-pc-windows-msvc
 
@@ -42,7 +42,7 @@ jobs:
         fetch-depth: 1
 
     - name: Install Nix
-      if: matrix.os != 'windows-2019'
+      if: matrix.os != 'windows-2022'
       uses: cachix/install-nix-action@v18
       with:
         nix_path: nixpkgs=channel:nixos-22.05
@@ -53,14 +53,14 @@ jobs:
         ci/ubuntu-install-packages
 
     - name: Install Rust
-      if: matrix.os == 'windows-2019'
+      if: matrix.os == 'windows-2022'
       uses: actions-rs/toolchain@v1.0.6
       with:
         toolchain: ${{ matrix.rust }}
         target: ${{ matrix.target }}
 
     - name: Use Cross
-      if: matrix.os == 'windows-2019'
+      if: matrix.os == 'windows-2022'
       shell: bash
       run: |
         cargo install cross
@@ -69,16 +69,16 @@ jobs:
         echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
 
     - name: Show command used for Cargo
-      if: matrix.os == 'windows-2019'
+      if: matrix.os == 'windows-2022'
       run: |
         echo "cargo command is: ${{ env.CARGO }}"
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
         echo "target dir is: ${{ env.TARGET_DIR }}"
 
     - name: Test release binary (Unix)
-      if: matrix.os != 'windows-2019'
+      if: matrix.os != 'windows-2022'
       run: nix-shell --run "cargo test --verbose --release"
 
     - name: Test release binary (Windows)
-      if: matrix.os == 'windows-2019'
+      if: matrix.os == 'windows-2022'
       run: ${{ env.CARGO }} test --verbose --release ${{ env.TARGET_FLAGS }}

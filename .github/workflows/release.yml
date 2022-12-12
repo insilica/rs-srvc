@@ -80,7 +80,7 @@ jobs:
           rust: nightly
           target: x86_64-apple-darwin
         - build: win-msvc
-          os: windows-2019
+          os: windows-2022
           rust: nightly
           target: x86_64-pc-windows-msvc
 
@@ -138,7 +138,7 @@ jobs:
         staging="srvc-${{ needs.create-release.outputs.rg_version }}-${{ matrix.target }}"
         mkdir -p "$staging/"
 
-        if [ "${{ matrix.os }}" = "windows-2019" ]; then
+        if [ "${{ matrix.os }}" = "windows-2022" ]; then
           cp "target/${{ matrix.target }}/release/sr.exe" "$staging/"
           7z a "$staging.zip" "$staging"
           echo "ASSET=$staging.zip" >> $GITHUB_ENV
