@@ -91,7 +91,7 @@ jobs:
         fetch-depth: 1
 
     - name: Install packages (Ubuntu)
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.build == 'linux'
       run: |
         ci/ubuntu-install-packages
 
@@ -138,7 +138,7 @@ jobs:
         staging="srvc-${{ needs.create-release.outputs.rg_version }}-${{ matrix.target }}"
         mkdir -p "$staging/"
 
-        if [ "${{ matrix.os }}" = "windows-2022" ]; then
+        if [ "${{ matrix.build }}" = "win-msvc" ]; then
           cp "target/${{ matrix.target }}/release/sr.exe" "$staging/"
           7z a "$staging.zip" "$staging"
           echo "ASSET=$staging.zip" >> $GITHUB_ENV
