@@ -2,6 +2,7 @@
 
 use std::env;
 use std::path::PathBuf;
+#[cfg(unix)]
 use std::process;
 use std::time::Duration;
 
