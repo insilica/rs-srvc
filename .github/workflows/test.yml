@@ -54,10 +54,10 @@ jobs:
 
     - name: Install Rust
       if: matrix.os == 'windows-2022'
-      uses: actions-rs/toolchain@v1.0.6
+      uses: dtolnay/rust-toolchain@e645b0cf01249a964ec099494d38d2da0f0b349f
       with:
         toolchain: ${{ matrix.rust }}
-        target: ${{ matrix.target }}
+        targets: ${{ matrix.target }}
 
     - name: Use Cross
       if: matrix.os == 'windows-2022'
