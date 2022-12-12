@@ -75,10 +75,18 @@ jobs:
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
         echo "target dir is: ${{ env.TARGET_DIR }}"
 
-    - name: Test release binary (Unix)
-      if: matrix.os != 'windows-2022'
+    - name: Test release binary (Linux)
+      if: matrix.build == "linux"
       run: nix-shell --run "cargo test --verbose --release"
 
+    - name: Test release binary (macOS)
+      if: matrix.build == "macos"
+      run: nix-shell --run "cargo test --verbose --release"
+      env:
+        TEST_SRVC_DISABLE_TIMEOUT: 1
+
     - name: Test release binary (Windows)
-      if: matrix.os == 'windows-2022'
+      if: matrix.build == "windows"
       run: ${{ env.CARGO }} test --verbose --release ${{ env.TARGET_FLAGS }}
+      env:
+        TEST_SRVC_DISABLE_TIMEOUT: 1
