@@ -149,8 +149,6 @@ jobs:
         fi
 
     - name: Upload release archive
-      uses: actions/upload-release-asset@v1.0.2
+      uses: softprops/action-gh-release@v0.1.15
       with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        with:
-          files: ${{ env.ASSET }}
+        files: ${{ env.ASSET }}
