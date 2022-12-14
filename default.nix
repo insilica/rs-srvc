@@ -1,10 +1,6 @@
-{ sources ? import ./nix/sources.nix, pkgs ? import sources.nixpkgs { } }:
-let target = pkgs.stdenv.targetPlatform;
-in with pkgs;
-mkShell {
-  buildInputs = [ cargo git niv nixfmt rustc rustfmt webfs ]
-    ++ (if target.isDarwin then
-      [ darwin.apple_sdk.frameworks.Security ]
-    else
-      [ ]);
-}
+# flake-compat makes Nix flakes compatible with the old Nix cli commands, like nix-build and nix-shell.
+(import (fetchTarball {
+  url =
+    "https://github.com/edolstra/flake-compat/archive/99f1c2157fba4bfe6211a321fd0ee43199025dbf.tar.gz";
+  sha256 = "0x2jn3vrawwv9xp15674wjz9pixwjyj3j771izayl962zziivbx2";
+}) { src = ./.; }).defaultNix

@@ -3,7 +3,7 @@
 Release Checklist
 -----------------
 * Ensure local `master` is up to date with respect to `origin/master`.
-* Edit the `Cargo.toml` to set the new version.
+* Edit `Cargo.toml` and `srvc.nix` to set the new version.
 * Run `cargo update` and review dependency updates. Commit updated
   `Cargo.lock`.
 * Update the CHANGELOG as appropriate.
