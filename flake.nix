@@ -8,12 +8,9 @@
 
   outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = nixpkgs.legacyPackages.${system};
-      in with pkgs;
       let
-        srvc = callPackage ./srvc.nix {
-          Security = lib.optionals stdenv.isDarwin Security;
-        };
+        pkgs = import nixpkgs { inherit system; };
+        srvc = pkgs.callPackage ./srvc.nix { inherit system; };
       in with pkgs; {
         packages.default = srvc;
         packages = { inherit srvc; };
