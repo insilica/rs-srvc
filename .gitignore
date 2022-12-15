@@ -1,5 +1,6 @@
 .*
 !.editorconfig
 
+result
 sink.jsonl
 target/
