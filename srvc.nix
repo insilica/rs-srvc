@@ -8,7 +8,8 @@ rustPlatform.buildRustPackage rec {
 
   cargoLock.lockFile = ./Cargo.lock;
 
-  buildInputs = lib.optionals stdenv.isDarwin [ Security ];
+  buildInputs =
+    lib.optionals stdenv.isDarwin [ Security ] ;
 
   doCheck = false;
 

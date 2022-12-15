@@ -10,7 +10,11 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        srvc = pkgs.callPackage ./srvc.nix { inherit system; };
+        srvc = pkgs.callPackage ./srvc.nix {
+          Security = with pkgs;
+            lib.optionals stdenv.isDarwin
+            [ darwin.apple_sdk.frameworks.Security ];
+        };
       in with pkgs; {
         packages.default = srvc;
         packages = { inherit srvc; };
