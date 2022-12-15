@@ -1,4 +1,3 @@
-# See https://dev.to/johnreillymurray/rust-environment-and-docker-build-with-nix-flakes-19c1
 {
   description = "SysRev Version Control";
 
@@ -9,12 +8,10 @@
 
   outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs =
-          nixpkgs.legacyPackages.${system}; # import nixpkgs { inherit system; };
+      let pkgs = nixpkgs.legacyPackages.${system};
       in with pkgs;
       let
-        srvc = pkgs.callPackage ./srvc.nix {
+        srvc = callPackage ./srvc.nix {
           Security = lib.optionals stdenv.isDarwin Security;
         };
       in {
