@@ -15,9 +15,9 @@
           Security = lib.optionals stdenv.isDarwin Security;
         };
       in with pkgs; {
-        defaultPackage = srvc;
+        packages.default = srvc;
         packages = { inherit srvc; };
-        devShell = mkShell {
+        devShells.default = mkShell {
           buildInputs = [ cargo git niv nixfmt rustc rustfmt webfs ];
         };
       });
