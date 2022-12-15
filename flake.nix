@@ -14,9 +14,12 @@
         srvc = callPackage ./srvc.nix {
           Security = lib.optionals stdenv.isDarwin Security;
         };
-      in {
+      in with pkgs; {
         defaultPackage = srvc;
         packages = { inherit srvc; };
+        devShell = mkShell {
+          buildInputs = [ cargo git niv nixfmt rustc rustfmt webfs ];
+        };
       });
 
 }
