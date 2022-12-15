@@ -39,6 +39,7 @@ jobs:
         fetch-depth: 1
 
     - name: Cache Rust artifacts
+      id: cache-rust
       uses: actions/cache@v3
       with:
         path: |
@@ -68,7 +69,7 @@ jobs:
         targets: ${{ matrix.target }}
 
     - name: Use Cross
-      if: matrix.build == 'win-msvc'
+      if: matrix.build == 'win-msvc' && steps.cache-rust.outputs.cache-hit != 'true'
       shell: bash
       run: |
         cargo install cross
