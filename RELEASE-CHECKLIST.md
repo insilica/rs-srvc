@@ -6,6 +6,7 @@ Release Checklist
 * Edit `Cargo.toml` and `srvc.nix` to set the new version.
 * Run `cargo update` and review dependency updates. Commit updated
   `Cargo.lock`.
+* Run `nix flake update`. Commit updated `flake.lock`.
 * Update the CHANGELOG as appropriate.
 * Push changes to GitHub, NOT including the tag.
 * Once CI for `master` finishes successfully, push the version tag.
