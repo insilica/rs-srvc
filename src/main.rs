@@ -82,6 +82,11 @@ enum EmbeddedSteps {
     Label {},
     /// Remove documents that have already been reviewed
     RemoveReviewed {},
+    /// Run a step using a Nix flake
+    RunUsing {
+        #[clap(forbid_empty_values = true)]
+        uses: String,
+    },
     /// Store review events in a file
     Sink {},
 }
@@ -105,6 +110,7 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
         EmbeddedSteps::Html { file_or_url } => embedded::html::run(&file_or_url),
         EmbeddedSteps::Label {} => embedded::label::run(),
         EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),
+        EmbeddedSteps::RunUsing { uses } => embedded::run_using::run(&uses),
         EmbeddedSteps::Sink {} => embedded::sink::run(),
     }
 }

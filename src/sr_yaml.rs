@@ -24,6 +24,7 @@ pub struct Step {
     pub labels: Option<Vec<String>>,
     pub run: Option<String>,
     pub run_embedded: Option<String>,
+    pub uses: Option<String>,
     #[serde(alias = "url")]
     uri: Option<String>,
 }
@@ -121,11 +122,19 @@ pub fn get_object<T: DeserializeOwned>(client: &Client, url: &str) -> Result<T> 
 }
 
 pub fn parse_step_data(step: Step) -> Result<lib_sr::Step> {
+    let run_embedded = match step.uses {
+        Some(s) => {
+            let mut cmd = "run-using ".to_string();
+            cmd.push_str(&s);
+            Some(cmd)
+        }
+        None => step.run_embedded,
+    };
     Ok(lib_sr::Step {
         extra: step.extra,
         labels: step.labels.unwrap_or(Vec::new()),
         run: step.run,
-        run_embedded: step.run_embedded,
+        run_embedded,
     })
 }
 

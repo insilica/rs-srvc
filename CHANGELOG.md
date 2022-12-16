@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add `uses` property to steps. This can be a reference to a [Nix flake](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html#examples) that will be run to execute the step
+
 ## v0.9.0 (2022-12-12)
 
 - Add `uri` property (alias `url`) to labels in `sr.yaml`. The label definition will be retrieved from the URI.
