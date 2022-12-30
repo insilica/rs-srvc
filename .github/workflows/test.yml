@@ -90,7 +90,7 @@ jobs:
 
     - name: Test release binary (macOS)
       if: matrix.build == 'macos'
-      run: nix-shell --run "cargo test --verbose --release"
+      run: nix develop -c cargo test --verbose --release
       env:
         TEST_SRVC_DISABLE_TIMEOUT: 1
 
