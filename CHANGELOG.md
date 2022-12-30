@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.10.0 (2022-12-30)
+
 - Add `uses` property to steps. This can be a reference to a [Nix flake](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html#examples) that will be run to execute the step
 
 ## v0.9.0 (2022-12-12)
