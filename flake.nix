@@ -18,9 +18,7 @@
       in with pkgs; {
         packages.default = srvc;
         packages = { inherit srvc; };
-        devShells.default = mkShell {
-          buildInputs = [ cargo git niv nixfmt rustc rustfmt webfs ];
-        };
+        devShells.default = import ./shell.nix { inherit pkgs; };
       });
 
 }
