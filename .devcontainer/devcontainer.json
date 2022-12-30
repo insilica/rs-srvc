@@ -1,0 +1,37 @@
+{
+    "name": "srvc",
+    "dockerFile": "Dockerfile",
+    "context": "${localWorkspaceFolder}",
+    "build": {
+        "args": {
+            "USER_UID": "${localEnv:USER_UID}",
+            "USER_GID": "${localEnv:USER_GID}"
+        }
+    },
+    "runArgs": [
+        "--security-opt",
+        "label=disable"
+    ],
+    "containerEnv": {
+        "PRELOAD_EXTENSIONS": "arrterian.nix-env-selector"
+    },
+    "overrideCommand": false,
+    "userEnvProbe": "loginShell",
+    "updateRemoteUserUID": false,
+    "onCreateCommand": "nix shell -c echo done building nix dev environment",
+    "extensions": [
+        "arrterian.nix-env-selector"
+    ],
+    "forwardPorts": [],
+    "mounts": [
+        "source=nix_store,target=/nix,type=volume"
+    ],
+    "customizations": {
+        "codespaces": {
+            "openFiles": [
+                "RELEASE-CHECKLIST.md",
+                "README.md"
+            ]
+        }
+    }
+}
