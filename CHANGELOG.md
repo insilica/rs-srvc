@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.10.1 (2022-12-30)
+
 - Enable Nix flakes when running a command via `uses`.
 
 ## v0.10.0 (2022-12-30)
