@@ -4,6 +4,7 @@ use std::io::{BufReader, ErrorKind, Read, Write};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+use actix_files::Files;
 use actix_web::http::header::ContentType;
 use actix_web::web::{block, Data, Json};
 use actix_web::{get, middleware, post, App, HttpResponse, HttpServer};
@@ -195,7 +196,7 @@ async fn serve(
         current_doc_events: doc_events.next().transpose()?,
         doc_events,
         html,
-        html_file_path,
+        html_file_path: html_file_path.clone(),
         timestamp_override: map_ctx.timestamp_override,
         writer: map_ctx.writer,
     };
@@ -204,13 +205,21 @@ async fn serve(
     let acm = app_ctx_mutex.to_owned();
 
     let server = HttpServer::new(move || {
-        App::new()
+        let mut app = App::new()
             .wrap(middleware::Compress::default())
             .app_data(app_ctx_mutex.to_owned())
             .service(get_config)
             .service(get_current_doc_events)
             .service(get_index)
-            .service(post_submit_label_answers)
+            .service(post_submit_label_answers);
+        match &html_file_path {
+            Some(path) => {
+                let serve_from = path.parent().unwrap_or(path);
+                app = app.service(Files::new("/", serve_from).prefer_utf8(true))
+            }
+            None => {}
+        };
+        app
     })
     .workers(4)
     .bind(("127.0.0.1", port))?;

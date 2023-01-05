@@ -3,6 +3,8 @@
 - Change the behavior of the generator embedded step to emit label-answers
   right after the document they refer to, regardless of the original event
   order.
+- Update html embedded step to also serve static assets in the same directory
+  as the HTML file, as well as subdirectories.
 
 ## v0.10.1 (2022-12-30)
 
