@@ -41,10 +41,7 @@ pub fn run(file_or_url: &str) -> Result<()> {
             r#type: String::from("label"),
             uri: None,
         };
-        event
-            .serialize(&mut serde_json::Serializer::new(&mut writer))
-            .chain_err(|| "Event serialization failed")?;
-        writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+        embedded::write_event(&mut writer, &event)?
     }
 
     for result in in_events {

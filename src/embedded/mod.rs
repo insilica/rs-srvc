@@ -31,7 +31,7 @@ pub struct Env {
 
 pub struct GeneratorContext {
     config: Config,
-    writer: Box<dyn Write>,
+    writer: Box<dyn Write + Send + Sync>,
 }
 
 pub struct MapContext {
