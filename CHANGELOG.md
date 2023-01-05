@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Change the behavior of the generator embedded step to emit label-answers
+  right after the document they refer to, regardless of the original event
+  order.
+
 ## v0.10.1 (2022-12-30)
 
 - Enable Nix flakes when running a command via `uses`.

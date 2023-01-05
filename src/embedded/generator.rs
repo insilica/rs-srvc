@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 use std::io::BufReader;
-use std::io::Write;
 
 use reqwest::blocking::Client;
-use serde::Serialize;
 use serde_json::{json, Value};
 
 use lib_sr::errors::*;
@@ -44,6 +42,9 @@ pub fn run(file_or_url: &str) -> Result<()> {
         embedded::write_event(&mut writer, &event)?
     }
 
+    let mut answers: HashMap<String, Vec<Event>> = HashMap::new();
+    let mut events: Vec<Event> = Vec::new();
+
     for result in in_events {
         let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
         let expected_hash = lib_sr::event::event_hash(event.clone())?;
@@ -57,10 +58,54 @@ pub fn run(file_or_url: &str) -> Result<()> {
             )
             .into());
         }
-        event
-            .serialize(&mut serde_json::Serializer::new(&mut writer))
-            .chain_err(|| "Event serialization failed")?;
-        writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+
+        if event.r#type != "label-answer" {
+            events.push(event);
+        } else {
+            match &event.data {
+                Some(data) => match data.get("document") {
+                    Some(doc_hash) => {
+                        let hash = doc_hash.as_str().expect("str").to_owned();
+                        match answers.get_mut(&hash) {
+                            Some(v) => v.push(event.clone()),
+                            None => {
+                                let mut v = Vec::new();
+                                v.push(event.clone());
+                                answers.insert(hash, v);
+                            }
+                        }
+                    }
+                    None => {
+                        return Err(format!(
+                        "label-answer is missing the \"data.document\" property. Event hash: {}",
+                        event.hash.unwrap()
+                    )
+                        .into())
+                    }
+                },
+                None => {
+                    return Err(format!(
+                        "label-answer is missing the \"data\" property. Event hash: {}",
+                        event.hash.unwrap()
+                    )
+                    .into())
+                }
+            }
+        }
+    }
+
+    for event in events {
+        embedded::write_event(&mut writer, &event)?;
+        if event.r#type == "document" {
+            match answers.get(&event.hash.to_owned().expect("hash")) {
+                Some(doc_answers) => {
+                    for answer in doc_answers {
+                        embedded::write_event(&mut writer, &answer)?;
+                    }
+                }
+                None => {}
+            }
+        }
     }
 
     Ok(())
