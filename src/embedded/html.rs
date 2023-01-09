@@ -90,7 +90,8 @@ async fn get_current_doc_events(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpR
 
 #[get("/")]
 async fn get_index(app_ctx_mutex: Data<Mutex<AppContext>>) -> std::io::Result<HttpResponse> {
-    let html_file_path = &app_ctx_mutex.lock().unwrap().html_file_path;
+    let app_ctx = app_ctx_mutex.lock().unwrap();
+    let html_file_path = &app_ctx.html_file_path;
     match html_file_path {
         Some(path) => {
             let file = File::open(path)?;
@@ -101,7 +102,7 @@ async fn get_index(app_ctx_mutex: Data<Mutex<AppContext>>) -> std::io::Result<Ht
         }
         None => Ok(HttpResponse::Ok()
             .content_type(ContentType::html())
-            .body(app_ctx_mutex.lock().unwrap().html.to_owned())),
+            .body(app_ctx.html.to_owned())),
     }
 }
 

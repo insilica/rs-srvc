@@ -5,6 +5,7 @@
   order.
 - Update html embedded step to also serve static assets in the same directory
   as the HTML file, as well as subdirectories.
+- Fix a hang when running 'run-embedded-step html' with a URL argument.
 
 ## v0.10.1 (2022-12-30)
 
