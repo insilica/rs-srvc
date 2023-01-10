@@ -162,6 +162,21 @@ fn test_generator_url_404() -> Result<(), std::io::Error> {
 }
 
 #[test]
+fn test_implicit_db() -> Result<(), std::io::Error> {
+    let dir = "test-resources/implicit-db";
+    common::remove_sink(dir)?;
+    common::cmd(400)
+        .current_dir(dir)
+        .args(&["review", "simple"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(dir)?;
+    Ok(())
+}
+
+#[test]
 fn test_reviewer_uri_domain() -> Result<(), std::io::Error> {
     let dir = "test-resources/reviewer-uri-domain";
     let sink = PathBuf::from(dir).join("sink.jsonl");

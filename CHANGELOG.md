@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Rename `run_embedded` step property to `run-embedded`. `run_embedded` is still accepted as an alias in `sr.yaml` files. [#2](https://github.com/insilica/rs-srvc/issues/2)
+- Allow omitting `db` from sr.yaml. The default value is now `sink.jsonl`.
 
 ## v0.11.0 (2023-01-09)
 

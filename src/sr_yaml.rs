@@ -290,7 +290,7 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
         Ok(_) => Ok(lib_sr::Config {
             current_labels: None,
             current_step: None,
-            db: config.db.ok_or("\"db\" not set in config")?,
+            db: config.db.unwrap_or(String::from("sink.jsonl")),
             extra: config.extra,
             flows: parse_flows(&client, config.flows)?,
             labels: parse_labels(&client, &config.labels)?,
