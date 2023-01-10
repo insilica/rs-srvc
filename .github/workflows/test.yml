@@ -50,11 +50,37 @@ jobs:
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+    - name: Restore cached Nix store
+      if: matrix.build != 'win-msvc'
+      id: nix-cache-restore
+      uses: john-shaffer/cache/restore@main
+      with:
+        key: nix-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
+        restore-keys: |
+          nix-${{ github.repository }}-${{ runner.os }}-
+        path: |
+          /nix/store
+          /nix/var/nix/db/db.sqlite
+
     - name: Install Nix
       if: matrix.build != 'win-msvc'
       uses: cachix/install-nix-action@v18
+
+    - name: Build Nix derivations
+      if: matrix.build != 'win-msvc' && steps.nix-cache-restore.outputs.cache-hit != 'true'
+      run: |
+        nix flake check
+        nix develop -c echo OK
+        nix build
+
+    - name: Save cached Nix store
+      if: matrix.build != 'win-msvc' && steps.nix-cache-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
       with:
-        nix_path: nixpkgs=channel:nixos-22.05
+        key: nix-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
+        path: |
+          /nix/store
+          /nix/var/nix/db/db.sqlite
 
     - name: Install packages (Ubuntu)
       if: matrix.build == 'linux'
