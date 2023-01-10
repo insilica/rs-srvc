@@ -48,7 +48,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Restore cached Nix store
       if: matrix.build != 'win-msvc'
