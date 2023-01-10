@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Rename `run_embedded` step property to `run-embedded`. `run_embedded` is still accepted as an alias in `sr.yaml` files. [#2](https://github.com/insilica/rs-srvc/issues/2)
+
 ## v0.11.0 (2023-01-09)
 
 - Change the behavior of the generator embedded step to emit label-answers

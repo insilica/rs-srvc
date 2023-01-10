@@ -45,6 +45,6 @@ flows:
 
   simple:
     steps:
-      - run_embedded: "generator-file docs.jsonl"
+      - run-embedded: "generator-file docs.jsonl"
 
-      - run_embedded: "remove-reviewed"
+      - run-embedded: "remove-reviewed"

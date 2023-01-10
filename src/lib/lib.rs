@@ -26,6 +26,7 @@ pub struct Step {
     pub extra: HashMap<String, serde_json::Value>,
     pub labels: Vec<String>,
     pub run: Option<String>,
+    #[serde(alias = "run-embedded", rename(serialize = "run-embedded"))]
     pub run_embedded: Option<String>,
 }
 
