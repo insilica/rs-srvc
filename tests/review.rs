@@ -8,16 +8,16 @@ fn test_label() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("n")?;
-    p.exp_string("substance")?;
+    p.exp_string("Substance")?;
     p.exp_string("1. \"sodium laureth sulfate\"")?;
     p.exp_string("7. Skip Question")?;
     p.exp_string("?")?;
     p.send_line("1")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())
@@ -29,11 +29,11 @@ fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-boolean";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("n")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())
@@ -45,16 +45,16 @@ fn test_label_uri() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-uri";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("n")?;
-    p.exp_string("substance")?;
+    p.exp_string("Substance")?;
     p.exp_string("1. \"sodium laureth sulfate\"")?;
     p.exp_string("7. Skip Question")?;
     p.exp_string("?")?;
     p.send_line("1")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())
@@ -66,15 +66,15 @@ fn test_label_json_schema() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-json-schema";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("yes")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("no")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("skip")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("yes")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())
@@ -86,15 +86,15 @@ fn test_label_json_schema_url() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-json-schema-url";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("yes")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("no")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("skip")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("yes")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())
@@ -236,16 +236,16 @@ fn test_step_uri() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/step-uri";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("n")?;
-    p.exp_string("substance")?;
+    p.exp_string("Substance")?;
     p.exp_string("1. \"sodium laureth sulfate\"")?;
     p.exp_string("7. Skip Question")?;
     p.exp_string("?")?;
     p.send_line("1")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())
@@ -257,16 +257,16 @@ fn test_flow_uri() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/flow-uri";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("n")?;
-    p.exp_string("substance")?;
+    p.exp_string("Substance")?;
     p.exp_string("1. \"sodium laureth sulfate\"")?;
     p.exp_string("7. Skip Question")?;
     p.exp_string("?")?;
     p.send_line("1")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())
@@ -274,20 +274,20 @@ fn test_flow_uri() -> Result<(), rexpect::errors::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_base_uri() -> Result<(), rexpect::errors::Error> {
+fn test_base_config() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/base-config";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
-    p.exp_string("eye irritation? [Yes/No/Skip]")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
     p.send_line("n")?;
-    p.exp_string("substance")?;
+    p.exp_string("Substance")?;
     p.exp_string("1. \"sodium laureth sulfate\"")?;
     p.exp_string("7. Skip Question")?;
     p.exp_string("?")?;
     p.send_line("1")?;
-    p.exp_string("acute toxicity? [Yes/No/Skip]")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
     common::check_sink(dir).unwrap();
     Ok(())

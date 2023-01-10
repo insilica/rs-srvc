@@ -205,7 +205,7 @@ pub fn parse_label_data(
         hash: None,
         id: id.to_string(),
         json_schema,
-        question: non_blank(id, "question", &label.question)?.to_lowercase(),
+        question: non_blank(id, "question", &label.question)?,
         required: label.required.unwrap_or(false),
         r#type: non_blank(id, "type", &label.r#type)?.to_lowercase(),
     };
