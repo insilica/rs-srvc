@@ -45,8 +45,14 @@ pub struct Flow {
 pub struct Label {
     #[serde(flatten)]
     extra: HashMap<String, serde_json::Value>,
+    #[serde(alias = "json-schema", rename(serialize = "json-schema"))]
     json_schema: Option<serde_json::Value>,
-    #[serde(alias = "json_schema_url")]
+    #[serde(
+        alias = "json_schema_url",
+        alias = "json-schema-uri",
+        alias = "json-schema-url",
+        rename(serialize = "json-schema-uri")
+    )]
     json_schema_uri: Option<String>,
     question: Option<String>,
     required: Option<bool>,
@@ -58,7 +64,12 @@ pub struct Label {
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
-    #[serde(alias = "base_url")]
+    #[serde(
+        alias = "base_url",
+        alias = "base-uri",
+        alias = "base-url",
+        rename(serialize = "base-uri")
+    )]
     pub base_uri: Option<String>,
     pub db: Option<String>,
     #[serde(flatten)]
@@ -66,6 +77,7 @@ pub struct Config {
     pub flows: Option<HashMap<String, Flow>>,
     pub labels: Option<HashMap<String, Label>>,
     pub reviewer: Option<String>,
+    #[serde(alias = "sink-all-events", rename(serialize = "sink-all-events"))]
     pub sink_all_events: Option<bool>,
 }
 

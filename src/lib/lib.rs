@@ -26,7 +26,7 @@ pub struct Step {
     pub extra: HashMap<String, serde_json::Value>,
     pub labels: Vec<String>,
     pub run: Option<String>,
-    #[serde(alias = "run-embedded", rename(serialize = "run-embedded"))]
+    #[serde(rename = "run-embedded")]
     pub run_embedded: Option<String>,
 }
 
@@ -45,6 +45,7 @@ pub struct Label {
     pub extra: HashMap<String, serde_json::Value>,
     pub hash: Option<String>,
     pub id: String,
+    #[serde(rename = "json-schema")]
     pub json_schema: Option<serde_json::Value>,
     pub question: String,
     pub required: bool,
@@ -54,7 +55,9 @@ pub struct Label {
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
+    #[serde(rename = "current-labels")]
     pub current_labels: Option<Vec<Label>>,
+    #[serde(rename = "current-step")]
     pub current_step: Option<Step>,
     pub db: String,
     #[serde(flatten)]
@@ -62,6 +65,7 @@ pub struct Config {
     pub flows: HashMap<String, Flow>,
     pub labels: HashMap<String, Label>,
     pub reviewer: String,
+    #[serde(rename = "sink-all-events")]
     pub sink_all_events: bool,
 }
 

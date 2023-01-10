@@ -312,7 +312,7 @@ h1 {
         var req = new XMLHttpRequest()
         req.addEventListener("load", function (resp) {
           config = JSON.parse(req.response)
-          labels = config['current_labels'] || []
+          labels = config['current-labels'] || config['current_labels'] || []
           labels.forEach(function (label) {
             labelsEl.appendChild(labelInput(label))
           })
