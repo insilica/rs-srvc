@@ -38,6 +38,12 @@ jobs:
       with:
         fetch-depth: 1
 
+    - name: Install Nix
+      if: matrix.build != 'win-msvc'
+      uses: cachix/install-nix-action@v18
+      with:
+        nix_path: nixpkgs=channel:nixos-22.05
+
     - name: Restore cached Nix store
       if: matrix.build != 'win-msvc'
       id: nix-cache-restore
@@ -49,12 +55,6 @@ jobs:
         path: |
           /nix/store
           /nix/var/nix/db/db.sqlite
-
-    - name: Install Nix
-      if: matrix.build != 'win-msvc'
-      uses: cachix/install-nix-action@v18
-      with:
-        nix_path: nixpkgs=channel:nixos-22.05
 
     - name: Build Nix derivations
       if: matrix.build != 'win-msvc' && steps.nix-cache-restore.outputs.cache-hit != 'true'
