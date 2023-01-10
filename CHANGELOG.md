@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.11.0 (2023-01-09)
+
 - Change the behavior of the generator embedded step to emit label-answers
   right after the document they refer to, regardless of the original event
   order.

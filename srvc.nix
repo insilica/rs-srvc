@@ -2,7 +2,7 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "srvc";
-  version = "0.10.1";
+  version = "0.11.0";
 
   src = ./.;
 
