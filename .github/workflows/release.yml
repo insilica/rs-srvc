@@ -115,6 +115,37 @@ jobs:
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
         echo "target dir is: ${{ env.TARGET_DIR }}"
 
+    - name: Restore cached Cargo artifacts
+      id: cargo-cache-restore
+      uses: actions/cache/restore@v3
+      with:
+        key: cargo-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          cargo-${{ github.repository }}-${{ runner.os }}-
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+
+    - name: Run cargo build
+      if: steps.cargo-cache-restore.outputs.cache-hit != 'true'
+      run: |
+        cargo build --release
+
+    - name: Save cached Cargo artifacts
+      if: steps.cargo-cache-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      with:
+        key: cargo-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+
     - name: Build release binary
       run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
 

@@ -38,18 +38,6 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Cache Rust artifacts
-      id: cache-rust
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-
     - name: Restore cached Nix store
       if: matrix.build != 'win-msvc'
       id: nix-cache-restore
@@ -111,6 +99,37 @@ jobs:
         echo "cargo command is: ${{ env.CARGO }}"
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
         echo "target dir is: ${{ env.TARGET_DIR }}"
+
+    - name: Restore cached Cargo artifacts
+      id: cargo-cache-restore
+      uses: actions/cache/restore@v3
+      with:
+        key: cargo-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          cargo-${{ github.repository }}-${{ runner.os }}-
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+
+    - name: Run cargo build
+      if: steps.cargo-cache-restore.outputs.cache-hit != 'true'
+      run: |
+        cargo build --release
+
+    - name: Save cached Cargo artifacts
+      if: steps.cargo-cache-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      with:
+        key: cargo-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
 
     - name: Test release binary (Linux)
       if: matrix.build == 'linux'
