@@ -235,9 +235,8 @@ async fn serve(
     server.run().await
 }
 
-pub fn run(file_or_url: &str) -> Result<()> {
+pub fn run_with_html(html: String, path: Option<PathBuf>) -> Result<()> {
     let map_ctx = embedded::get_map_context()?;
-    let (html, path) = embedded::get_file_or_url(Client::new(), file_or_url)?;
     let port = map_ctx
         .config
         .to_owned()
@@ -248,4 +247,9 @@ pub fn run(file_or_url: &str) -> Result<()> {
         .unwrap_or(0) as u16;
 
     serve(port, map_ctx, html, path).chain_err(|| "Error starting server")
+}
+
+pub fn run(file_or_url: &str) -> Result<()> {
+    let (html, path) = embedded::get_file_or_url(Client::new(), file_or_url)?;
+    run_with_html(html, path)
 }
