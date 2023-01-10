@@ -116,6 +116,21 @@ fn test_simple() -> Result<(), std::io::Error> {
 }
 
 #[test]
+fn test_generator_blank_lines() -> Result<(), std::io::Error> {
+    let dir = "test-resources/generator-blank-lines";
+    common::remove_sink(dir)?;
+    common::cmd(400)
+        .current_dir(dir)
+        .args(&["review", "generator"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(dir)?;
+    Ok(())
+}
+
+#[test]
 fn test_generator_order() -> Result<(), std::io::Error> {
     let dir = "test-resources/generator-order";
     common::remove_sink(dir)?;

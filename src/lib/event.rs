@@ -40,8 +40,31 @@ pub fn parse_event(s: &str) -> Result<Event> {
     }
 }
 
+pub fn parse_event_opt(s: &str) -> Result<Option<Event>> {
+    match serde_json::from_str(s) {
+        Ok(event) => Ok(Some(event)),
+        Err(e) => {
+            if s.len() == 0 {
+                Ok(None)
+            } else {
+                Err(e).chain_err(|| "Event deserialization failed")
+            }
+        }
+    }
+}
+
 pub fn events(reader: BufReader<impl Read>) -> impl Iterator<Item = Result<Event>> {
     reader
         .lines()
-        .map(|line| parse_event(line.chain_err(|| "Failed to read line")?.as_str()))
+        .map(|line| parse_event_opt(line.chain_err(|| "Failed to read line")?.as_str()))
+        .filter(|x| match x {
+            Ok(Some(_)) => true,
+            Ok(None) => false,
+            Err(_) => true,
+        })
+        .map(|x| match x {
+            Ok(Some(event)) => Ok(event),
+            Ok(None) => panic!("Unexpected None"),
+            Err(e) => Err(e),
+        })
 }

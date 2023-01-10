@@ -5,6 +5,7 @@
 - Allow omitting `db` from sr.yaml. The default value is now `sink.jsonl`.
 - Add `label-web` embedded step. It serves a web server with a basic labelling interface.
 - Fix an unintentional conversion of label.question to lower-case.
+- Tolerate blank lines in event streams. This fixes a crash with the `generator` embedded step when the source file has extra blank lines.
 
 ## v0.11.0 (2023-01-09)
 
