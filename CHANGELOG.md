@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Add git revision to "sr version" output
+- Rename `remove-reviewed` embedded step to `skip-reviewed` for clarity. `remove-reviewed` still works as an alias.
 
 ## v0.12.0 (2023-01-10)
 

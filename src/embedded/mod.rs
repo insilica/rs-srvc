@@ -18,9 +18,9 @@ pub mod generator;
 pub mod html;
 pub mod label;
 pub mod label_web;
-pub mod remove_reviewed;
 pub mod run_using;
 pub mod sink;
+pub mod skip_reviewed;
 
 #[derive(Debug)]
 pub struct Env {

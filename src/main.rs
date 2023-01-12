@@ -83,8 +83,6 @@ enum EmbeddedSteps {
     Label {},
     /// Label documents using a web interface
     LabelWeb {},
-    /// Remove documents that have already been reviewed
-    RemoveReviewed {},
     /// Run a step using a Nix flake
     RunUsing {
         #[clap(forbid_empty_values = true)]
@@ -92,6 +90,9 @@ enum EmbeddedSteps {
     },
     /// Store review events in a file
     Sink {},
+    #[clap(alias = "remove-reviewed")]
+    /// Skip documents that have already been reviewed
+    SkipReviewed {},
 }
 
 fn print_config(opts: &mut Opts, pretty: bool) -> Result<()> {
@@ -113,7 +114,7 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
         EmbeddedSteps::Html { file_or_url } => embedded::html::run(&file_or_url),
         EmbeddedSteps::Label {} => embedded::label::run(),
         EmbeddedSteps::LabelWeb {} => embedded::label_web::run(),
-        EmbeddedSteps::RemoveReviewed {} => embedded::remove_reviewed::run(),
+        EmbeddedSteps::SkipReviewed {} => embedded::skip_reviewed::run(),
         EmbeddedSteps::RunUsing { uses } => embedded::run_using::run(&uses),
         EmbeddedSteps::Sink {} => embedded::sink::run(),
     }
