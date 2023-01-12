@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> { } }:
+{ pkgs ? import <nixpkgs> { }, self-rev ? null }:
 let target = pkgs.stdenv.targetPlatform;
 in with pkgs;
 mkShell {
@@ -7,4 +7,6 @@ mkShell {
       [ darwin.apple_sdk.frameworks.Security ]
     else
       [ ]);
+
+  SELF_REV = self-rev;
 }

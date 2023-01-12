@@ -20,6 +20,7 @@ mod json_schema;
 mod review;
 mod sr_yaml;
 
+const REV: Option<&'static str> = option_env!("SELF_REV");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 /// Sysrev version control CLI
@@ -120,6 +121,12 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
 
 fn version() -> Result<()> {
     writeln!(io::stdout(), "srvc {}", VERSION).chain_err(|| "Failed to write to stdout")?;
+    match REV {
+        Some(rev) => {
+            writeln!(io::stdout(), "Revision {}", rev).chain_err(|| "Failed to write to stdout")?
+        }
+        _ => {}
+    }
     Ok(())
 }
 

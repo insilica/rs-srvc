@@ -14,11 +14,15 @@
           Security = with pkgs;
             lib.optionals stdenv.isDarwin
             [ darwin.apple_sdk.frameworks.Security ];
+            self-rev = if (self ? rev) then self.rev else null;
         };
       in with pkgs; {
         packages.default = srvc;
         packages = { inherit srvc; };
-        devShells.default = import ./shell.nix { inherit pkgs; };
+        devShells.default = import ./shell.nix {
+          inherit pkgs;
+          self-rev = if (self ? rev) then self.rev else null;
+        };
       });
 
 }

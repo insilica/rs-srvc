@@ -1,4 +1,4 @@
-{ lib, rustPlatform, stdenv, Security }:
+{ lib, rustPlatform, stdenv, Security, self-rev ? null }:
 
 rustPlatform.buildRustPackage rec {
   pname = "srvc";
@@ -12,6 +12,8 @@ rustPlatform.buildRustPackage rec {
     lib.optionals stdenv.isDarwin [ Security ] ;
 
   doCheck = false;
+
+  SELF_REV = self-rev;
 
   meta = { mainProgram = "sr"; };
 }
