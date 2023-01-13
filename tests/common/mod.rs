@@ -2,21 +2,19 @@
 
 use std::env;
 use std::path::PathBuf;
-#[cfg(unix)]
-use std::process;
+use std::thread;
 use std::time::Duration;
 
 use assert_cmd::Command;
 #[cfg(unix)]
 use rexpect::session::PtySession;
 
-#[cfg(unix)]
+mod http_server;
+
 #[ctor::ctor]
-static STATIC_CTOR: process::Child = {
-    process::Command::new("webfsd")
-        .args(&["-4Fp", "8877", "-r", "test-resources"])
-        .spawn()
-        .expect("Failed to start webfsd test-resources server")
+static STATIC_CTOR: () = {
+    thread::spawn(move || http_server::run("test-resources", 8877).unwrap());
+    http_server::wait_server_ready(8877).unwrap()
 };
 
 pub fn cmd(timeout_millis: u64) -> Command {
