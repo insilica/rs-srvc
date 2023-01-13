@@ -3,6 +3,7 @@
 !.editorconfig
 !.gitignore
 
+_build/
 result
 sink.jsonl
 target/
