@@ -1,0 +1,64 @@
+name: Docs
+
+on:
+  push:
+    branches: master
+
+jobs:
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v18
+
+    - name: Restore cached Nix store
+      id: nix-cache-restore
+      uses: john-shaffer/cache/restore@main
+      with:
+        key: nix-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
+        restore-keys: |
+          nix-${{ github.repository }}-${{ runner.os }}-
+        path: |
+          /nix/store
+          /nix/var/nix/db/db.sqlite
+
+    - name: Build Nix derivations
+      if: steps.nix-cache-restore.outputs.cache-hit != 'true'
+      run: |
+        nix flake check
+        nix develop -c echo OK
+        nix build
+
+    - name: Save cached Nix store
+      if: steps.nix-cache-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      with:
+        key: nix-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
+        path: |
+          /nix/store
+          /nix/var/nix/db/db.sqlite
+
+    - name: Build hugo site
+      run: nix develop -c make html
+      working-directory: docs
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DOCS }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DOCS }}
+        aws-region: us-east-1
+        mask-aws-account-id: no
+
+    - name: Deploy site
+      run: |
+        nix develop -c aws s3 sync _build/html s3://docs.sysrev.com
+        nix develop -c aws cloudfront create-invalidation --distribution-id EA1FHUI2SBWO4 --paths "/*"
+      working-directory: docs
