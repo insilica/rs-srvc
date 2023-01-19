@@ -10,7 +10,8 @@ SRVC documentation contents
 .. toctree::
     :maxdepth: 3
 
-    intro/index
+    installation
+    overview
     ref/index
 
 Indices, glossary and tables

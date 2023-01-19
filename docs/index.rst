@@ -15,6 +15,6 @@ First steps
 
 Are you new to SRVC? This is the place to start!
 
-* :doc:`Overview <intro/overview>`
-* :doc:`Installation <intro/installation>`
+* :doc:`Installation <installation>`
+* :doc:`Overview <overview>`
 * :doc:`Reference <ref/index>`
