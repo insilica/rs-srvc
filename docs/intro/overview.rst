@@ -78,7 +78,7 @@ Get started with the command:
 
 You should see the text ``Listening on http://127.0.0.1:5005``.
 Visiting that address in a browser will load an interface that shows a document and allows submitting answers for that document.
-After you submit an answer, you should see that it has been appendend to ``sink.jsonl``.
+After you submit an answer, you should see that it has been appended to ``sink.jsonl``.
 
 Collaboration
 =============
