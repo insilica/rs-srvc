@@ -2,7 +2,7 @@
 Installation
 ============
 
-Install Using Homebrew (macOS and Linux)
+Homebrew (macOS and Linux)
 ========================================
 
 Install homebrew_, and run:
@@ -13,7 +13,7 @@ Install homebrew_, and run:
 
     brew install insilica/srvc/srvc
 
-Install Using Nix (macOS and Linux)
+Nix (macOS and Linux)
 ===================================
 
 Install Nix_, and run:
@@ -24,7 +24,7 @@ Install Nix_, and run:
 
     nix profile install github:insilica/rs-srvc
 
-Binary (macOS, Linux, and Windows)
+Binary (macOS, Linux, Windows)
 ==================================
 
 Download the binary for your platform from the releases_ page. Extract it, make

@@ -1,5 +1,5 @@
 =============
-SRVC overview
+Overview
 =============
 
 SRVC is an open-source document review system.
@@ -80,7 +80,7 @@ You should see the text ``Listening on http://127.0.0.1:5005``.
 Visiting that address in a browser will load an interface that shows a document and allows submitting answers for that document.
 After you submit an answer, you should see that it has been appended to ``sink.jsonl``.
 
-Collaboration
+Collaborate
 =============
 
 One way to collaborate with other reviewers is to use a git repository for your SRVC project directory.

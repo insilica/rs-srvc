@@ -1,8 +1,8 @@
 ==================
-SRVC documentation
+SRVC
 ==================
 
-.. rubric:: Everything you need to know about SRVC (SysRev Version Control).
+.. rubric:: Everything you need to use SRVC (SysRev Version Control).
 
 SRVC is an open-source document review system that provides full privacy and control over your data.
 It is versatile, and can be extended with Python, R, or any other language.
@@ -18,3 +18,16 @@ Are you new to SRVC? This is the place to start!
 * :doc:`Installation <installation>`
 * :doc:`Overview <overview>`
 * :doc:`Reference <ref/index>`
+
+Quickstart
+==========
+First, :doc:`Install SRVC <installation>`, then clone `srvc-template <https://github.com/insilica/srvc-template>`_  and :
+
+.. code-block:: console
+
+   $ git clone git@github.com:insilica/srvc-template.git 
+   $ cd srvc-template
+   $ sr review pubmed-search # Pull "angry bees" from pubmed
+   $ sr review label # Start labeling interface on port 5005
+
+Now you can alter ``sr.yaml`` to modify the pubmed query or begin building your own SRVC projects.
