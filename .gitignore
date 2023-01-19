@@ -1,6 +1,7 @@
 .*
 !.devcontainer
 !.editorconfig
+!.github
 !.gitignore
 
 _build/
