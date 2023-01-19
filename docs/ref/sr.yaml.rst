@@ -2,10 +2,7 @@
 sr.yaml
 =======
 
-``sr.yaml`` is a file in every SRVC project.
-It defines the project configuration and the review flows.
-
-Here is a sample ``sr.yaml`` `from the srvc-template repository <https://github.com/insilica/srvc-template/blob/main/sr.yaml>`_.
+``sr.yaml`` is a file in every SRVC project that defines project configuration and the review flows. Here is a sample ``sr.yaml`` `from the srvc-template repository <https://github.com/insilica/srvc-template/blob/main/sr.yaml>`_:
 
 .. code-block:: yaml
 
