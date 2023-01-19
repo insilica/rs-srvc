@@ -1,20 +1,20 @@
-.. SRVC documentation master file, created by
-   sphinx-quickstart on Fri Jan 13 15:42:11 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to SRVC's documentation!
-================================
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-
-
-Indices and tables2
+==================
+SRVC documentation
 ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. rubric:: Everything you need to know about SRVC (SysRev Version Control).
+
+SRVC is an open-source document review system that provides full privacy and control over your data.
+It is versatile, and can be extended with Python, R, or any other language.
+The data model is flexible, and supports managing data with `git <https://git-scm.com/>`_.
+
+.. _index-first-steps:
+
+First steps
+===========
+
+Are you new to SRVC? This is the place to start!
+
+* :doc:`Overview <intro/overview>`
+* :doc:`Installation <intro/installation>`
+* :doc:`Reference <ref/index>`
