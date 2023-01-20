@@ -9,10 +9,9 @@ Here is an overview of how to create a review project with SRVC.
 Create a project
 ================
 
-Every SRVC project is defined by an sr.yaml file.
-It specifies the project configuration, labels, and review flows.
-
-Here is a sample ``sr.yaml`` from the `srvc-template repository <https://github.com/insilica/srvc-template/blob/main/sr.yaml>`_.
+Every SRVC project has an sr.yaml configuration which 
+specifies labels, review flows, and other parameters. 
+See the ``sr.yaml`` from the `srvc-template repository <https://github.com/insilica/srvc-template/blob/main/sr.yaml>`_:
 
 .. code-block:: yaml
 
