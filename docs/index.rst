@@ -25,9 +25,9 @@ First, :doc:`Install SRVC <installation>`, then clone `srvc-template <https://gi
 
 .. code-block:: console
 
-   $ git clone git@github.com:insilica/srvc-template.git 
+   $ git clone git@github.com:insilica/srvc-template.git
    $ cd srvc-template
-   $ sr review pubmed-search # Pull "angry bees" from pubmed
-   $ sr review label # Start labeling interface on port 5005
+   $ sr flow pubmed-search # Pull "angry bees" from pubmed
+   $ sr flow label # Start labeling interface on port 5005
 
 Now you can alter ``sr.yaml`` to modify the pubmed query or begin building your own SRVC projects.

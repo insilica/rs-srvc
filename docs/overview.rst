@@ -9,8 +9,8 @@ Here is an overview of how to create a review project with SRVC.
 Create a project
 ================
 
-Every SRVC project has an sr.yaml configuration which 
-specifies labels, review flows, and other parameters. 
+Every SRVC project has an sr.yaml configuration which
+specifies labels, review flows, and other parameters.
 See the ``sr.yaml`` from the `srvc-template repository <https://github.com/insilica/srvc-template/blob/main/sr.yaml>`_:
 
 .. code-block:: yaml
@@ -58,7 +58,7 @@ With the ``sr.yaml`` file given above, documents can be imported from PubMed wit
 
 .. code-block:: shell
 
-    sr review pubmed-search
+    sr flow pubmed-search
 
 As the :doc:`search step </ref/step/pubmed-search>` runs, you can see :doc:`documents </ref/event/document>` being appended to a file named ``sink.jsonl``.
 
@@ -73,7 +73,7 @@ Get started with the command:
 
 .. code-block:: shell
 
-    sr review label
+    sr flow label
 
 You should see the text ``Listening on http://127.0.0.1:5005``.
 Visiting that address in a browser will load an interface that shows a document and allows submitting answers for that document.
