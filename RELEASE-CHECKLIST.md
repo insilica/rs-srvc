@@ -4,10 +4,10 @@ Release Checklist
 -----------------
 * Ensure local `master` is up to date with respect to `origin/master`.
 * Run `cargo update` and review dependency updates.
+* Edit `Cargo.toml` and `srvc.nix` to set the new version.
 * Run `nix flake update`.
 * Run `cargo test`.
 * Commit updated `Cargo.lock` and `flake.lock`.
-* Edit `Cargo.toml` and `srvc.nix` to set the new version.
 * Update the CHANGELOG as appropriate.
 * Push changes to GitHub, NOT including the tag.
 * Once CI for `master` finishes successfully, push the version tag.
