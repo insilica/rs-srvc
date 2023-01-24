@@ -3,7 +3,7 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import subprocess
+import subprocess, os
 
 commit_id = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('ascii')
 
@@ -34,8 +34,13 @@ html_show_sphinx = False
 html_static_path = ['_static']
 html_theme = 'sphinx_rtd_theme'
 html_context = {
+  'current_version': os.environ.get('CURRENT_VERSION', 'latest'),
   'display_github': True,
   'github_user': 'insilica',
   'github_repo': 'rs-srvc',
   'github_version': commit_id + '/docs/',
+  'versions': [
+    ['latest', '/latest/'],
+    ['stable', '/stable/'],
+  ],
 }

@@ -70,19 +70,31 @@ jobs:
         aws-region: us-east-1
         mask-aws-account-id: no
 
-    - name: Deploy site
+    - name: Deploy latest site
       if: github.ref == 'refs/heads/master'
       run: |
         nix develop -c aws s3 sync _build/html s3://docs.sysrev.com/latest
         nix develop -c aws cloudfront create-invalidation --distribution-id EA1FHUI2SBWO4 --paths "/latest/*"
       working-directory: docs
+      env:
+        CURRENT_VERSION: latest
 
-    - name: Deploy site
+    - name: Deploy version site
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
         nix develop -c aws s3 sync _build/html s3://docs.sysrev.com/$RG_VERSION
+        nix develop -c aws cloudfront create-invalidation --distribution-id EA1FHUI2SBWO4 --paths "/$RG_VERSION/*"
+      working-directory: docs
+      env:
+        CURRENT_VERSION: ${{ env.RG_VERSION }}
+
+    - name: Deploy stable site
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
         nix develop -c aws s3 sync _build/html s3://docs.sysrev.com/stable
         touch .redirect
         nix develop -c aws s3 cp .redirect s3://docs.sysrev.com/index.html --website-redirect /stable/
-        nix develop -c aws cloudfront create-invalidation --distribution-id EA1FHUI2SBWO4 --paths "/$RG_VERSION/* /stable/*"
+        nix develop -c aws cloudfront create-invalidation --distribution-id EA1FHUI2SBWO4 --paths "/stable/*"
       working-directory: docs
+      env:
+        CURRENT_VERSION: stable
