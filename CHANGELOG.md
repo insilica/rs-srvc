@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.13.0 (2023-01-24)
+
 - Add git revision to "sr version" output
 - Rename `remove-reviewed` embedded step to `skip-reviewed` for clarity. `remove-reviewed` still works as an alias.
 - Rename `review` command to `flow`. `review` still works as an alias.
