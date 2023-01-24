@@ -6,6 +6,13 @@
 import subprocess, os
 
 commit_id = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('ascii')
+stable_version = os.environ.get('STABLE_VERSION')
+versions = [
+    ['latest', '/latest/'],
+    ['stable', '/stable/'],
+  ]
+if stable_version:
+  versions.append([stable_version, '/' + stable_version + '/'])
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -39,8 +46,5 @@ html_context = {
   'github_user': 'insilica',
   'github_repo': 'rs-srvc',
   'github_version': commit_id + '/docs/',
-  'versions': [
-    ['latest', '/latest/'],
-    ['stable', '/stable/'],
-  ],
+  'versions': versions,
 }

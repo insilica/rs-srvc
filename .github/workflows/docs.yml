@@ -87,6 +87,7 @@ jobs:
       working-directory: docs
       env:
         CURRENT_VERSION: ${{ env.RG_VERSION }}
+        STABLE_VERSION: ${{ env.RG_VERSION }}
 
     - name: Deploy stable site
       if: startsWith(github.ref, 'refs/tags/v')
@@ -98,3 +99,4 @@ jobs:
       working-directory: docs
       env:
         CURRENT_VERSION: stable
+        STABLE_VERSION: ${{ env.RG_VERSION }}
