@@ -7,7 +7,7 @@ mod common;
 fn test_label() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;
@@ -28,7 +28,7 @@ fn test_label() -> Result<(), rexpect::errors::Error> {
 fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-boolean";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;
@@ -44,7 +44,7 @@ fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
 fn test_label_uri() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-uri";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 4000)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;
@@ -65,7 +65,7 @@ fn test_label_uri() -> Result<(), rexpect::errors::Error> {
 fn test_label_json_schema() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-json-schema";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("yes")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;
@@ -85,7 +85,7 @@ fn test_label_json_schema() -> Result<(), rexpect::errors::Error> {
 fn test_label_json_schema_url() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-json-schema-url";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 400)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("yes")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;
@@ -248,7 +248,7 @@ fn test_wrong_name() -> Result<(), std::io::Error> {
 fn test_step_uri() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/step-uri";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 4000)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;
@@ -269,7 +269,7 @@ fn test_step_uri() -> Result<(), rexpect::errors::Error> {
 fn test_flow_uri() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/flow-uri";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 4000)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;
@@ -290,7 +290,7 @@ fn test_flow_uri() -> Result<(), rexpect::errors::Error> {
 fn test_base_config() -> Result<(), rexpect::errors::Error> {
     let dir = "test-resources/base-config";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["review", "label"], 1661192610, 4000)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 4000)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("y")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;

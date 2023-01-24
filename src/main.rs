@@ -15,9 +15,9 @@ use lib_sr::errors::*;
 use lib_sr::Opts;
 
 mod embedded;
+mod flow;
 mod hash;
 mod json_schema;
-mod review;
 mod sr_yaml;
 
 const REV: Option<&'static str> = option_env!("SELF_REV");
@@ -46,16 +46,17 @@ enum Commands {
         pretty: bool,
     },
 
-    /// Run a review flow
-    Review {
-        /// The name of the review flow
+    /// Run a flow
+    #[clap(alias = "review")]
+    Flow {
+        /// The name of the flow
         #[clap(forbid_empty_values = true)]
         name: String,
     },
 
-    /// Run an embedded review step
+    /// Run an embedded step
     RunEmbeddedStep {
-        /// The name of an embedded review step
+        /// The name of an embedded step
         #[clap(subcommand)]
         name: EmbeddedSteps,
     },
@@ -141,7 +142,7 @@ fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
-        Commands::Review { name } => review::run(opts, name),
+        Commands::Flow { name } => flow::run(opts, name),
         Commands::RunEmbeddedStep { name } => run_embedded_step(name),
         Commands::Version {} => version(),
     }
