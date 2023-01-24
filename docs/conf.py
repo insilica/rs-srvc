@@ -3,6 +3,10 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import subprocess
+
+commit_id = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('ascii')
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -29,3 +33,9 @@ html_show_copyright = False
 html_show_sphinx = False
 html_static_path = ['_static']
 html_theme = 'sphinx_rtd_theme'
+html_context = {
+  'display_github': True,
+  'github_user': 'insilica',
+  'github_repo': 'rs-srvc',
+  'github_version': commit_id + '/docs/',
+}
