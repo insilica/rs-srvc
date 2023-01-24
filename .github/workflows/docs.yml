@@ -82,5 +82,7 @@ jobs:
       run: |
         nix develop -c aws s3 sync _build/html s3://docs.sysrev.com/$RG_VERSION
         nix develop -c aws s3 sync _build/html s3://docs.sysrev.com/stable
+        touch .redirect
+        nix develop -c aws s3 cp .redirect s3://docs.sysrev.com/index.html --website-redirect /stable/
         nix develop -c aws cloudfront create-invalidation --distribution-id EA1FHUI2SBWO4 --paths "/$RG_VERSION/* /stable/*"
       working-directory: docs
