@@ -49,7 +49,6 @@ pub struct Label {
     pub json_schema: Option<serde_json::Value>,
     pub question: String,
     pub required: bool,
-    pub r#type: String,
 }
 
 #[skip_serializing_none]

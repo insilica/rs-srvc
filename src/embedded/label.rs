@@ -178,14 +178,22 @@ fn read_answer(
     reviewer: String,
     timestamp_override: Option<u64>,
 ) -> Result<Event> {
-    if "boolean" == label.r#type {
-        read_boolean(label, doc, reviewer, timestamp_override)
-    } else if "categorical" == label.r#type {
-        read_categorical(label, doc, reviewer, timestamp_override)
-    } else if "string" == label.r#type {
-        read_string(label, doc, reviewer, timestamp_override)
-    } else {
-        Err(format!("Unknown label type: {}", label.r#type).into())
+    // label.type is allowed for backwards-compatibility, but new types
+    // should not be added. Use json_schema instead.
+    match label.extra.get("type").map(|v| v.as_str()).flatten() {
+        Some(t) => {
+            let t = t.to_lowercase();
+            if "boolean" == t {
+                read_boolean(label, doc, reviewer, timestamp_override)
+            } else if "categorical" == t {
+                read_categorical(label, doc, reviewer, timestamp_override)
+            } else if "string" == t {
+                read_string(label, doc, reviewer, timestamp_override)
+            } else {
+                Err(format!("Unknown label type ({}): {}", label.id, t).into())
+            }
+        }
+        None => Err(format!("Unknown label type ({})", label.id).into()),
     }
 }
 

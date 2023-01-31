@@ -1,5 +1,6 @@
 ## Unreleased
 
+- (breaking) Don't lower-case the `type` property on labels. `type` no longer has any special significance other than in the `label` embedded step. Its use should be replaced with `json_schema`.
 ## v0.13.0 (2023-01-24)
 
 - Add git revision to "sr version" output

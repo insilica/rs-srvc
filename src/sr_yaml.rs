@@ -56,7 +56,6 @@ pub struct Label {
     json_schema_uri: Option<String>,
     question: Option<String>,
     required: Option<bool>,
-    r#type: Option<String>,
     #[serde(alias = "url")]
     uri: Option<String>,
 }
@@ -219,7 +218,6 @@ pub fn parse_label_data(
         json_schema,
         question: non_blank(id, "question", &label.question)?,
         required: label.required.unwrap_or(false),
-        r#type: non_blank(id, "type", &label.r#type)?.to_lowercase(),
     };
     let data_s = serde_json::to_string(&label).chain_err(|| "Serialization failed")?;
     let data = serde_json::from_str(&data_s).chain_err(|| "Deserialization failed")?;
