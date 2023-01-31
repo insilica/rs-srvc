@@ -247,9 +247,35 @@ pub fn parse_label(
     }
 }
 
-pub fn get_label_schema(client: &Client, label: &Label) -> Result<Option<serde_json::Value>> {
+lazy_static! {
+    static ref SCHEMA_ALIASES: HashMap<&'static str, &'static str> = hashmap! {
+        "boolean" => "https://docs.sysrev.com/schema/label-answer/boolean-v2.json",
+        "string" => "https://docs.sysrev.com/schema/label-answer/string-v2.json",
+    };
+}
+
+fn get_label_schema_for_alias(client: &Client, id: &str, alias: &str) -> Result<serde_json::Value> {
+    match SCHEMA_ALIASES.get(alias) {
+        Some(url) => json_schema::get_schema_for_url(client, url),
+        None => Err(format!(
+            "The {} label has an unknown value for json_schema: {}",
+            id, alias
+        )
+        .into()),
+    }
+}
+
+pub fn get_label_schema(
+    client: &Client,
+    label: &Label,
+    id: &str,
+) -> Result<Option<serde_json::Value>> {
     let json = if label.json_schema.is_some() {
-        label.json_schema.to_owned()
+        let lbl = label.json_schema.to_owned().unwrap();
+        match lbl.as_str() {
+            Some(s) => Some(get_label_schema_for_alias(client, id, s)?),
+            None => Some(lbl),
+        }
     } else {
         label
             .json_schema_uri
@@ -273,7 +299,7 @@ pub fn parse_labels(
         Some(labels) => {
             let mut m = HashMap::new();
             for (id, label) in labels {
-                let json_schema = get_label_schema(&client, &label)?;
+                let json_schema = get_label_schema(&client, &label, id)?;
                 let parsed = parse_label(&client, &id, label, json_schema)?;
                 m.insert(id.to_owned(), parsed);
             }
