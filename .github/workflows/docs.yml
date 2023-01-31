@@ -90,6 +90,7 @@ jobs:
     - name: Deploy stable site
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
+        nix develop -c aws s3 sync ../src/schema s3://docs.sysrev.com/schema
         nix develop -c make html
         nix develop -c aws s3 sync _build/html s3://docs.sysrev.com/stable
         touch .redirect

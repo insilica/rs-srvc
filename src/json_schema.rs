@@ -9,7 +9,9 @@ lazy_static! {
     static ref EMBEDDED_DOCUMENTS: HashMap<&'static str, &'static str> = {
         hashmap! {
             "label-answer/boolean-v1" => include_str!("schema/label-answer/boolean-v1.json"),
+            "label-answer/boolean-v2" => include_str!("schema/label-answer/boolean-v2.json"),
             "label-answer/string-v1" => include_str!("schema/label-answer/string-v1.json"),
+            "label-answer/string-v2" => include_str!("schema/label-answer/string-v2.json"),
         }
     };
 }
@@ -21,6 +23,14 @@ lazy_static! {
             let json: serde_json::Value = serde_json::from_str(s)
                 .chain_err(|| "Deserialization failed")
                 .expect("Invalid JSON");
+            m.insert(
+                format!("http://docs.sysrev.com/schema/{}.json", name),
+                json.to_owned(),
+            );
+            m.insert(
+                format!("https://docs.sysrev.com/schema/{}.json", name),
+                json.to_owned(),
+            );
             m.insert(
                 format!(
                     "http://raw.githubusercontent.com/insilica/rs-srvc/master/src/schema/{}.json",
