@@ -9,10 +9,12 @@ Document events follow this format:
 .. code-block:: json
 
     {
-      "data": {"title": "The Beehive Theory"},
-      "hash":"QmZp5xnczbBDvAd2ma88Q2bRFkJiKeqxQt9iN6DHc527iR",
-      "type":"document",
-      "uri":"https://pubmed.ncbi.nlm.nih.gov/16999303/"
+      "data": {
+        "title": "The Beehive Theory"
+      },
+      "hash": "QmZp5xnczbBDvAd2ma88Q2bRFkJiKeqxQt9iN6DHc527iR",
+      "type": "document",
+      "uri": "https://pubmed.ncbi.nlm.nih.gov/16999303/"
     }
 
 The data property may be any JSON object.
