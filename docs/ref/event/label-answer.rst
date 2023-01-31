@@ -12,18 +12,19 @@ Label answer events follow this format:
       "data": {
         "answer": true,
         "document": "QmZp5xnczbBDvAd2ma88Q2bRFkJiKeqxQt9iN6DHc527iR",
-        "label": "QmdfYCe3UZ1xD39yj1w34EnkqsJtenPjeug7urWMkpUtei",
+        "label": "QmYqmthq6E7aRyGgPmDZpWtL3Lk6UqM2RmCWLC1oVbmaxF",
         "reviewer": "mailto:user@example.com",
         "timestamp": 1673396981
       },
-      "hash":"QmeHHhQu1FFe2T9NHoxpsQmJoeW5aAi8T77HPSJVG47YvD",
-      "type":"label-answer"
+      "hash": "QmZPAta9rGPJkHbfZSacCP4C1gqjRudxt8p7xNpr1P7NTQ",
+      "type": "label-answer"
     }
 
 All properties are required.
 
 ``answer`` may be any JSON value that is allowed by the label definition.
 In this example, answer is a boolean value.
+If the :doc:`label <label>` has a ``json-schema`` property, ``answer`` must be valid according to the schema.
 
 ``document`` is the hash of document that the answer belongs to.
 

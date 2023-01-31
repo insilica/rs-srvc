@@ -12,15 +12,26 @@ Label events follow this format:
     {
       "data": {
         "id": "include",
+        "json-schema": {
+          "$schema": "http://json-schema.org/draft-07/schema",
+          "$id": "https://docs.sysrev.com/schema/label-answer/boolean-v2.json",
+          "title": "Boolean answer",
+          "description": "A boolean label answer",
+          "type": "boolean"
+        },
         "question": "Include?",
         "required": false
       },
-      "hash":"QmdfYCe3UZ1xD39yj1w34EnkqsJtenPjeug7urWMkpUtei",
+      "hash":"QmYqmthq6E7aRyGgPmDZpWtL3Lk6UqM2RmCWLC1oVbmaxF",
       "type":"label"
     }
 
 ``data.id`` is required.
 It is a string that allows SRVC to identify past versions of the same label.
+
+``data.json-schema`` is optional.
+It is a `JSON Schema <https://json-schema.org/>`_ object.
+If present, :doc:`label answers <label-answer>` will be validated against the schema.
 
 ``data.question`` is required.
 It is a string that is typically shown to the reviewer as a prompt.
