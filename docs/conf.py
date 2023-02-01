@@ -5,7 +5,8 @@
 
 import subprocess, os
 
-commit_id = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('ascii')
+commit_id = os.environ.get('SELF_REV') or subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('ascii')
+print(commit_id)
 stable_version = os.environ.get('STABLE_VERSION')
 versions = [
     ['latest', '/latest/'],

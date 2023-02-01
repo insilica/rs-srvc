@@ -14,7 +14,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        self-rev = if (self ? rev) then self.rev else null;
+        self-rev = if (self ? rev) then self.rev else "HEAD";
+        docs-html = pkgs.callPackage ./docs/html.nix { inherit self-rev; };
         srvc = pkgs.callPackage ./srvc.nix {
           Security = with pkgs;
             lib.optionals stdenv.isDarwin
@@ -23,7 +24,7 @@
         };
       in with pkgs; {
         packages.default = srvc;
-        packages = { inherit srvc; };
+        packages = { inherit docs-html srvc; };
         devShells.default = mkShell {
           buildInputs = [
             cargo
