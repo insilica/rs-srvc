@@ -25,9 +25,9 @@ Example ``sr.yaml``:
 
     labels:
       include:
+        json-schema: boolean
         question: Include?
         required: true
-        type: boolean
 
     flows:
       label:

@@ -19,7 +19,6 @@ Example ``sr.yaml``:
 
     labels:
       annotation:
-        type: webannotation
         question: Annotation
 
     flows:

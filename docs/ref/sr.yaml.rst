@@ -18,9 +18,9 @@ sr.yaml
           - C
 
       include:
+        json-schema: boolean
         question: Include?
         required: true
-        type: boolean
 
     flows:
       pubmed-search:

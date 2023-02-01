@@ -27,9 +27,9 @@ See the ``sr.yaml`` from the `srvc-template repository <https://github.com/insil
           - C
 
       include:
+        json-schema: boolean
         question: Include?
         required: true
-        type: boolean
 
     flows:
       pubmed-search:
