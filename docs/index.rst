@@ -25,7 +25,7 @@ First, :doc:`Install SRVC <installation>`, then clone `srvc-template <https://gi
 
 .. code-block:: console
 
-   $ git clone git@github.com:insilica/srvc-template.git
+   $ git clone https://github.com/insilica/sfac.git
    $ cd srvc-template
    $ sr flow pubmed-search # Pull "angry bees" from pubmed
    $ sr flow label # Start labeling interface on port 5005
