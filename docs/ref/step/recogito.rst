@@ -8,7 +8,7 @@ The step follows this format:
 
 .. code-block:: yaml
 
-      - run-embedded: html https://raw.githubusercontent.com/sysrev/srvc-hello/main/src/resources/public/recogito.html
+      - run-embedded: html https://static.sysrev.com/srvc/recogito/
         labels: [annotation]
         port: 5006
 
@@ -38,6 +38,6 @@ Example ``sr.yaml``:
 
           - run-embedded: remove-reviewed
 
-          - run-embedded: html https://raw.githubusercontent.com/sysrev/srvc-hello/main/src/resources/public/recogito.html
+          - run-embedded: html https://static.sysrev.com/srvc/recogito/
             labels: [annotation]
             port: 5006
