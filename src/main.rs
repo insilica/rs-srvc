@@ -149,6 +149,7 @@ fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
 }
 
 fn run() -> Result<()> {
+    env_logger::init();
     let cli = Cli::parse();
     let mut opts = opts(&cli);
     run_command(cli, &mut opts)

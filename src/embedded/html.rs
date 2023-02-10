@@ -8,6 +8,7 @@ use actix_files::Files;
 use actix_web::http::header::ContentType;
 use actix_web::web::{block, Data, Json};
 use actix_web::{get, middleware, post, App, HttpResponse, HttpServer};
+use log::{debug, info};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::json;
@@ -250,6 +251,8 @@ pub fn run_with_html(html: String, path: Option<PathBuf>) -> Result<()> {
 }
 
 pub fn run(file_or_url: &str) -> Result<()> {
+    info! {"Serving HTML step from {}", file_or_url};
     let (html, path) = embedded::get_file_or_url(Client::new(), file_or_url)?;
+    debug! {"Read {} bytes", html.len()};
     run_with_html(html, path)
 }
