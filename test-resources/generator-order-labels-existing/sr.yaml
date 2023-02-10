@@ -1,0 +1,15 @@
+reviewer: mailto:user@example.com
+
+labels:
+  acute_tox:
+    question: acute toxicity?
+    type: boolean
+  include:
+    json-schema: boolean
+    question: Include?
+    required: true
+
+flows:
+  generator-order-labels-existing:
+    steps:
+      - run-embedded: generator docs.jsonl
