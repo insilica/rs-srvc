@@ -89,14 +89,14 @@ pub fn run() -> Result<()> {
         mut writer,
     } = embedded::get_map_context()?;
     let reviewer = config.reviewer;
-    let mut reviewed_docs = HashSet::new();
+    let mut hashes = HashSet::new();
     let is_remote = embedded::is_remote_target(&config.db);
     let client = Client::new();
 
     if !is_remote {
         let db_file = File::open(&config.db);
-        reviewed_docs = match db_file {
-            Err(_) => reviewed_docs, // The file may not exist yet
+        hashes = match db_file {
+            Err(_) => hashes, // The file may not exist yet
             Ok(file) => read_reviewed_docs(file, &reviewer)?,
         };
     }
@@ -105,13 +105,12 @@ pub fn run() -> Result<()> {
         let event = result?;
         let hash = event.hash.clone().unwrap_or("".to_string());
         if is_remote
-            && !reviewed_docs.contains(&hash)
+            && !hashes.contains(&hash)
             && remote_reviewed(&client, &config.db, &event, &reviewer)?
         {
-            reviewed_docs.insert(hash.clone());
-        }
-        if !reviewed_docs.contains(&hash) {
-            embedded::write_event(&mut writer, &event)?;
+            hashes.insert(hash.clone());
+        } else {
+            embedded::write_event_dedupe(&mut writer, &event, &mut hashes)?;
         }
     }
 

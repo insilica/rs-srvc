@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::BufReader;
 
 use reqwest::blocking::Client;
@@ -17,6 +17,7 @@ pub fn run(file_or_url: &str) -> Result<()> {
     let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
     let reader = BufReader::new(input.as_bytes());
     let in_events = event::events(reader);
+    let mut hashes: HashSet<String> = HashSet::new();
     let mut labels: Vec<&Label> = config.labels.values().collect();
     labels.sort_by(|a, b| a.id.cmp(&b.id));
 
@@ -39,7 +40,7 @@ pub fn run(file_or_url: &str) -> Result<()> {
             r#type: String::from("label"),
             uri: None,
         };
-        embedded::write_event(&mut writer, &event)?
+        embedded::write_event_dedupe(&mut writer, &event, &mut hashes)?
     }
 
     let mut answers: HashMap<String, Vec<Event>> = HashMap::new();
@@ -60,7 +61,7 @@ pub fn run(file_or_url: &str) -> Result<()> {
         }
 
         if event.r#type == "label" {
-            embedded::write_event(&mut writer, &event)?
+            embedded::write_event_dedupe(&mut writer, &event, &mut hashes)?
         } else if event.r#type == "label-answer" {
             match &event.data {
                 Some(data) => match data.get("document") {
@@ -97,12 +98,12 @@ pub fn run(file_or_url: &str) -> Result<()> {
     }
 
     for event in events {
-        embedded::write_event(&mut writer, &event)?;
+        embedded::write_event_dedupe(&mut writer, &event, &mut hashes)?;
         if event.r#type == "document" {
             match answers.get(&event.hash.to_owned().expect("hash")) {
                 Some(doc_answers) => {
                     for answer in doc_answers {
-                        embedded::write_event(&mut writer, &answer)?;
+                        embedded::write_event_dedupe(&mut writer, &answer, &mut hashes)?;
                     }
                 }
                 None => {}

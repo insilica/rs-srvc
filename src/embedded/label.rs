@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io;
 use std::io::{BufRead, BufReader, Write};
 
@@ -216,19 +216,20 @@ pub fn run() -> Result<()> {
         timestamp_override,
         mut writer,
     } = embedded::get_map_context()?;
+    let mut hashes = HashSet::new();
     let labels = config.current_labels.unwrap_or(Vec::new());
     let reviewer = config.reviewer;
 
     for result in in_events {
         let event = result?;
-        embedded::write_event(&mut writer, &event)?;
+        embedded::write_event_dedupe(&mut writer, &event, &mut hashes)?;
 
         if event.r#type == "document" {
             print_doc(&event)?;
             for label in &labels {
                 let mut answer = read_answer(label, &event, reviewer.clone(), timestamp_override)?;
                 answer.hash = Some(event::event_hash(answer.clone())?);
-                embedded::write_event(&mut writer, &answer)?;
+                embedded::write_event_dedupe(&mut writer, &answer, &mut hashes)?;
             }
         }
     }

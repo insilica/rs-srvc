@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
 use std::io::{BufReader, LineWriter, Read, Write};
@@ -137,6 +137,22 @@ pub fn get_map_context() -> Result<MapContext> {
 pub fn write_event(mut writer: &mut Box<dyn Write + Send + Sync>, event: &Event) -> Result<()> {
     serde_json::to_writer(&mut writer, event).chain_err(|| "Event serialization failed")?;
     writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+    Ok(())
+}
+
+pub fn write_event_dedupe(
+    writer: &mut Box<dyn Write + Send + Sync>,
+    event: &Event,
+    hashes: &mut HashSet<String>,
+) -> Result<()> {
+    let hash = match event.hash.clone() {
+        Some(s) => s,
+        None => Err("Tried to write event with no hash")?,
+    };
+    if !hashes.contains(&hash) {
+        write_event(writer, event)?;
+        hashes.insert(hash);
+    }
     Ok(())
 }
 
