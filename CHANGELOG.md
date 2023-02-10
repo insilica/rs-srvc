@@ -4,6 +4,7 @@
 - Recognize short aliases for the json_schema label property. E.g., a label with `json_schema: boolean` is valid. The `boolean` alias corresponds to a JSON Schema that only allows boolean values.
 - Add env_logger to support controlling log output through the RUST_LOG environment variable.
 - Proxy requests to the remote server when running a remote HTML step. We use this to load static assets.
+- Add version number to the JSON config that steps receive.
 
 ## v0.13.0 (2023-01-24)
 

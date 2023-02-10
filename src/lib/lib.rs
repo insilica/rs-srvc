@@ -51,6 +51,11 @@ pub struct Label {
     pub required: bool,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Srvc {
+    pub version: String,
+}
+
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
@@ -66,6 +71,7 @@ pub struct Config {
     pub reviewer: String,
     #[serde(rename = "sink-all-events")]
     pub sink_all_events: bool,
+    pub srvc: Srvc,
 }
 
 pub struct Opts {

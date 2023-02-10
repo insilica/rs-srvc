@@ -332,6 +332,9 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
             labels: parse_labels(&client, &config.labels)?,
             reviewer,
             sink_all_events: config.sink_all_events.unwrap_or(false),
+            srvc: lib_sr::Srvc {
+                version: String::from(env!("CARGO_PKG_VERSION")),
+            },
         }),
         Err(_) => {
             if !reviewer.contains(":") && reviewer.contains("@") && reviewer.contains(".") {
