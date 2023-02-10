@@ -1,0 +1,6 @@
+reviewer: mailto:user@example.com
+
+flows:
+  generator-order-labels:
+    steps:
+      - run-embedded: generator docs.jsonl

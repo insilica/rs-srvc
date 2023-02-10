@@ -146,6 +146,21 @@ fn test_generator_order() -> Result<(), std::io::Error> {
 }
 
 #[test]
+fn test_generator_order_labels() -> Result<(), std::io::Error> {
+    let dir = "test-resources/generator-order-labels";
+    common::remove_sink(dir)?;
+    common::cmd(400)
+        .current_dir(dir)
+        .args(&["review", "generator-order-labels"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(dir)?;
+    Ok(())
+}
+
+#[test]
 fn test_generator_url() -> Result<(), std::io::Error> {
     let dir = "test-resources/generator-url";
     common::remove_sink(dir)?;

@@ -59,9 +59,9 @@ pub fn run(file_or_url: &str) -> Result<()> {
             .into());
         }
 
-        if event.r#type != "label-answer" {
-            events.push(event);
-        } else {
+        if event.r#type == "label" {
+            embedded::write_event(&mut writer, &event)?
+        } else if event.r#type == "label-answer" {
             match &event.data {
                 Some(data) => match data.get("document") {
                     Some(doc_hash) => {
@@ -91,6 +91,8 @@ pub fn run(file_or_url: &str) -> Result<()> {
                     .into())
                 }
             }
+        } else {
+            events.push(event);
         }
     }
 

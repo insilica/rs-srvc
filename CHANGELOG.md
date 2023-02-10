@@ -6,6 +6,7 @@
 - Proxy requests to the remote server when running a remote HTML step. We use this to load static assets.
 - Add version number to the JSON config that steps receive.
 - Prefix HTML step routes with /srvc. The old routes are deprecated, but will still work for now.
+- Fix a case where the generator stop could emit a label-answer before the corresponding label ([#3](https://github.com/insilica/rs-srvc/issues/3)).
 
 ## v0.13.0 (2023-01-24)
 
