@@ -317,7 +317,7 @@ h1 {
             labelsEl.appendChild(labelInput(label))
           })
         })
-        req.open("GET", "/config")
+        req.open("GET", "/srvc/config")
         req.send()
       }
 
@@ -339,7 +339,7 @@ h1 {
             }
           });
         });
-        req.open("GET", "/current-doc-events");
+        req.open("GET", "/srvc/current-doc-events");
         req.send();
       };
 
@@ -453,7 +453,7 @@ h1 {
         req.addEventListener("load", function (resp) {
           loadCurrentDocEvents()
         })
-        req.open("POST", "/submit-label-answers")
+        req.open("POST", "/srvc/submit-label-answers")
         req.setRequestHeader("Content-Type", "application/json")
         req.send(JSON.stringify({"answers":labelAnswers()}))
       }
