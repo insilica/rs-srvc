@@ -7,11 +7,18 @@ use std::sync::Mutex;
 use actix_files::Files;
 use actix_web::http::header::ContentType;
 use actix_web::web::{block, Data, Json};
-use actix_web::{get, middleware, post, App, HttpResponse, HttpServer};
+use actix_web::{
+    dev::PeerAddr, get, http::Method, middleware, post, web, App, HttpRequest, HttpResponse,
+    HttpServer,
+};
+use futures_util::StreamExt;
 use log::{debug, info};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::json;
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+use url::Url;
 
 use lib_sr::errors::*;
 use lib_sr::event::Event;
@@ -135,6 +142,57 @@ async fn post_submit_label_answers(
     Ok(HttpResponse::Ok().json(hashmap! {"success" => true}))
 }
 
+// Adapted from https://github.com/actix/examples/blob/2df944c5e55951021e6c1da0feffef8c24c19506/http-proxy/src/main.rs#L57
+#[get("/{url:.*}")]
+async fn forward_reqwest(
+    req: HttpRequest,
+    mut payload: web::Payload,
+    method: Method,
+    peer_addr: Option<PeerAddr>,
+    url: web::Data<Url>,
+    client: web::Data<reqwest::Client>,
+) -> actix_web::error::Result<HttpResponse, actix_web::error::Error> {
+    let path = req.uri().path();
+    let mut new_url = url
+        .join(path.trim_start_matches('/'))
+        .map_err(actix_web::error::ErrorInternalServerError)?;
+    new_url.set_query(req.uri().query());
+    debug! {"Forwarding request to {}", new_url};
+
+    let (tx, rx) = mpsc::unbounded_channel();
+
+    actix_web::rt::spawn(async move {
+        while let Some(chunk) = payload.next().await {
+            tx.send(chunk).unwrap();
+        }
+    });
+
+    let forwarded_req = client
+        .request(method, new_url)
+        .body(reqwest::Body::wrap_stream(UnboundedReceiverStream::new(rx)));
+
+    // TODO: This forwarded implementation is incomplete as it only handles the unofficial
+    // X-Forwarded-For header but not the official Forwarded one.
+    let forwarded_req = match peer_addr {
+        Some(PeerAddr(addr)) => forwarded_req.header("x-forwarded-for", addr.ip().to_string()),
+        None => forwarded_req,
+    };
+
+    let res = forwarded_req
+        .send()
+        .await
+        .map_err(actix_web::error::ErrorInternalServerError)?;
+
+    let mut client_resp = HttpResponse::build(res.status());
+    // Remove `Connection` as per
+    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection#Directives
+    for (header_name, header_value) in res.headers().iter().filter(|(h, _)| *h != "connection") {
+        client_resp.insert_header((header_name.clone(), header_value.clone()));
+    }
+
+    Ok(client_resp.streaming(res.bytes_stream()))
+}
+
 fn err(s: &str) -> std::io::Error {
     std::io::Error::new(ErrorKind::Other, s)
 }
@@ -188,6 +246,7 @@ async fn serve(
     map_ctx: MapContext,
     html: String,
     html_file_path: Option<PathBuf>,
+    url: Option<Url>,
 ) -> std::io::Result<()> {
     let mut doc_events = DocEventsIterator {
         in_events: map_ctx.in_events,
@@ -205,6 +264,10 @@ async fn serve(
     write_leading_non_docs(&mut app_ctx)?;
     let app_ctx_mutex = Data::new(Mutex::new(app_ctx));
     let acm = app_ctx_mutex.to_owned();
+    let num_workers = match &url {
+        Some(_) => 16,
+        None => 4,
+    };
 
     let server = HttpServer::new(move || {
         let mut app = App::new()
@@ -221,9 +284,18 @@ async fn serve(
             }
             None => {}
         };
+        match &url.clone() {
+            Some(url) => {
+                app = app
+                    .app_data(Data::new(reqwest::Client::new()))
+                    .app_data(Data::new(url.to_owned()))
+                    .service(forward_reqwest)
+            }
+            None => {}
+        }
         app
     })
-    .workers(4)
+    .workers(num_workers)
     .bind(("127.0.0.1", port))?;
 
     let addr = server.addrs().first().unwrap().to_owned();
@@ -236,7 +308,7 @@ async fn serve(
     server.run().await
 }
 
-pub fn run_with_html(html: String, path: Option<PathBuf>) -> Result<()> {
+pub fn run_with_html(html: String, path: Option<PathBuf>, url: Option<Url>) -> Result<()> {
     let map_ctx = embedded::get_map_context()?;
     let port = map_ctx
         .config
@@ -247,12 +319,12 @@ pub fn run_with_html(html: String, path: Option<PathBuf>) -> Result<()> {
         .flatten()
         .unwrap_or(0) as u16;
 
-    serve(port, map_ctx, html, path).chain_err(|| "Error starting server")
+    serve(port, map_ctx, html, path, url).chain_err(|| "Error starting server")
 }
 
 pub fn run(file_or_url: &str) -> Result<()> {
     info! {"Serving HTML step from {}", file_or_url};
-    let (html, path) = embedded::get_file_or_url(Client::new(), file_or_url)?;
+    let (html, path, url) = embedded::get_file_or_url(Client::default(), file_or_url)?;
     debug! {"Read {} bytes", html.len()};
-    run_with_html(html, path)
+    run_with_html(html, path, url)
 }

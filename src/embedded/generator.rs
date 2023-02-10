@@ -13,7 +13,7 @@ use crate::embedded;
 use crate::embedded::GeneratorContext;
 
 pub fn run(file_or_url: &str) -> Result<()> {
-    let (input, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
+    let (input, _, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
     let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
     let reader = BufReader::new(input.as_bytes());
     let in_events = event::events(reader);

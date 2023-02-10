@@ -159,7 +159,10 @@ pub fn insert_timestamp(
     Ok(())
 }
 
-fn get_file_or_url(client: Client, file_or_url: &str) -> Result<(String, Option<PathBuf>)> {
+fn get_file_or_url(
+    client: Client,
+    file_or_url: &str,
+) -> Result<(String, Option<PathBuf>, Option<Url>)> {
     match Url::parse(file_or_url) {
         Ok(url) => {
             let response = client
@@ -173,6 +176,7 @@ fn get_file_or_url(client: Client, file_or_url: &str) -> Result<(String, Option<
                         .text()
                         .chain_err(|| "Failed to read response text")?,
                     None,
+                    Some(url),
                 ))
             } else {
                 Err(format!("Unexpected {} status for {}", status, url).into())
@@ -187,7 +191,7 @@ fn get_file_or_url(client: Client, file_or_url: &str) -> Result<(String, Option<
             reader
                 .read_to_string(&mut s)
                 .chain_err(|| format!("Buffer read failed for file {}", file_or_url))?;
-            Ok((s, Some(path)))
+            Ok((s, Some(path), None))
         }
     }
 }

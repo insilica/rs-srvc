@@ -19,11 +19,12 @@ actix-web = "4"
 bs58 = "0.4"
 clap = { version = "3.0", features = ["derive"] }
 error-chain = "0.12"
+futures-util = "0.3"
 jsonschema = "0.16"
 lazy_static = "1.4"
 maplit = "1.0"
 multihash = "0.16"
-reqwest = { version = "0.11", default-features = false, features = ["blocking", "gzip", "rustls-tls"] }
+reqwest = { version = "0.11", default-features = false, features = ["blocking", "gzip", "rustls-tls", "stream"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_ipld_dagcbor = "0.2"
 serde_json = "1.0"
@@ -31,6 +32,8 @@ serde_yaml = "0.8"
 serde_with = "1.0"
 shell-words = "1.0"
 tempfile = "3.0"
+tokio = { version = "1.0", features = ["sync"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
 url = "2.0"
 uuid = { version = "1.0", features = ["v4", "fast-rng"] }
 windows-win = "2.0"
