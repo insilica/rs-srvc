@@ -8,7 +8,7 @@ use actix_files::Files;
 use actix_web::http::header::ContentType;
 use actix_web::web::{block, Data, Json};
 use actix_web::{
-    dev::PeerAddr, get, http::Method, middleware, post, web, App, HttpRequest, HttpResponse,
+    dev::PeerAddr, get, http::Method, middleware, routes, web, App, HttpRequest, HttpResponse,
     HttpServer,
 };
 use futures_util::StreamExt;
@@ -80,13 +80,17 @@ impl Iterator for DocEventsIterator {
     }
 }
 
-#[get("/config")]
+#[routes]
+#[get("/config")] // Deprecated in v0.14.0
+#[get("/srvc/config")]
 async fn get_config(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpResponse {
     let config = &app_ctx_mutex.lock().unwrap().config;
     HttpResponse::Ok().json(config)
 }
 
-#[get("/current-doc-events")]
+#[routes]
+#[get("/current-doc-events")] // Deprecated in v0.14.0
+#[get("/srvc/current-doc-events")]
 async fn get_current_doc_events(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpResponse {
     let current_doc_events = &app_ctx_mutex.lock().unwrap().current_doc_events;
     let events = match current_doc_events {
@@ -114,7 +118,9 @@ async fn get_index(app_ctx_mutex: Data<Mutex<AppContext>>) -> std::io::Result<Ht
     }
 }
 
-#[post("/submit-label-answers")]
+#[routes]
+#[post("/submit-label-answers")] // Deprecated in v0.14.0
+#[post("/srvc/submit-label-answers")]
 async fn post_submit_label_answers(
     app_ctx_mutex: Data<Mutex<AppContext>>,
     request: Json<SubmitLabelAnswersRequest>,
