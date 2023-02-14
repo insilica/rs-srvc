@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.14.1 (2023-02-14)
+
 - Reduce CPU usage during a flow.
 
 ## v0.14.0 (2023-02-10)
