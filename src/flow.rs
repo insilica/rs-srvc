@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::process;
 use std::str::FromStr;
 use std::thread;
+use std::time::Duration;
 
 use serde::Serialize;
 use tempfile::TempDir;
@@ -237,9 +238,14 @@ fn end_steps(processes: Vec<StepProcess>) -> Result<()> {
 
 fn wait_for_steps(mut processes: Vec<StepProcess>) -> Result<()> {
     let mut exit_status = None;
+    // Start with a small timeout so small tasks exit quickly,
+    // but scale up the timeout to avoid excessive CPU usage in
+    // long-running flows.
+    let mut timeout = Duration::from_millis(10);
     while processes.len() > 0 && exit_status.is_none() {
         let mut next_processes = Vec::new();
         for mut process in processes {
+            thread::sleep(timeout);
             match process.process.try_wait() {
                 Ok(Some(status)) => {
                     if status.code() != Some(0) {
@@ -251,6 +257,9 @@ fn wait_for_steps(mut processes: Vec<StepProcess>) -> Result<()> {
             }
         }
         processes = next_processes;
+        if timeout < Duration::from_millis(500) {
+            timeout *= 2;
+        }
     }
 
     match exit_status {

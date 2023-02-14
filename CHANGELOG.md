@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Reduce CPU usage during a flow.
+
 ## v0.14.0 (2023-02-10)
 
 - (breaking) Don't lower-case the `type` property on labels. `type` no longer has any special significance other than in the `label` embedded step. Its use should be replaced with `json_schema`.
