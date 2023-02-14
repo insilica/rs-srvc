@@ -330,7 +330,7 @@ pub fn run_with_html(html: String, path: Option<PathBuf>, url: Option<Url>) -> R
 
 pub fn run(file_or_url: &str) -> Result<()> {
     info! {"Serving HTML step from {}", file_or_url};
-    let (html, path, url) = embedded::get_file_or_url(Client::default(), file_or_url)?;
+    let (html, path, url) = embedded::get_file_or_url_string(Client::default(), file_or_url)?;
     debug! {"Read {} bytes", html.len()};
     run_with_html(html, path, url)
 }

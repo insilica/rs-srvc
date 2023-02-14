@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Read};
+use std::io::BufRead;
 
 use multihash::MultihashDigest;
 use serde::Deserialize;
@@ -53,7 +53,7 @@ pub fn parse_event_opt(s: &str) -> Result<Option<Event>> {
     }
 }
 
-pub fn events(reader: BufReader<impl Read>) -> impl Iterator<Item = Result<Event>> {
+pub fn events(reader: impl BufRead) -> impl Iterator<Item = Result<Event>> {
     reader
         .lines()
         .map(|line| parse_event_opt(line.chain_err(|| "Failed to read line")?.as_str()))

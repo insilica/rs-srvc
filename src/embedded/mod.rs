@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
-use std::io::{BufReader, LineWriter, Read, Write};
+use std::io::{BufRead, BufReader, LineWriter, Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -178,7 +178,7 @@ pub fn insert_timestamp(
 fn get_file_or_url(
     client: Client,
     file_or_url: &str,
-) -> Result<(String, Option<PathBuf>, Option<Url>)> {
+) -> Result<(Box<dyn BufRead + Send + Sync>, Option<PathBuf>, Option<Url>)> {
     match Url::parse(file_or_url) {
         Ok(url) => {
             let response = client
@@ -187,13 +187,7 @@ fn get_file_or_url(
                 .chain_err(|| format!("Failed to complete HTTP request to {}", url))?;
             let status = response.status().as_u16();
             if status == 200 {
-                Ok((
-                    response
-                        .text()
-                        .chain_err(|| "Failed to read response text")?,
-                    None,
-                    Some(url),
-                ))
+                Ok((Box::new(BufReader::new(response)), None, Some(url)))
             } else {
                 Err(format!("Unexpected {} status for {}", status, url).into())
             }
@@ -202,12 +196,20 @@ fn get_file_or_url(
             let path = PathBuf::from(file_or_url);
             let file =
                 File::open(&path).chain_err(|| format!("Failed to open file {}", file_or_url))?;
-            let mut reader = BufReader::new(file);
-            let mut s = String::new();
-            reader
-                .read_to_string(&mut s)
-                .chain_err(|| format!("Buffer read failed for file {}", file_or_url))?;
-            Ok((s, Some(path), None))
+            let reader = BufReader::new(file);
+            Ok((Box::new(reader), Some(path), None))
         }
     }
+}
+
+fn get_file_or_url_string(
+    client: Client,
+    file_or_url: &str,
+) -> Result<(String, Option<PathBuf>, Option<Url>)> {
+    let (mut reader, pathbuf, url) = get_file_or_url(client, file_or_url)?;
+    let mut s = String::new();
+    reader
+        .read_to_string(&mut s)
+        .chain_err(|| format!("Buffer read failed for file {}", file_or_url))?;
+    Ok((s, pathbuf, url))
 }
