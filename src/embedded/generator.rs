@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::io::Write;
 
 use reqwest::blocking::Client;
 use serde_json::{json, Value};
@@ -6,16 +7,16 @@ use serde_json::{json, Value};
 use lib_sr::errors::*;
 use lib_sr::event;
 use lib_sr::event::Event;
-use lib_sr::Label;
+use lib_sr::{Config, Label};
 
 use crate::embedded;
 use crate::embedded::GeneratorContext;
 
-pub fn run(file_or_url: &str) -> Result<()> {
-    let (reader, _, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
-    let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
-    let in_events = event::events(reader);
-    let mut hashes: HashSet<String> = HashSet::new();
+fn write_labels(
+    writer: &mut Box<dyn Write + Send + Sync>,
+    config: &Config,
+) -> Result<HashSet<String>> {
+    let mut label_hashes = HashSet::new();
     let mut labels: Vec<&Label> = config.labels.values().collect();
     labels.sort_by(|a, b| a.id.cmp(&b.id));
 
@@ -38,8 +39,17 @@ pub fn run(file_or_url: &str) -> Result<()> {
             r#type: String::from("label"),
             uri: None,
         };
-        embedded::write_event_dedupe(&mut writer, &event, &mut hashes)?
+        embedded::write_event_dedupe(writer, &event, &mut label_hashes)?;
     }
+
+    Ok(label_hashes)
+}
+
+pub fn run(file_or_url: &str) -> Result<()> {
+    let (reader, _, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
+    let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
+    let in_events = event::events(reader);
+    let mut hashes = write_labels(&mut writer, &config)?;
 
     let mut answers: HashMap<String, Vec<Event>> = HashMap::new();
     let mut events: Vec<Event> = Vec::new();
