@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add event hash to some error messages when writing an event fails.
+
 ## v0.14.1 (2023-02-14)
 
 - Reduce CPU usage during a flow.

@@ -135,8 +135,12 @@ pub fn get_map_context() -> Result<MapContext> {
 }
 
 pub fn write_event(mut writer: &mut Box<dyn Write + Send + Sync>, event: &Event) -> Result<()> {
-    serde_json::to_writer(&mut writer, event).chain_err(|| "Event serialization failed")?;
-    writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+    let hash = event.hash.clone().unwrap_or(String::from("None"));
+    serde_json::to_writer(&mut writer, event)
+        .chain_err(|| format!("Failed to serialize event with hash: {}", hash))?;
+    writer
+        .write(b"\n")
+        .chain_err(|| format!("Buffer write failed for event with hash: {}", hash))?;
     Ok(())
 }
 
