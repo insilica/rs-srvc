@@ -91,7 +91,10 @@ fn make_step_server() -> Result<StepServer> {
     let input_port = get_port(&input_listener)?;
     let output_port = get_port(&output_listener)?;
 
-    thread::spawn(|| run_step_server(input_listener, output_listener));
+    thread::spawn(|| match run_step_server(input_listener, output_listener) {
+        Ok(_) => {}
+        Err(e) => eprintln!("Error in step server: {:?}", e),
+    });
 
     Ok(StepServer {
         input_port,
