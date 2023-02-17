@@ -7,10 +7,10 @@ use rusqlite::Connection;
 use serde_json::{json, Value};
 use url::Url;
 
-use lib_sr::errors::*;
 use lib_sr::event;
 use lib_sr::event::Event;
 use lib_sr::sqlite;
+use lib_sr::{common, errors::*};
 use lib_sr::{Config, Label};
 
 use crate::embedded;
@@ -199,7 +199,7 @@ pub fn run(file_or_url: &str) -> Result<()> {
     match Url::parse(file_or_url) {
         Ok(_) => run_jsonl(file_or_url),
         Err(_) => {
-            if embedded::has_sqlite_ext(file_or_url) {
+            if common::has_sqlite_ext(file_or_url) {
                 run_sqlite(file_or_url)
             } else {
                 run_jsonl(file_or_url)

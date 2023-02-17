@@ -9,11 +9,11 @@ use std::path::PathBuf;
 use reqwest::blocking::Client;
 use serde::Serialize;
 
-use lib_sr::errors::*;
 use lib_sr::event;
 use lib_sr::event::Event;
 use lib_sr::sqlite;
 use lib_sr::Config;
+use lib_sr::{common, errors::*};
 
 use crate::embedded;
 use crate::embedded::Env;
@@ -209,7 +209,7 @@ pub fn run() -> Result<()> {
     let config = embedded::get_config(&env.config)?;
     if embedded::is_remote_target(&config.db) {
         run_remote(env, config)
-    } else if embedded::has_sqlite_ext(&config.db) {
+    } else if common::has_sqlite_ext(&config.db) {
         run_local_sqlite(env, config)
     } else {
         run_local_jsonl(env, config)
