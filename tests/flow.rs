@@ -146,6 +146,21 @@ fn test_generator_order() -> Result<(), std::io::Error> {
 }
 
 #[test]
+fn test_generator_sqlite() -> Result<(), std::io::Error> {
+    let dir = "test-resources/generator-sqlite";
+    common::remove_sink(dir)?;
+    common::cmd(5000)
+        .current_dir(dir)
+        .args(&["flow", "default"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(dir)?;
+    Ok(())
+}
+
+#[test]
 fn test_generator_order_labels() -> Result<(), std::io::Error> {
     let dir = "test-resources/generator-order-labels";
     common::remove_sink(dir)?;

@@ -1,16 +1,24 @@
 use std::collections::{HashMap, HashSet};
 use std::io::Write;
+use std::path::PathBuf;
 
 use reqwest::blocking::Client;
+use rusqlite::Connection;
 use serde_json::{json, Value};
+use url::Url;
 
 use lib_sr::errors::*;
 use lib_sr::event;
 use lib_sr::event::Event;
+use lib_sr::sqlite;
 use lib_sr::{Config, Label};
 
 use crate::embedded;
 use crate::embedded::GeneratorContext;
+
+const SELECT_DOCUMENTS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'document' ORDER BY uri NULLS LAST, hash";
+const SELECT_LABELS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label' ORDER BY data->'$.id', hash";
+const SELECT_LABEL_ANSWERS_FOR_DOC: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->'$.document' = json_quote(?) ORDER BY data->'$.timestamp', hash";
 
 fn write_labels(
     writer: &mut Box<dyn Write + Send + Sync>,
@@ -45,7 +53,7 @@ fn write_labels(
     Ok(label_hashes)
 }
 
-pub fn run(file_or_url: &str) -> Result<()> {
+fn run_jsonl(file_or_url: &str) -> Result<()> {
     let (reader, _, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
     let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
     let in_events = event::events(reader);
@@ -120,4 +128,82 @@ pub fn run(file_or_url: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn write_labels_sqlite(
+    conn: &Connection,
+    writer: &mut Box<dyn Write + Send + Sync>,
+    label_hashes: &HashSet<String>,
+) -> Result<()> {
+    let mut stmt = sqlite::prepare(&conn, SELECT_LABELS)?;
+    let mut rows = stmt
+        .query([])
+        .chain_err(|| format!("Failed to execute prepared statement: {}", SELECT_LABELS))?;
+    while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
+        let event = sqlite::parse_event(row)?;
+        if !label_hashes.contains(&event.hash.to_owned().expect("hash")) {
+            embedded::write_event(writer, &event)?;
+        }
+    }
+    Ok(())
+}
+
+fn write_document_answers_sqlite(
+    conn: &Connection,
+    writer: &mut Box<dyn Write + Send + Sync>,
+    doc_hash: &str,
+) -> Result<()> {
+    let mut stmt = sqlite::prepare(&conn, SELECT_LABEL_ANSWERS_FOR_DOC)?;
+    let mut rows = stmt.query([doc_hash]).chain_err(|| {
+        format!(
+            "Failed to execute prepared statement: {}",
+            SELECT_LABEL_ANSWERS_FOR_DOC
+        )
+    })?;
+    while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
+        let event = sqlite::parse_event(row)?;
+        embedded::write_event(writer, &event)?;
+    }
+    Ok(())
+}
+
+fn write_documents_sqlite(
+    conn: &Connection,
+    writer: &mut Box<dyn Write + Send + Sync>,
+) -> Result<()> {
+    let mut stmt = sqlite::prepare(&conn, SELECT_DOCUMENTS)?;
+    let mut rows = stmt
+        .query([])
+        .chain_err(|| format!("Failed to execute prepared statement: {}", SELECT_DOCUMENTS))?;
+    while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
+        let event = sqlite::parse_event(row)?;
+        embedded::write_event(writer, &event)?;
+        write_document_answers_sqlite(&conn, writer, &event.hash.expect("hash"))?;
+    }
+    Ok(())
+}
+
+fn run_sqlite(file: &str) -> Result<()> {
+    let conn = sqlite::open_ro(&PathBuf::from(file))?;
+    let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
+    let label_hashes = write_labels(&mut writer, &config)?;
+
+    write_labels_sqlite(&conn, &mut writer, &label_hashes)?;
+    write_documents_sqlite(&conn, &mut writer)?;
+
+    sqlite::close(conn)?;
+    Ok(())
+}
+
+pub fn run(file_or_url: &str) -> Result<()> {
+    match Url::parse(file_or_url) {
+        Ok(_) => run_jsonl(file_or_url),
+        Err(_) => {
+            if embedded::has_sqlite_ext(file_or_url) {
+                run_sqlite(file_or_url)
+            } else {
+                run_jsonl(file_or_url)
+            }
+        }
+    }
 }

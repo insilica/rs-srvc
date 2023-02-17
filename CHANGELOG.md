@@ -2,6 +2,7 @@
 
 - Add event hash to some error messages when writing an event fails.
 - Print errors that occur in the step server handler, such as event hash mismatches.
+- Add support for SQLite generators and sinks.
 
 ## v0.14.1 (2023-02-14)
 

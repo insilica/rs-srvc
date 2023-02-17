@@ -4,6 +4,7 @@ use std::fs::OpenOptions;
 use std::io::BufReader;
 use std::io::LineWriter;
 use std::io::Write;
+use std::path::PathBuf;
 
 use reqwest::blocking::Client;
 use serde::Serialize;
@@ -11,6 +12,7 @@ use serde::Serialize;
 use lib_sr::errors::*;
 use lib_sr::event;
 use lib_sr::event::Event;
+use lib_sr::sqlite;
 use lib_sr::Config;
 
 use crate::embedded;
@@ -114,7 +116,7 @@ fn prep_event(labels: &mut HashMap<String, Event>, result: Result<Event>) -> Res
     Ok(event)
 }
 
-pub fn run_remote(env: Env, config: Config) -> Result<()> {
+fn run_remote(env: Env, config: Config) -> Result<()> {
     let mut hashes = HashSet::new();
     let mut labels = HashMap::new();
     let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
@@ -148,7 +150,7 @@ pub fn run_remote(env: Env, config: Config) -> Result<()> {
     Ok(())
 }
 
-pub fn run_local(env: Env, config: Config) -> Result<()> {
+fn run_local_jsonl(env: Env, config: Config) -> Result<()> {
     let maybe_db = File::open(&config.db);
     let mut hashes = match maybe_db {
         Err(_) => HashSet::new(), // The file may not exist yet
@@ -185,12 +187,31 @@ pub fn run_local(env: Env, config: Config) -> Result<()> {
     Ok(())
 }
 
+fn run_local_sqlite(env: Env, config: Config) -> Result<()> {
+    let mut labels = HashMap::new();
+    let conn = sqlite::open(&PathBuf::from(&config.db))?;
+    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
+    let in_events = embedded::input_events(&input_addr)?;
+
+    for result in in_events {
+        let event = prep_event(&mut labels, result)?;
+
+        if event.r#type != "control" || config.sink_all_events {
+            sqlite::insert_event(&conn, event)?;
+        }
+    }
+
+    sqlite::close(conn)
+}
+
 pub fn run() -> Result<()> {
     let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
     let config = embedded::get_config(&env.config)?;
     if embedded::is_remote_target(&config.db) {
         run_remote(env, config)
+    } else if embedded::has_sqlite_ext(&config.db) {
+        run_local_sqlite(env, config)
     } else {
-        run_local(env, config)
+        run_local_jsonl(env, config)
     }
 }

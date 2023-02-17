@@ -95,6 +95,15 @@ pub fn is_remote_target(db: &str) -> bool {
     target.starts_with("http://") || target.starts_with("https://")
 }
 
+pub fn has_sqlite_ext(filename: &str) -> bool {
+    let name = filename.to_lowercase();
+    if name.ends_with(".db") || name.ends_with(".sqlite") {
+        true
+    } else {
+        false
+    }
+}
+
 pub fn api_route(remote: &str, path: &str) -> String {
     format!(
         "{}{}api/v1/{}",

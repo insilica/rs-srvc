@@ -4,7 +4,14 @@
 !.github
 !.gitignore
 
+*.db-shm
+*.db-wal
+*.sqlite-shm
+*.sqlite-wal
+
 _build/
 result
+sink.db
 sink.jsonl
+sink.sqlite
 target/
