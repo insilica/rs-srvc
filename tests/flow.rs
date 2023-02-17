@@ -1,5 +1,11 @@
 mod common;
 
+fn test_dir(resource_dir: &str) -> String {
+    let mut dir = String::from("test-resources/");
+    dir.push_str(resource_dir);
+    return dir;
+}
+
 /// Test a simple flow that doesn't read from stdin or print to
 /// stdout or stderr.
 ///
@@ -19,8 +25,7 @@ fn test_flow(
     flow_name: &str,
     timeout_millis: u64,
 ) -> Result<(), std::io::Error> {
-    let mut dir = String::from("test-resources/");
-    dir.push_str(resource_dir);
+    let dir = test_dir(resource_dir);
     common::remove_sink(&dir)?;
     common::cmd(timeout_millis)
         .current_dir(&dir)
@@ -53,8 +58,7 @@ fn test_flow_err(
     stderr: &'static str,
     sink_should_exist: bool,
 ) -> Result<(), std::io::Error> {
-    let mut dir = String::from("test-resources/");
-    dir.push_str(resource_dir);
+    let dir = test_dir(resource_dir);
     common::remove_sink(&dir)?;
     common::cmd(timeout_millis)
         .current_dir(&dir)
