@@ -5,6 +5,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate maplit;
 
+use std::env;
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
@@ -32,6 +33,9 @@ struct Cli {
 
     #[clap(short, long, default_value = "sr.yaml")]
     config: String,
+
+    #[clap(short, long)]
+    dir: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
@@ -165,6 +169,17 @@ fn run() -> Result<()> {
     env_logger::init();
     let cli = Cli::parse();
     let mut opts = opts(&cli);
+
+    match cli.dir.to_owned() {
+        Some(path) => env::set_current_dir(&path).chain_err(|| {
+            format!(
+                "Failed to set working directory: {}",
+                path.to_string_lossy()
+            )
+        })?,
+        None => {}
+    }
+
     run_command(cli, &mut opts)
 }
 

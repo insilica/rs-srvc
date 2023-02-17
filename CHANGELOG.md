@@ -5,6 +5,7 @@
 - Add support for SQLite generators and sinks.
 - Add `sr docs` command to open the documentation website.
 - Add a `--db` option to `sr flow` to specify the db from the command-line.
+- Add a `--dir` option to set the working directory.
 
 ## v0.14.1 (2023-02-14)
 
