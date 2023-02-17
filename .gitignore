@@ -4,8 +4,10 @@
 !.github
 !.gitignore
 
+*.db-journal
 *.db-shm
 *.db-wal
+*.sqlite-journal
 *.sqlite-shm
 *.sqlite-wal
 
