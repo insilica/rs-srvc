@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 mod common;
 
 /// Test a simple flow that doesn't read from stdin or print to
@@ -32,6 +30,40 @@ fn test_flow(
         .stdout("")
         .stderr("");
     common::check_sink(&dir)?;
+    Ok(())
+}
+
+/// Test a simple flow that prints an error message to stderr.
+///
+/// # Arguments
+///
+/// * `resource_dir`: A directory in test-resources/ that contains
+///     sr.yaml, expected.jsonl, and any other files used by the flow.
+/// * `flow_name`: The name of the flow to test, as defined in sr.yaml.
+/// * `timeout_millis`: Timeout for the flow to complete, in milliseconds.
+///     If the flow takes longer than this, the test will fail and exit.
+///     This is ignored when $TEST_SRVC_DISABLE_TIMEOUT is set.
+/// * `stderr`: The expected output of stderr.
+/// * `sink_should_exist`: Whether the sink file should exist after
+///     running the flow.
+fn test_flow_err(
+    resource_dir: &str,
+    flow_name: &str,
+    timeout_millis: u64,
+    stderr: &'static str,
+    sink_should_exist: bool,
+) -> Result<(), std::io::Error> {
+    let mut dir = String::from("test-resources/");
+    dir.push_str(resource_dir);
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", flow_name])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(stderr);
+    assert_eq!(sink_should_exist, common::sink_path(&dir).exists());
     Ok(())
 }
 
@@ -174,16 +206,13 @@ fn test_generator_url() -> Result<(), std::io::Error> {
 
 #[test]
 fn test_generator_url_404() -> Result<(), std::io::Error> {
-    let dir = "test-resources/generator-url-404";
-    common::remove_sink(dir)?;
-    common::cmd(400)
-        .current_dir(dir)
-        .args(&["review", "generator-url"])
-        .assert()
-        .code(1)
-        .stdout("")
-        .stderr("Error: Unexpected 404 status for http://127.0.0.1:8877/generator-url/404.jsonl\nError: Step failed with exit code 1\n");
-    Ok(())
+    test_flow_err(
+        "generator-url-404",
+        "generator-url",
+        400,
+        "Error: Unexpected 404 status for http://127.0.0.1:8877/generator-url/404.jsonl\nError: Step failed with exit code 1\n",
+        true
+    )
 }
 
 #[test]
@@ -193,56 +222,35 @@ fn test_implicit_db() -> Result<(), std::io::Error> {
 
 #[test]
 fn test_reviewer_uri_domain() -> Result<(), std::io::Error> {
-    let dir = "test-resources/reviewer-uri-domain";
-    let sink = PathBuf::from(dir).join("sink.jsonl");
-    if sink.exists() {
-        std::fs::remove_file(&sink)?;
-    };
-    common::cmd(200)
-        .current_dir(dir)
-        .args(&["review", "simple"])
-        .assert()
-        .code(1)
-        .stdout("")
-        .stderr("Error: \"reviewer\" is not a valid URI: \"example.com\"\n");
-    assert_eq!(false, sink.exists());
-    Ok(())
+    test_flow_err(
+        "reviewer-uri-domain",
+        "simple",
+        400,
+        "Error: \"reviewer\" is not a valid URI: \"example.com\"\n",
+        false,
+    )
 }
 
 #[test]
 fn test_reviewer_uri_email() -> Result<(), std::io::Error> {
-    let dir = "test-resources/reviewer-uri-email";
-    let sink = PathBuf::from(dir).join("sink.jsonl");
-    if sink.exists() {
-        std::fs::remove_file(&sink)?;
-    };
-    common::cmd(200)
-        .current_dir(dir)
-        .args(&["review", "simple"])
-        .assert()
-        .code(1)
-        .stdout("")
-        .stderr("Error: \"reviewer\" is not a valid URI: \"user@example.com\"\n  Try \"mailto:user@example.com\"\n");
-    assert_eq!(false, sink.exists());
-    Ok(())
+    test_flow_err(
+        "reviewer-uri-email",
+        "simple",
+        400,
+        "Error: \"reviewer\" is not a valid URI: \"user@example.com\"\n  Try \"mailto:user@example.com\"\n",
+        false,
+    )
 }
 
 #[test]
 fn test_wrong_name() -> Result<(), std::io::Error> {
-    let dir = "test-resources/wrong-name";
-    let sink = PathBuf::from(dir).join("sink.jsonl");
-    if sink.exists() {
-        std::fs::remove_file(&sink)?;
-    };
-    common::cmd(200)
-        .current_dir(dir)
-        .args(&["review", "simpel"])
-        .assert()
-        .code(1)
-        .stdout("")
-        .stderr("Error: No flow named \"simpel\" in \"sr.yaml\"\n");
-    assert_eq!(false, sink.exists());
-    Ok(())
+    test_flow_err(
+        "wrong-name",
+        "simpel",
+        400,
+        "Error: No flow named \"simpel\" in \"sr.yaml\"\n",
+        false,
+    )
 }
 
 #[cfg(unix)]
