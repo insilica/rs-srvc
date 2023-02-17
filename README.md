@@ -19,7 +19,7 @@ brew install insilica/srvc/srvc
 [Install Nix](https://nixos.org/), and run:
 
 ```
-nix profile install github:insilica/rs-srvc
+nix profile install nixpkgs#srvc
 ```
 
 ### Binary (macOS, Linux, and Windows)
