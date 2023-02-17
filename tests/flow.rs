@@ -230,6 +230,7 @@ fn test_generator_url() -> Result<(), std::io::Error> {
     test_flow("generator-url", "generator-url", 400)
 }
 
+#[cfg(unix)]
 #[test]
 fn test_generator_url_404() -> Result<(), std::io::Error> {
     test_flow_err(
