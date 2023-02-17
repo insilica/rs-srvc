@@ -2,6 +2,39 @@ use std::path::PathBuf;
 
 mod common;
 
+/// Test a simple flow that doesn't read from stdin or print to
+/// stdout or stderr.
+///
+/// The flow should output to sink.jsonl. The contents of sink.jsonl
+/// are checked against expected.jsonl.
+///
+/// # Arguments
+///
+/// * `resource_dir`: A directory in test-resources/ that contains
+///     sr.yaml, expected.jsonl, and any other files used by the flow.
+/// * `flow_name`: The name of the flow to test, as defined in sr.yaml.
+/// * `timeout_millis`: Timeout for the flow to complete, in milliseconds.
+///     If the flow takes longer than this, the test will fail and exit.
+///     This is ignored when $TEST_SRVC_DISABLE_TIMEOUT is set.
+fn test_flow(
+    resource_dir: &str,
+    flow_name: &str,
+    timeout_millis: u64,
+) -> Result<(), std::io::Error> {
+    let mut dir = String::from("test-resources/");
+    dir.push_str(resource_dir);
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", flow_name])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir)?;
+    Ok(())
+}
+
 #[cfg(unix)]
 #[test]
 fn test_label() -> Result<(), rexpect::errors::Error> {
@@ -102,107 +135,41 @@ fn test_label_json_schema_url() -> Result<(), rexpect::errors::Error> {
 
 #[test]
 fn test_simple() -> Result<(), std::io::Error> {
-    let dir = "test-resources/simple";
-    common::remove_sink(dir)?;
-    common::cmd(400)
-        .current_dir(dir)
-        .args(&["review", "simple"])
-        .assert()
-        .success()
-        .stdout("")
-        .stderr("");
-    common::check_sink(dir)?;
-    Ok(())
+    test_flow("simple", "simple", 400)
 }
 
 #[test]
 fn test_generator_blank_lines() -> Result<(), std::io::Error> {
-    let dir = "test-resources/generator-blank-lines";
-    common::remove_sink(dir)?;
-    common::cmd(400)
-        .current_dir(dir)
-        .args(&["review", "generator"])
-        .assert()
-        .success()
-        .stdout("")
-        .stderr("");
-    common::check_sink(dir)?;
-    Ok(())
+    test_flow("generator-blank-lines", "generator", 400)
 }
 
 #[test]
 fn test_generator_order() -> Result<(), std::io::Error> {
-    let dir = "test-resources/generator-order";
-    common::remove_sink(dir)?;
-    common::cmd(400)
-        .current_dir(dir)
-        .args(&["review", "generator-order"])
-        .assert()
-        .success()
-        .stdout("")
-        .stderr("");
-    common::check_sink(dir)?;
-    Ok(())
+    test_flow("generator-order", "generator-order", 400)
 }
 
 #[test]
 fn test_generator_sqlite() -> Result<(), std::io::Error> {
-    let dir = "test-resources/generator-sqlite";
-    common::remove_sink(dir)?;
-    common::cmd(5000)
-        .current_dir(dir)
-        .args(&["flow", "default"])
-        .assert()
-        .success()
-        .stdout("")
-        .stderr("");
-    common::check_sink(dir)?;
-    Ok(())
+    test_flow("generator-sqlite", "default", 5000)
 }
 
 #[test]
 fn test_generator_order_labels() -> Result<(), std::io::Error> {
-    let dir = "test-resources/generator-order-labels";
-    common::remove_sink(dir)?;
-    common::cmd(400)
-        .current_dir(dir)
-        .args(&["review", "generator-order-labels"])
-        .assert()
-        .success()
-        .stdout("")
-        .stderr("");
-    common::check_sink(dir)?;
-    Ok(())
+    test_flow("generator-order-labels", "generator-order-labels", 400)
 }
 
 #[test]
 fn test_generator_order_labels_existing() -> Result<(), std::io::Error> {
-    let dir = "test-resources/generator-order-labels-existing";
-    common::remove_sink(dir)?;
-    common::cmd(400)
-        .current_dir(dir)
-        .args(&["review", "generator-order-labels-existing"])
-        .assert()
-        .success()
-        .stdout("")
-        .stderr("");
-    common::check_sink(dir)?;
-    Ok(())
+    test_flow(
+        "generator-order-labels-existing",
+        "generator-order-labels-existing",
+        400,
+    )
 }
 
 #[test]
 fn test_generator_url() -> Result<(), std::io::Error> {
-    let dir = "test-resources/generator-url";
-    common::remove_sink(dir)?;
-    common::cmd(400)
-        .current_dir(dir)
-        .args(&["review", "generator-url"])
-        .assert()
-        .success()
-        .stdout("")
-        .stderr("");
-    common::check_sink(dir)?;
-    Ok(())
+    test_flow("generator-url", "generator-url", 400)
 }
 
 #[test]
@@ -221,17 +188,7 @@ fn test_generator_url_404() -> Result<(), std::io::Error> {
 
 #[test]
 fn test_implicit_db() -> Result<(), std::io::Error> {
-    let dir = "test-resources/implicit-db";
-    common::remove_sink(dir)?;
-    common::cmd(400)
-        .current_dir(dir)
-        .args(&["review", "simple"])
-        .assert()
-        .success()
-        .stdout("")
-        .stderr("");
-    common::check_sink(dir)?;
-    Ok(())
+    test_flow("implicit-db", "simple", 400)
 }
 
 #[test]
