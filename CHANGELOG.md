@@ -12,8 +12,8 @@
 
 ## v0.14.0 (2023-02-10)
 
-- (breaking) Don't lower-case the `type` property on labels. `type` no longer has any special significance other than in the `label` embedded step. Its use should be replaced with `json_schema`.
-- Recognize short aliases for the json_schema label property. E.g., a label with `json_schema: boolean` is valid. The `boolean` alias corresponds to a JSON Schema that only allows boolean values.
+- (breaking) Don't lower-case the `type` property on labels. `type` no longer has any special significance other than in the `label` embedded step. Its use should be replaced with `json-schema`.
+- Recognize short aliases for the json-schema label property. E.g., a label with `json-schema: boolean` is valid. The `boolean` alias corresponds to a JSON Schema that only allows boolean values.
 - Add env_logger to support controlling log output through the RUST_LOG environment variable.
 - Proxy requests to the remote server when running a remote HTML step. We use this to load static assets.
 - Add version number to the JSON config that steps receive.
