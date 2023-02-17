@@ -46,8 +46,12 @@ pub fn spawn(
     Ok(rexpect::session::spawn_command(cmd, timeout)?)
 }
 
+pub fn sink_path(dir: &str) -> PathBuf {
+    PathBuf::from(dir).join("sink.jsonl")
+}
+
 pub fn remove_sink(dir: &str) -> Result<(), std::io::Error> {
-    let sink = PathBuf::from(dir).join("sink.jsonl");
+    let sink = sink_path(dir);
     if sink.exists() {
         std::fs::remove_file(&sink)
     } else {
