@@ -4,6 +4,7 @@
 - Print errors that occur in the step server handler, such as event hash mismatches.
 - Add support for SQLite generators and sinks.
 - Add `sr docs` command to open the documentation website.
+- Add a `--db` option to `sr flow` to specify the db from the command-line.
 
 ## v0.14.1 (2023-02-14)
 

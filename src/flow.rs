@@ -326,9 +326,10 @@ pub fn run_flow(flow: &Flow, config: &Config) -> Result<()> {
     return result;
 }
 
-pub fn run(opts: &mut Opts, flow_name: String) -> Result<()> {
+pub fn run(opts: &mut Opts, db: Option<String>, flow_name: String) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
-    let config = sr_yaml::parse_config(yaml_config)?;
+    let mut config = sr_yaml::parse_config(yaml_config)?;
+    config.db = db.unwrap_or(config.db);
     let flow = config.flows.get(&flow_name);
     let flow = match flow {
         Some(flow) => Ok(flow),

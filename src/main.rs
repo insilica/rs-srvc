@@ -53,6 +53,10 @@ enum Commands {
     /// Run a flow
     #[clap(alias = "review")]
     Flow {
+        /// Override the default db file
+        #[clap(long)]
+        db: Option<String>,
+
         /// The name of the flow
         #[clap(forbid_empty_values = true)]
         name: String,
@@ -151,7 +155,7 @@ fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
         Commands::Docs {} => open_docs(),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
-        Commands::Flow { name } => flow::run(opts, name),
+        Commands::Flow { db, name } => flow::run(opts, db, name),
         Commands::RunEmbeddedStep { name } => run_embedded_step(name),
         Commands::Version {} => version(),
     }

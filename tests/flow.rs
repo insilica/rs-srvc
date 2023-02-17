@@ -1,3 +1,5 @@
+use std::{fs, path::PathBuf};
+
 mod common;
 
 fn test_dir(resource_dir: &str) -> String {
@@ -172,6 +174,26 @@ fn test_label_json_schema_url() -> Result<(), rexpect::errors::Error> {
 #[test]
 fn test_simple() -> Result<(), std::io::Error> {
     test_flow("simple", "simple", 400)
+}
+
+#[test]
+fn test_db_override() -> Result<(), std::io::Error> {
+    let dir = test_dir("test-db-override");
+    common::remove_sink(&dir)?;
+    common::cmd(400)
+        .current_dir(&dir)
+        .args(&["flow", "--db", "override.jsonl", "default"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    let db_path = PathBuf::from(&dir).join("override.jsonl");
+    let sink_path = common::sink_path(&dir);
+    assert_eq!(true, db_path.exists());
+    assert_eq!(false, sink_path.exists());
+    fs::rename(db_path, sink_path).unwrap();
+    common::check_sink(&dir)?;
+    Ok(())
 }
 
 #[test]
