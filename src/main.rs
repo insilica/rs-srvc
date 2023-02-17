@@ -11,6 +11,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
+use lib_sr::common;
 use lib_sr::errors::*;
 use lib_sr::Opts;
 
@@ -36,6 +37,9 @@ struct Cli {
 #[derive(Subcommand)]
 #[clap(version)]
 enum Commands {
+    /// Open the documentation website
+    Docs {},
+
     /// Add hashes to a stream of events
     Hash {},
 
@@ -96,6 +100,10 @@ enum EmbeddedSteps {
     SkipReviewed {},
 }
 
+fn open_docs() -> Result<()> {
+    common::open_browser(&format!("https://docs.sysrev.com/v{}/", VERSION))
+}
+
 fn print_config(opts: &mut Opts, pretty: bool) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
     let config = sr_yaml::parse_config(yaml_config)?;
@@ -140,6 +148,7 @@ fn opts(cli: &Cli) -> Opts {
 
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
+        Commands::Docs {} => open_docs(),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
         Commands::Flow { name } => flow::run(opts, name),
