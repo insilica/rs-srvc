@@ -1,5 +1,7 @@
 use std::{fs, path::PathBuf};
 
+use lib_sr::errors::*;
+
 mod common;
 
 fn test_dir(resource_dir: &str) -> String {
@@ -26,7 +28,7 @@ fn test_flow(
     resource_dir: &str,
     flow_name: &str,
     timeout_millis: u64,
-) -> Result<(), std::io::Error> {
+) -> lib_sr::errors::Result<()> {
     let dir = test_dir(resource_dir);
     common::remove_sink(&dir)?;
     common::cmd(timeout_millis)
@@ -59,7 +61,7 @@ fn test_flow_err(
     timeout_millis: u64,
     stderr: &'static str,
     sink_should_exist: bool,
-) -> Result<(), std::io::Error> {
+) -> Result<()> {
     let dir = test_dir(resource_dir);
     common::remove_sink(&dir)?;
     common::cmd(timeout_millis)
@@ -75,7 +77,7 @@ fn test_flow_err(
 
 #[cfg(unix)]
 #[test]
-fn test_label() -> Result<(), rexpect::errors::Error> {
+fn test_label() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
@@ -96,7 +98,7 @@ fn test_label() -> Result<(), rexpect::errors::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
+fn test_label_boolean() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-boolean";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
@@ -112,7 +114,7 @@ fn test_label_boolean() -> Result<(), rexpect::errors::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_label_uri() -> Result<(), rexpect::errors::Error> {
+fn test_label_uri() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-uri";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 4000)?;
@@ -133,7 +135,7 @@ fn test_label_uri() -> Result<(), rexpect::errors::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_label_json_schema() -> Result<(), rexpect::errors::Error> {
+fn test_label_json_schema() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-json-schema";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
@@ -153,7 +155,7 @@ fn test_label_json_schema() -> Result<(), rexpect::errors::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_label_json_schema_url() -> Result<(), rexpect::errors::Error> {
+fn test_label_json_schema_url() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-json-schema-url";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
@@ -172,12 +174,12 @@ fn test_label_json_schema_url() -> Result<(), rexpect::errors::Error> {
 }
 
 #[test]
-fn test_simple() -> Result<(), std::io::Error> {
+fn test_simple() -> Result<()> {
     test_flow("simple", "simple", 400)
 }
 
 #[test]
-fn test_db_override() -> Result<(), std::io::Error> {
+fn test_db_override() -> Result<()> {
     let dir = test_dir("test-db-override");
     common::remove_sink(&dir)?;
     common::cmd(400)
@@ -197,27 +199,27 @@ fn test_db_override() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn test_generator_blank_lines() -> Result<(), std::io::Error> {
+fn test_generator_blank_lines() -> Result<()> {
     test_flow("generator-blank-lines", "generator", 400)
 }
 
 #[test]
-fn test_generator_order() -> Result<(), std::io::Error> {
+fn test_generator_order() -> Result<()> {
     test_flow("generator-order", "generator-order", 400)
 }
 
 #[test]
-fn test_generator_sqlite() -> Result<(), std::io::Error> {
+fn test_generator_sqlite() -> Result<()> {
     test_flow("generator-sqlite", "default", 5000)
 }
 
 #[test]
-fn test_generator_order_labels() -> Result<(), std::io::Error> {
+fn test_generator_order_labels() -> Result<()> {
     test_flow("generator-order-labels", "generator-order-labels", 400)
 }
 
 #[test]
-fn test_generator_order_labels_existing() -> Result<(), std::io::Error> {
+fn test_generator_order_labels_existing() -> Result<()> {
     test_flow(
         "generator-order-labels-existing",
         "generator-order-labels-existing",
@@ -226,13 +228,13 @@ fn test_generator_order_labels_existing() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn test_generator_url() -> Result<(), std::io::Error> {
+fn test_generator_url() -> Result<()> {
     test_flow("generator-url", "generator-url", 400)
 }
 
 #[cfg(unix)]
 #[test]
-fn test_generator_url_404() -> Result<(), std::io::Error> {
+fn test_generator_url_404() -> Result<()> {
     test_flow_err(
         "generator-url-404",
         "generator-url",
@@ -243,12 +245,12 @@ fn test_generator_url_404() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn test_implicit_db() -> Result<(), std::io::Error> {
+fn test_implicit_db() -> Result<()> {
     test_flow("implicit-db", "simple", 400)
 }
 
 #[test]
-fn test_reviewer_uri_domain() -> Result<(), std::io::Error> {
+fn test_reviewer_uri_domain() -> Result<()> {
     test_flow_err(
         "reviewer-uri-domain",
         "simple",
@@ -259,7 +261,7 @@ fn test_reviewer_uri_domain() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn test_reviewer_uri_email() -> Result<(), std::io::Error> {
+fn test_reviewer_uri_email() -> Result<()> {
     test_flow_err(
         "reviewer-uri-email",
         "simple",
@@ -270,7 +272,7 @@ fn test_reviewer_uri_email() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn test_wrong_name() -> Result<(), std::io::Error> {
+fn test_wrong_name() -> Result<()> {
     test_flow_err(
         "wrong-name",
         "simpel",
@@ -282,7 +284,7 @@ fn test_wrong_name() -> Result<(), std::io::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_step_uri() -> Result<(), rexpect::errors::Error> {
+fn test_step_uri() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/step-uri";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 4000)?;
@@ -303,7 +305,7 @@ fn test_step_uri() -> Result<(), rexpect::errors::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_flow_uri() -> Result<(), rexpect::errors::Error> {
+fn test_flow_uri() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/flow-uri";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 4000)?;
@@ -324,7 +326,7 @@ fn test_flow_uri() -> Result<(), rexpect::errors::Error> {
 
 #[cfg(unix)]
 #[test]
-fn test_base_config() -> Result<(), rexpect::errors::Error> {
+fn test_base_config() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/base-config";
     common::remove_sink(dir).unwrap();
     let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 4000)?;

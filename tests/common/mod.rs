@@ -6,6 +6,7 @@ use std::thread;
 use std::time::Duration;
 
 use assert_cmd::Command;
+use lib_sr::errors::*;
 #[cfg(unix)]
 use rexpect::session::PtySession;
 
@@ -32,7 +33,7 @@ pub fn spawn(
     args: Vec<&str>,
     timestamp_override: u64,
     timeout_millis: u64,
-) -> Result<PtySession, rexpect::errors::Error> {
+) -> std::result::Result<PtySession, rexpect::errors::Error> {
     let mut cmd = std::process::Command::new(env!("CARGO_BIN_EXE_sr"));
     cmd.args(args);
     cmd.current_dir(dir);
@@ -50,16 +51,16 @@ pub fn sink_path(dir: &str) -> PathBuf {
     PathBuf::from(dir).join("sink.jsonl")
 }
 
-pub fn remove_sink(dir: &str) -> Result<(), std::io::Error> {
+pub fn remove_sink(dir: &str) -> Result<()> {
     let sink = sink_path(dir);
     if sink.exists() {
-        std::fs::remove_file(&sink)
+        std::fs::remove_file(&sink).chain_err(|| "Failed to delete old sink")
     } else {
         Ok(())
     }
 }
 
-pub fn check_sink(dir: &str) -> Result<(), std::io::Error> {
+pub fn check_sink(dir: &str) -> Result<()> {
     Command::new("git")
         .args(["diff", "--no-index", "expected.jsonl", "sink.jsonl"])
         .current_dir(dir)
