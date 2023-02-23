@@ -62,23 +62,21 @@ pub fn insert_event(conn: &Connection, event: Event) -> Result<usize> {
         .map(|v| serde_json::to_string(&v))
         .transpose()
         .chain_err(|| format!("Failed to serialize data property of event: {}", hash))?;
-    let extra =
-        if event.extra.is_empty() {
-            None
-        } else {
-            let v = serde_json::to_value(event.extra).chain_err(|| {
-                format!(
-                    "Failed to convert HashMap to serde_json::Value for event: {}",
-                    hash
-                )
-            })?;
-            Some(serde_json::to_string(&v).chain_err(|| {
-                format!("Failed to serialize extra properties for event: {}", hash)
-            })?)
-        };
+    let extra = if event.extra.is_empty() {
+        String::from("{}")
+    } else {
+        let v = serde_json::to_value(event.extra).chain_err(|| {
+            format!(
+                "Failed to convert HashMap to serde_json::Value for event: {}",
+                hash
+            )
+        })?;
+        serde_json::to_string(&v)
+            .chain_err(|| format!("Failed to serialize extra properties for event: {}", hash))?
+    };
     match conn.execute(
-        "INSERT OR IGNORE INTO srvc_event (hash, data, extra, type, uri) VALUES (?, ?, ?, ?, ?)",
-        [event.hash, data, extra, Some(event.r#type), event.uri],
+        "INSERT INTO srvc_event (hash, data, extra, type, uri) VALUES (?, ?, ?, ?, ?) ON CONFLICT (hash) DO NOTHING",
+        [event.hash, data, Some(extra), Some(event.r#type), event.uri],
     ) {
         Ok(rows) => {
             trace!("Modified {} rows", rows);
