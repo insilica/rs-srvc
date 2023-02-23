@@ -15,15 +15,15 @@ CREATE INDEX IF NOT EXISTS idx_srvc_event_type ON srvc_event (type);
 CREATE INDEX IF NOT EXISTS idx_srvc_event_uri ON srvc_event (uri);
 
 CREATE INDEX IF NOT EXISTS idx_srvc_event_label_answer_document
-  ON srvc_event ((data->'$.document'))
+  ON srvc_event (data->>'$.document')
   WHERE type = 'label-answer';
 
 CREATE INDEX IF NOT EXISTS idx_srvc_event_label_answer_label
-  ON srvc_event ((data->'$.label'))
+  ON srvc_event (data->>'$.label')
   WHERE type = 'label-answer';
 
 CREATE INDEX IF NOT EXISTS idx_srvc_event_label_answer_reviewer
-  ON srvc_event ((data->'$.reviewer'))
+  ON srvc_event (data->>'$.reviewer')
   WHERE type = 'label-answer';
 
 COMMIT;

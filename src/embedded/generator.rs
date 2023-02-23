@@ -16,8 +16,8 @@ use crate::embedded;
 use crate::embedded::GeneratorContext;
 
 const SELECT_DOCUMENTS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'document' ORDER BY uri NULLS LAST, hash";
-const SELECT_LABELS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label' ORDER BY data->'$.id', hash";
-const SELECT_LABEL_ANSWERS_FOR_DOC: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->'$.document' = json_quote(?) ORDER BY data->'$.timestamp', hash";
+const SELECT_LABELS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label' ORDER BY data->>'$.id', hash";
+const SELECT_LABEL_ANSWERS_FOR_DOC: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->>'$.document' = ? ORDER BY data->>'$.timestamp', hash";
 
 fn get_label_events(config: &Config) -> Result<Vec<Event>> {
     let mut labels: Vec<&Label> = config.labels.values().collect();
