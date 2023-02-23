@@ -42,7 +42,7 @@ fn test_flow(
         .success()
         .stdout("")
         .stderr("");
-    common::check_sink(&dir)?;
+    common::check_sink(&dir, true)?;
 
     common::remove_sink(&dir)?;
     common::cmd(timeout_millis)
@@ -59,7 +59,7 @@ fn test_flow(
         .success()
         .stdout("")
         .stderr("");
-    common::check_sink_hashes(&dir)?;
+    common::check_sink(&dir, false)?;
     Ok(())
 }
 
@@ -126,7 +126,7 @@ fn test_label() -> std::result::Result<(), rexpect::errors::Error> {
     p.send_line("1")?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
-    common::check_sink(dir).unwrap();
+    common::check_sink(dir, true).unwrap();
     Ok(())
 }
 
@@ -142,7 +142,7 @@ fn test_label_boolean() -> std::result::Result<(), rexpect::errors::Error> {
     p.send_line("n")?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
-    common::check_sink(dir).unwrap();
+    common::check_sink(dir, true).unwrap();
     Ok(())
 }
 
@@ -163,7 +163,7 @@ fn test_label_uri() -> std::result::Result<(), rexpect::errors::Error> {
     p.send_line("1")?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
-    common::check_sink(dir).unwrap();
+    common::check_sink(dir, true).unwrap();
     Ok(())
 }
 
@@ -183,7 +183,7 @@ fn test_label_json_schema() -> std::result::Result<(), rexpect::errors::Error> {
     p.send_line("yes")?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
-    common::check_sink(dir).unwrap();
+    common::check_sink(dir, true).unwrap();
     Ok(())
 }
 
@@ -203,7 +203,7 @@ fn test_label_json_schema_url() -> std::result::Result<(), rexpect::errors::Erro
     p.send_line("yes")?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
-    common::check_sink(dir).unwrap();
+    common::check_sink(dir, true).unwrap();
     Ok(())
 }
 
@@ -228,7 +228,7 @@ fn test_db_override() -> Result<()> {
     assert_eq!(true, db_path.exists());
     assert_eq!(false, sink_path.exists());
     fs::rename(db_path, sink_path).unwrap();
-    common::check_sink(&dir)?;
+    common::check_sink(&dir, true)?;
     Ok(())
 }
 
@@ -333,7 +333,7 @@ fn test_step_uri() -> std::result::Result<(), rexpect::errors::Error> {
     p.send_line("1")?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
-    common::check_sink(dir).unwrap();
+    common::check_sink(dir, true).unwrap();
     Ok(())
 }
 
@@ -354,7 +354,7 @@ fn test_flow_uri() -> std::result::Result<(), rexpect::errors::Error> {
     p.send_line("1")?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
-    common::check_sink(dir).unwrap();
+    common::check_sink(dir, true).unwrap();
     Ok(())
 }
 
@@ -375,6 +375,6 @@ fn test_base_config() -> std::result::Result<(), rexpect::errors::Error> {
     p.send_line("1")?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_control('c')?;
-    common::check_sink(dir).unwrap();
+    common::check_sink(dir, true).unwrap();
     Ok(())
 }

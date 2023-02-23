@@ -84,7 +84,7 @@ fn file_hashes(path: &PathBuf) -> Result<HashSet<String>> {
     Ok(hashes)
 }
 
-pub fn check_sink_hashes(dir: &str) -> Result<()> {
+fn check_sink_hashes(dir: &str) -> Result<()> {
     let expected = file_hashes(&PathBuf::from(dir).join("expected.jsonl"))?;
     let sink = file_hashes(&PathBuf::from(dir).join("sink.jsonl"))?;
 
@@ -100,19 +100,21 @@ pub fn check_sink_hashes(dir: &str) -> Result<()> {
         "sink.jsonl does contain any hashes that are not in expected.jsonl"
     );
 
-    remove_sink(dir)?;
     Ok(())
 }
 
-pub fn check_sink(dir: &str) -> Result<()> {
-    Command::new("git")
-        .args(["diff", "--no-index", "expected.jsonl", "sink.jsonl"])
-        .current_dir(dir)
-        .assert()
-        .code(0)
-        .success()
-        .stderr("")
-        .stdout("");
+pub fn check_sink(dir: &str, text_diff: bool) -> Result<()> {
+    check_sink_hashes(dir)?;
+    if text_diff {
+        Command::new("git")
+            .args(["diff", "--no-index", "expected.jsonl", "sink.jsonl"])
+            .current_dir(dir)
+            .assert()
+            .code(0)
+            .success()
+            .stderr("")
+            .stdout("");
+    }
     remove_sink(dir)?;
     Ok(())
 }
