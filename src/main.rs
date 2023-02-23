@@ -20,6 +20,7 @@ mod embedded;
 mod flow;
 mod hash;
 mod json_schema;
+mod pull;
 mod sr_yaml;
 
 const REV: Option<&'static str> = option_env!("SELF_REV");
@@ -71,6 +72,17 @@ enum Commands {
         /// The name of an embedded step
         #[clap(subcommand)]
         name: EmbeddedSteps,
+    },
+
+    /// Pull events into the project from a file or URL
+    Pull {
+        /// Override the default db file
+        #[clap(long)]
+        db: Option<String>,
+
+        /// Path to a file or URL containing review events
+        #[clap(forbid_empty_values = true)]
+        file_or_url: String,
     },
 
     /// Print the srvc version
@@ -160,6 +172,7 @@ fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
         Commands::Flow { db, name } => flow::run(opts, db, name),
+        Commands::Pull { db, file_or_url } => pull::run(opts, db, &file_or_url),
         Commands::RunEmbeddedStep { name } => run_embedded_step(name),
         Commands::Version {} => version(),
     }

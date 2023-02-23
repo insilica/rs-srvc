@@ -203,6 +203,22 @@ where
     Ok(())
 }
 
+pub fn run_f<F>(file_or_url: &str, config: &Config, f: &mut F) -> Result<()>
+where
+    F: FnMut(Event) -> Result<()>,
+{
+    match Url::parse(file_or_url) {
+        Ok(_) => run_jsonl(file_or_url, config, f),
+        Err(_) => {
+            if common::has_sqlite_ext(file_or_url) {
+                run_sqlite(file_or_url, config, f)
+            } else {
+                run_jsonl(file_or_url, config, f)
+            }
+        }
+    }
+}
+
 pub fn run(file_or_url: &str) -> Result<()> {
     let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
     let mut hashes = HashSet::new();
