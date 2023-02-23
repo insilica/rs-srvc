@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::io::Write;
 use std::path::PathBuf;
 
 use reqwest::blocking::Client;
@@ -20,13 +19,11 @@ const SELECT_DOCUMENTS: &str = "SELECT data, extra, hash, type, uri FROM srvc_ev
 const SELECT_LABELS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label' ORDER BY data->'$.id', hash";
 const SELECT_LABEL_ANSWERS_FOR_DOC: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->'$.document' = json_quote(?) ORDER BY data->'$.timestamp', hash";
 
-fn write_labels(
-    writer: &mut Box<dyn Write + Send + Sync>,
-    config: &Config,
-) -> Result<HashSet<String>> {
-    let mut label_hashes = HashSet::new();
+fn get_label_events(config: &Config) -> Result<Vec<Event>> {
     let mut labels: Vec<&Label> = config.labels.values().collect();
+    // Provide a consistent ordering for consumers
     labels.sort_by(|a, b| a.id.cmp(&b.id));
+    let mut events = Vec::new();
 
     for label in labels {
         let data: Value = serde_json::from_str(
@@ -47,17 +44,22 @@ fn write_labels(
             r#type: String::from("label"),
             uri: None,
         };
-        embedded::write_event_dedupe(writer, &event, &mut label_hashes)?;
+        events.push(event);
     }
 
-    Ok(label_hashes)
+    Ok(events)
 }
 
-fn run_jsonl(file_or_url: &str) -> Result<()> {
+fn run_jsonl<F>(file_or_url: &str, config: &Config, f: &mut F) -> Result<()>
+where
+    F: FnMut(Event) -> Result<()>,
+{
     let (reader, _, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
-    let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
     let in_events = event::events(reader);
-    let mut hashes = write_labels(&mut writer, &config)?;
+
+    for event in get_label_events(config)? {
+        f(event)?;
+    }
 
     let mut answers: HashMap<String, Vec<Event>> = HashMap::new();
     let mut events: Vec<Event> = Vec::new();
@@ -77,7 +79,7 @@ fn run_jsonl(file_or_url: &str) -> Result<()> {
         }
 
         if event.r#type == "label" {
-            embedded::write_event_dedupe(&mut writer, &event, &mut hashes)?
+            f(event)?;
         } else if event.r#type == "label-answer" {
             match &event.data {
                 Some(data) => match data.get("document") {
@@ -114,12 +116,12 @@ fn run_jsonl(file_or_url: &str) -> Result<()> {
     }
 
     for event in events {
-        embedded::write_event_dedupe(&mut writer, &event, &mut hashes)?;
+        f(event.clone())?;
         if event.r#type == "document" {
             match answers.get(&event.hash.to_owned().expect("hash")) {
                 Some(doc_answers) => {
                     for answer in doc_answers {
-                        embedded::write_event_dedupe(&mut writer, &answer, &mut hashes)?;
+                        f(answer.clone())?;
                     }
                 }
                 None => {}
@@ -130,11 +132,17 @@ fn run_jsonl(file_or_url: &str) -> Result<()> {
     Ok(())
 }
 
-fn write_labels_sqlite(
-    conn: &Connection,
-    writer: &mut Box<dyn Write + Send + Sync>,
-    label_hashes: &HashSet<String>,
-) -> Result<()> {
+pub fn write_labels_sqlite<F>(conn: &Connection, config: &Config, f: &mut F) -> Result<()>
+where
+    F: FnMut(Event) -> Result<()>,
+{
+    let mut label_hashes = HashSet::new();
+    for event in get_label_events(config)? {
+        let hash = event.hash.to_owned().expect("hash");
+        f(event)?;
+        label_hashes.insert(hash);
+    }
+
     let mut stmt = sqlite::prepare(&conn, SELECT_LABELS)?;
     let mut rows = stmt
         .query([])
@@ -142,17 +150,16 @@ fn write_labels_sqlite(
     while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
         if !label_hashes.contains(&event.hash.to_owned().expect("hash")) {
-            embedded::write_event(writer, &event)?;
+            f(event)?;
         }
     }
     Ok(())
 }
 
-fn write_document_answers_sqlite(
-    conn: &Connection,
-    writer: &mut Box<dyn Write + Send + Sync>,
-    doc_hash: &str,
-) -> Result<()> {
+fn write_document_answers_sqlite<F>(conn: &Connection, f: &mut F, doc_hash: &str) -> Result<()>
+where
+    F: FnMut(Event) -> Result<()>,
+{
     let mut stmt = sqlite::prepare(&conn, SELECT_LABEL_ANSWERS_FOR_DOC)?;
     let mut rows = stmt.query([doc_hash]).chain_err(|| {
         format!(
@@ -162,47 +169,57 @@ fn write_document_answers_sqlite(
     })?;
     while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
-        embedded::write_event(writer, &event)?;
+        f(event)?;
     }
     Ok(())
 }
 
-fn write_documents_sqlite(
-    conn: &Connection,
-    writer: &mut Box<dyn Write + Send + Sync>,
-) -> Result<()> {
+pub fn write_documents_sqlite<F>(conn: &Connection, f: &mut F) -> Result<()>
+where
+    F: FnMut(Event) -> Result<()>,
+{
     let mut stmt = sqlite::prepare(&conn, SELECT_DOCUMENTS)?;
     let mut rows = stmt
         .query([])
         .chain_err(|| format!("Failed to execute prepared statement: {}", SELECT_DOCUMENTS))?;
     while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
-        embedded::write_event(writer, &event)?;
-        write_document_answers_sqlite(&conn, writer, &event.hash.expect("hash"))?;
+        f(event.clone())?;
+        write_document_answers_sqlite(&conn, f, &event.hash.expect("hash"))?;
     }
     Ok(())
 }
 
-fn run_sqlite(file: &str) -> Result<()> {
+pub fn run_sqlite<F>(file: &str, config: &Config, f: &mut F) -> Result<()>
+where
+    F: FnMut(Event) -> Result<()>,
+{
     let conn = sqlite::open_ro(&PathBuf::from(file))?;
-    let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
-    let label_hashes = write_labels(&mut writer, &config)?;
 
-    write_labels_sqlite(&conn, &mut writer, &label_hashes)?;
-    write_documents_sqlite(&conn, &mut writer)?;
+    write_labels_sqlite(&conn, config, f)?;
+    write_documents_sqlite(&conn, f)?;
 
     sqlite::close(conn)?;
     Ok(())
 }
 
 pub fn run(file_or_url: &str) -> Result<()> {
+    let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
+    let mut hashes = HashSet::new();
     match Url::parse(file_or_url) {
-        Ok(_) => run_jsonl(file_or_url),
+        Ok(_) => {
+            let mut f_dedupe =
+                |event| embedded::write_event_dedupe(&mut writer, &event, &mut hashes);
+            run_jsonl(file_or_url, &config, &mut f_dedupe)
+        }
         Err(_) => {
             if common::has_sqlite_ext(file_or_url) {
-                run_sqlite(file_or_url)
+                let mut f = |event| embedded::write_event(&mut writer, &event);
+                run_sqlite(file_or_url, &config, &mut f)
             } else {
-                run_jsonl(file_or_url)
+                let mut f_dedupe =
+                    |event| embedded::write_event_dedupe(&mut writer, &event, &mut hashes);
+                run_jsonl(file_or_url, &config, &mut f_dedupe)
             }
         }
     }
