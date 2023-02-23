@@ -93,17 +93,20 @@ fn value_to_map(value: &Value) -> Option<HashMap<String, Value>> {
     }
 }
 
-pub fn parse_event(row: &Row) -> Result<Event> {
-    let msg = "Failed to parse event row data";
-    let extra_json: Option<Value> = row.get(1).chain_err(|| msg)?;
+pub fn parse_event_rusqlite(row: &Row) -> rusqlite::Result<Event> {
+    let extra_json: Option<Value> = row.get(1)?;
     let extra = extra_json
         .and_then(|v| value_to_map(&v))
         .unwrap_or_else(HashMap::new);
     Ok(Event {
-        data: row.get(0).chain_err(|| msg)?,
+        data: row.get(0)?,
         extra,
-        hash: row.get(2).chain_err(|| msg)?,
-        r#type: row.get(3).chain_err(|| msg)?,
-        uri: row.get(4).chain_err(|| msg)?,
+        hash: row.get(2)?,
+        r#type: row.get(3)?,
+        uri: row.get(4)?,
     })
+}
+
+pub fn parse_event(row: &Row) -> Result<Event> {
+    parse_event_rusqlite(row).chain_err(|| "Failed to parse event row data")
 }
