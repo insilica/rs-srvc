@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use rusqlite::{Connection, OpenFlags, Row, Statement};
+use rusqlite::{CachedStatement, Connection, OpenFlags, Row};
 use serde_json::Value;
 
 use crate::errors::*;
@@ -12,8 +12,8 @@ fn load_schema(conn: &Connection) -> Result<()> {
         .chain_err(|| "Failed to load sqlite schema")
 }
 
-pub fn prepare<'a>(conn: &'a Connection, stmt: &str) -> Result<Statement<'a>> {
-    conn.prepare(stmt)
+pub fn prepare_cached<'a>(conn: &'a Connection, stmt: &str) -> Result<CachedStatement<'a>> {
+    conn.prepare_cached(stmt)
         .chain_err(|| "Failed to prepare SQL statement")
 }
 

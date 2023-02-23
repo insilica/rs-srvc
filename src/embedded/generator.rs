@@ -143,7 +143,7 @@ where
         label_hashes.insert(hash);
     }
 
-    let mut stmt = sqlite::prepare(&conn, SELECT_LABELS)?;
+    let mut stmt = sqlite::prepare_cached(&conn, SELECT_LABELS)?;
     let mut rows = stmt
         .query([])
         .chain_err(|| format!("Failed to execute prepared statement: {}", SELECT_LABELS))?;
@@ -160,7 +160,7 @@ fn write_document_answers_sqlite<F>(conn: &Connection, f: &mut F, doc_hash: &str
 where
     F: FnMut(Event) -> Result<()>,
 {
-    let mut stmt = sqlite::prepare(&conn, SELECT_LABEL_ANSWERS_FOR_DOC)?;
+    let mut stmt = sqlite::prepare_cached(&conn, SELECT_LABEL_ANSWERS_FOR_DOC)?;
     let mut rows = stmt.query([doc_hash]).chain_err(|| {
         format!(
             "Failed to execute prepared statement: {}",
@@ -178,7 +178,7 @@ pub fn write_documents_sqlite<F>(conn: &Connection, f: &mut F) -> Result<()>
 where
     F: FnMut(Event) -> Result<()>,
 {
-    let mut stmt = sqlite::prepare(&conn, SELECT_DOCUMENTS)?;
+    let mut stmt = sqlite::prepare_cached(&conn, SELECT_DOCUMENTS)?;
     let mut rows = stmt
         .query([])
         .chain_err(|| format!("Failed to execute prepared statement: {}", SELECT_DOCUMENTS))?;
