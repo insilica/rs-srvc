@@ -16,7 +16,6 @@ use lib_sr::Config;
 use lib_sr::{common, errors::*};
 
 use crate::embedded;
-use crate::embedded::Env;
 use crate::json_schema;
 
 pub fn read_hashes(file: File) -> Result<HashSet<String>> {
@@ -116,11 +115,9 @@ fn prep_event(labels: &mut HashMap<String, Event>, result: Result<Event>) -> Res
     Ok(event)
 }
 
-fn run_remote(env: Env, config: Config) -> Result<()> {
+fn run_remote(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -> Result<()> {
     let mut hashes = HashSet::new();
     let mut labels = HashMap::new();
-    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
-    let in_events = embedded::input_events(&input_addr)?;
     let client = Client::new();
     let url = embedded::api_route(&config.db, "upload");
 
@@ -150,7 +147,7 @@ fn run_remote(env: Env, config: Config) -> Result<()> {
     Ok(())
 }
 
-fn run_local_jsonl(env: Env, config: Config) -> Result<()> {
+fn run_local_jsonl(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -> Result<()> {
     let maybe_db = File::open(&config.db);
     let mut hashes = match maybe_db {
         Err(_) => HashSet::new(), // The file may not exist yet
@@ -162,8 +159,6 @@ fn run_local_jsonl(env: Env, config: Config) -> Result<()> {
         .append(true)
         .open(&config.db)
         .chain_err(|| format!("Failed to open db: \"{}\"", config.db))?;
-    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
-    let in_events = embedded::input_events(&input_addr)?;
     let mut writer = LineWriter::new(db_file);
 
     for result in in_events {
@@ -187,11 +182,9 @@ fn run_local_jsonl(env: Env, config: Config) -> Result<()> {
     Ok(())
 }
 
-fn run_local_sqlite(env: Env, config: Config) -> Result<()> {
+fn run_local_sqlite(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -> Result<()> {
     let mut labels = HashMap::new();
     let conn = sqlite::open(&PathBuf::from(&config.db))?;
-    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
-    let in_events = embedded::input_events(&input_addr)?;
 
     for result in in_events {
         let event = prep_event(&mut labels, result)?;
@@ -204,14 +197,23 @@ fn run_local_sqlite(env: Env, config: Config) -> Result<()> {
     sqlite::close(conn)
 }
 
+pub fn run_with_events(
+    config: &Config,
+    in_events: impl Iterator<Item = Result<Event>>,
+) -> Result<()> {
+    if embedded::is_remote_target(&config.db) {
+        run_remote(config, in_events)
+    } else if common::has_sqlite_ext(&config.db) {
+        run_local_sqlite(config, in_events)
+    } else {
+        run_local_jsonl(config, in_events)
+    }
+}
+
 pub fn run() -> Result<()> {
     let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
     let config = embedded::get_config(&env.config)?;
-    if embedded::is_remote_target(&config.db) {
-        run_remote(env, config)
-    } else if common::has_sqlite_ext(&config.db) {
-        run_local_sqlite(env, config)
-    } else {
-        run_local_jsonl(env, config)
-    }
+    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
+    let in_events = embedded::input_events(&input_addr)?;
+    run_with_events(&config, in_events)
 }
