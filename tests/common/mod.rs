@@ -1,12 +1,16 @@
 #![allow(dead_code)]
 
+use std::collections::HashSet;
 use std::env;
+use std::fs::File;
+use std::io::BufReader;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
 use assert_cmd::Command;
 use lib_sr::errors::*;
+use lib_sr::event;
 #[cfg(unix)]
 use rexpect::session::PtySession;
 
@@ -51,13 +55,53 @@ pub fn sink_path(dir: &str) -> PathBuf {
     PathBuf::from(dir).join("sink.jsonl")
 }
 
+pub fn sqlite_sink_path(dir: &str) -> PathBuf {
+    PathBuf::from(dir).join("sink.db")
+}
+
 pub fn remove_sink(dir: &str) -> Result<()> {
     let sink = sink_path(dir);
+    let sqlite_sink = sqlite_sink_path(dir);
     if sink.exists() {
-        std::fs::remove_file(&sink).chain_err(|| "Failed to delete old sink")
+        std::fs::remove_file(&sink).chain_err(|| "Failed to delete old sink")?
+    }
+    if sqlite_sink.exists() {
+        std::fs::remove_file(&sqlite_sink).chain_err(|| "Failed to delete old sink")
     } else {
         Ok(())
     }
+}
+
+fn file_hashes(path: &PathBuf) -> Result<HashSet<String>> {
+    let reader = BufReader::new(File::open(path).chain_err(|| "Failed to open file")?);
+    let mut hashes = HashSet::new();
+    for event in event::events(reader) {
+        match event {
+            Ok(event) => hashes.insert(event.hash.expect("No hash for event")),
+            Err(e) => Err(e)?,
+        };
+    }
+    Ok(hashes)
+}
+
+pub fn check_sink_hashes(dir: &str) -> Result<()> {
+    let expected = file_hashes(&PathBuf::from(dir).join("expected.jsonl"))?;
+    let sink = file_hashes(&PathBuf::from(dir).join("sink.jsonl"))?;
+
+    assert_eq!(
+        HashSet::new(),
+        expected.difference(&sink).collect(),
+        "sink.jsonl contains all of the hashes in expected.jsonl"
+    );
+
+    assert_eq!(
+        HashSet::new(),
+        sink.difference(&expected).collect(),
+        "sink.jsonl does contain any hashes that are not in expected.jsonl"
+    );
+
+    remove_sink(dir)?;
+    Ok(())
 }
 
 pub fn check_sink(dir: &str) -> Result<()> {

@@ -14,7 +14,11 @@ fn test_dir(resource_dir: &str) -> String {
 /// stdout or stderr.
 ///
 /// The flow should output to sink.jsonl. The contents of sink.jsonl
-/// are checked against expected.jsonl.
+/// are checked against expected.jsonl. Order is compared.
+///
+/// If the test succeeds, the flow is run a second time with
+/// "--db sink.db". The events in sink.db must match expected.jsonl,
+/// but order is not compared.
 ///
 /// # Arguments
 ///
@@ -39,10 +43,30 @@ fn test_flow(
         .stdout("")
         .stderr("");
     common::check_sink(&dir)?;
+
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", "--db", "sink.db", flow_name])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["pull", "--db", "sink.jsonl", "sink.db"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink_hashes(&dir)?;
     Ok(())
 }
 
 /// Test a simple flow that prints an error message to stderr.
+///
+/// If the test succeeds, the flow is run a second time with
+/// "--db sink.db".
 ///
 /// # Arguments
 ///
@@ -72,6 +96,16 @@ fn test_flow_err(
         .stdout("")
         .stderr(stderr);
     assert_eq!(sink_should_exist, common::sink_path(&dir).exists());
+
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", "--db", "sink.db", flow_name])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(stderr);
+    assert_eq!(sink_should_exist, common::sqlite_sink_path(&dir).exists());
     Ok(())
 }
 
