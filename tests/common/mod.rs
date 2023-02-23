@@ -2,6 +2,7 @@
 
 use std::collections::HashSet;
 use std::env;
+use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -59,17 +60,19 @@ pub fn sqlite_sink_path(dir: &str) -> PathBuf {
     PathBuf::from(dir).join("sink.db")
 }
 
-pub fn remove_sink(dir: &str) -> Result<()> {
-    let sink = sink_path(dir);
-    let sqlite_sink = sqlite_sink_path(dir);
-    if sink.exists() {
-        std::fs::remove_file(&sink).chain_err(|| "Failed to delete old sink")?
-    }
-    if sqlite_sink.exists() {
-        std::fs::remove_file(&sqlite_sink).chain_err(|| "Failed to delete old sink")
+fn remove_file(path: &PathBuf) -> Result<()> {
+    if path.exists() {
+        fs::remove_file(path).chain_err(|| format!("Failed to remove {}", path.to_string_lossy()))
     } else {
         Ok(())
     }
+}
+
+pub fn remove_sink(dir: &str) -> Result<()> {
+    for fname in ["sink.jsonl", "sink.db", "sink.db-shm", "sink.db-wal"] {
+        remove_file(&PathBuf::from(dir).join(fname))?
+    }
+    Ok(())
 }
 
 fn file_hashes(path: &PathBuf) -> Result<HashSet<String>> {
