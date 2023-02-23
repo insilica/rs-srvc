@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use log::trace;
 use rusqlite::{CachedStatement, Connection, OpenFlags, Row};
 use serde_json::Value;
 
@@ -55,6 +56,7 @@ pub fn close(conn: Connection) -> Result<()> {
 
 pub fn insert_event(conn: &Connection, event: Event) -> Result<usize> {
     let hash = event.hash.clone().expect("Hash not set");
+    trace! {"Inserting event: {}", hash};
     let data = event
         .data
         .map(|v| serde_json::to_string(&v))
@@ -74,11 +76,16 @@ pub fn insert_event(conn: &Connection, event: Event) -> Result<usize> {
                 format!("Failed to serialize extra properties for event: {}", hash)
             })?)
         };
-    conn.execute(
+    match conn.execute(
         "INSERT OR IGNORE INTO srvc_event (hash, data, extra, type, uri) VALUES (?, ?, ?, ?, ?)",
         [event.hash, data, extra, Some(event.r#type), event.uri],
-    )
-    .chain_err(|| format!("Error inserting event: {}", hash))
+    ) {
+        Ok(rows) => {
+            trace!("Modified {} rows", rows);
+            Ok(rows)
+        }
+        Err(e) => Err(e).chain_err(|| format!("Error inserting event: {}", hash)),
+    }
 }
 
 fn value_to_map(value: &Value) -> Option<HashMap<String, Value>> {
