@@ -11,10 +11,12 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
+use url::Url;
 
 use lib_sr::common;
 use lib_sr::errors::*;
 use lib_sr::Opts;
+use url::form_urlencoded;
 
 mod embedded;
 mod flow;
@@ -43,7 +45,11 @@ struct Cli {
 #[clap(version)]
 enum Commands {
     /// Open the documentation website
-    Docs {},
+    Docs {
+        /// Search query
+        #[clap(multiple_values = true)]
+        query: Vec<String>,
+    },
 
     /// Add hashes to a stream of events
     Hash {},
@@ -120,8 +126,19 @@ enum EmbeddedSteps {
     SkipReviewed {},
 }
 
-fn open_docs() -> Result<()> {
-    common::open_browser(&format!("https://docs.sysrev.com/v{}/", VERSION))
+fn open_docs(query: Vec<String>) -> Result<()> {
+    if query.is_empty() {
+        common::open_browser(&format!("https://docs.sysrev.com/v{}/", VERSION))
+    } else {
+        let mut url =
+            Url::parse(&format!("https://docs.sysrev.com/v{}/search.html", VERSION)).expect("url");
+        let params = vec![("q", query.join(" "))];
+        let qs = form_urlencoded::Serializer::new(String::new())
+            .extend_pairs(params)
+            .finish();
+        url.set_query(Some(&qs));
+        common::open_browser(url.as_str())
+    }
 }
 
 fn print_config(opts: &mut Opts, pretty: bool) -> Result<()> {
@@ -168,7 +185,7 @@ fn opts(cli: &Cli) -> Opts {
 
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
-        Commands::Docs {} => open_docs(),
+        Commands::Docs { query } => open_docs(query),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
         Commands::Flow { db, name } => flow::run(opts, db, name),
