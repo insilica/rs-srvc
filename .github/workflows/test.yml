@@ -50,9 +50,9 @@ jobs:
       id: nix-cache-restore
       uses: john-shaffer/cache/restore@main
       with:
-        key: nix-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
+        key: nix-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
         restore-keys: |
-          nix-${{ github.repository }}-${{ runner.os }}-
+          nix-${{ runner.os }}-
         path: |
           /nix/store
           /nix/var/nix/db/db.sqlite
@@ -68,7 +68,7 @@ jobs:
       if: matrix.build != 'win-msvc' && steps.nix-cache-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v3
       with:
-        key: nix-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
+        key: nix-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
         path: |
           /nix/store
           /nix/var/nix/db/db.sqlite
@@ -105,9 +105,9 @@ jobs:
       id: cargo-cache-restore
       uses: actions/cache/restore@v3
       with:
-        key: cargo-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
-          cargo-${{ github.repository }}-${{ runner.os }}-
+          cargo-${{ runner.os }}-
         path: |
           ~/.cargo/bin/
           ~/.cargo/registry/index/
@@ -124,7 +124,7 @@ jobs:
       if: steps.cargo-cache-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v3
       with:
-        key: cargo-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
         path: |
           ~/.cargo/bin/
           ~/.cargo/registry/index/
