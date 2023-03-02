@@ -78,7 +78,7 @@ h1 {
       var stringInput = function (label) {
         var el = document.createElement('input');
         el.id = label['hash'];
-        el.maxLength = label['json_schema']['maxLength'];
+        el.maxLength = label['json-schema']['maxLength'];
         return el
       }
 
@@ -90,8 +90,8 @@ h1 {
           ul.appendChild(li);
         }
 
-        var itemsType = (label.json_schema.items || {})['type'];
-        var enu = (label.json_schema['items'] || {})['enum'];
+        var itemsType = (label['json-schema'].items || {})['type'];
+        var enu = (label['json-schema']['items'] || {})['enum'];
         if ( enu ) {
           var select = document.createElement('select');
           li.appendChild(select);
@@ -219,7 +219,7 @@ h1 {
       };
 
       var insertGroupRow = function (table, label, insertAfter) {
-        var props = (label.json_schema.items || {})['properties'];
+        var props = (label['json-schema'].items || {})['properties'];
         var tr = document.createElement('tr');
         table.appendChild(tr);
         var td = document.createElement('td');
@@ -264,7 +264,7 @@ h1 {
       };
 
       var groupInput = function (label) {
-        var props = (label.json_schema.items || {})['properties'];
+        var props = (label['json-schema'].items || {})['properties'];
         var table = document.createElement('table');
         var thead = document.createElement('thead');
         table.appendChild(thead);
@@ -285,7 +285,7 @@ h1 {
         var questionTd = document.createElement('td');
         questionTd.innerText = label['question'];
         var inputTd = document.createElement('td');
-        var schemaType = (label.json_schema || {})['type'];
+        var schemaType = (label['json-schema'] || {})['type'];
         if ( 'boolean' == schemaType || 'boolean' == label.type ) {
           inputTd.appendChild(booleanInput(label));
         } else if ( 'array' == schemaType ) {
@@ -374,7 +374,7 @@ h1 {
       }
 
       var groupLabelAnswer = function(label, el) {
-        var props = label.json_schema.items.properties;
+        var props = label['json-schema'].items.properties;
         var table = el.firstChild.firstChild;
 
         var rows = [];
@@ -399,7 +399,7 @@ h1 {
       }
 
       var arrayLabelAnswer = function(label, el) {
-        var itemsType = (label.json_schema.items || {})['type'];
+        var itemsType = (label['json-schema'].items || {})['type'];
         var vals = [];
         for ( const li of el.childNodes ) {
           if ( 'LI' == li.tagName ) {
@@ -419,7 +419,7 @@ h1 {
       var labelAnswer = function(label) {
         var answer;
         var el = document.getElementById(label.hash);
-        var schemaType = (label.json_schema || {})['type'];
+        var schemaType = (label['json-schema'] || {})['type'];
         if ( 'boolean' == schemaType || 'boolean' == label.type ) {
           answer = el.checked || false;
         } else if ( 'array' == schemaType ) {

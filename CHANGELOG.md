@@ -7,6 +7,7 @@
 - Add a `--db` option to `sr flow` to specify the db from the command-line.
 - Add a `--dir` option to set the working directory.
 - Add `sr pull` command to import events from a file or URL.
+- Fix label-web step not seeing json-schemas for labels.
 
 ## v0.14.1 (2023-02-14)
 
