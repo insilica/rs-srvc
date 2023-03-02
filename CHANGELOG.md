@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix html embedded step may not properly determine the directory when relative URLs are used.
+
 ## v0.15.0 (2023-03-02)
 
 - Add event hash to some error messages when writing an event fails.

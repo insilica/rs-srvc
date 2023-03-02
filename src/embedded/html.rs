@@ -285,7 +285,8 @@ async fn serve(
             .service(post_submit_label_answers);
         match &html_file_path {
             Some(path) => {
-                let serve_from = path.parent().unwrap_or(path);
+                let cpath = path.canonicalize().expect("canonicalize");
+                let serve_from = cpath.parent().unwrap_or(path);
                 app = app.service(Files::new("/", serve_from).prefer_utf8(true))
             }
             None => {}
