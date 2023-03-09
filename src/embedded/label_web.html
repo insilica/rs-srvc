@@ -276,7 +276,7 @@ h1 {
         for (k in props) {
           var th = document.createElement('th');
           thead.appendChild(th);
-          th.innerText = k;
+          th.innerText = props[k].title || k;
         }
         insertGroupRow(table, label);
 
