@@ -1,6 +1,6 @@
 ## Unreleased
 
-- Fix html embedded step may not properly determine the directory when relative URLs are used.
+- Fix html embedded step sometimes not properly determining the directory when relative URLs are used.
 - Fix label-web step setting string maxLength to 0 when no maxLength property exists
 - Show json-schema title property for group labels in label-web
 - Use the srvcOrder json-schema property to control the order of columns in group labels
