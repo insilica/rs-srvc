@@ -221,14 +221,15 @@ h1 {
         return ul;
       };
 
-      var insertGroupRow = function (table, label, insertAfter) {
-        var props = (label['json-schema'].items || {})['properties'];
-        var tr = document.createElement('tr');
+      let insertGroupRow = function (table, label, insertAfter) {
+        let items = label['json-schema'].items || {};
+        let props = items.properties;
+        let tr = document.createElement('tr');
         table.appendChild(tr);
-        var td = document.createElement('td');
+        let td = document.createElement('td');
         tr.appendChild(td);
 
-        var addButton = document.createElement('button');
+        let addButton = document.createElement('button');
         td.appendChild(addButton);
         addButton.innerText = '+';
         addButton.addEventListener('click', function (ev) {
@@ -236,7 +237,7 @@ h1 {
           ev.preventDefault();
         });
 
-        var delButton = document.createElement('button');
+        let delButton = document.createElement('button');
         td.appendChild(delButton);
         delButton.innerText = '-';
         delButton.addEventListener('click', function (ev) {
@@ -244,9 +245,16 @@ h1 {
           ev.preventDefault();
         });
 
-        for (k in props) {
-          var schema = props[k];
-          var td = document.createElement('td');
+        let order = [];
+        if (items.srvcOrder) {
+          order = items.srvcOrder.values();
+        } else {
+          order = Object.keys(props)
+        }
+
+        for (const k of order) {
+          let schema = props[k];
+          let td = document.createElement('td');
           tr.appendChild(td);
           if ( 'boolean' == schema.type ) {
             td.appendChild(booleanGroupInput());
@@ -266,15 +274,24 @@ h1 {
         }
       };
 
-      var groupInput = function (label) {
-        var props = (label['json-schema'].items || {})['properties'];
-        var table = document.createElement('table');
-        var thead = document.createElement('thead');
+      let groupInput = function (label) {
+        let items = label['json-schema'].items || {};
+        let props = items.properties;
+        let table = document.createElement('table');
+        let thead = document.createElement('thead');
         table.appendChild(thead);
-        var th = document.createElement('th');
+        let th = document.createElement('th');
         thead.appendChild(th);
-        for (k in props) {
-          var th = document.createElement('th');
+
+        let order = [];
+        if (items.srvcOrder) {
+          order = items.srvcOrder.values();
+        } else {
+          order = Object.keys(props)
+        }
+
+        for (const k of order) {
+          let th = document.createElement('th');
           thead.appendChild(th);
           th.innerText = props[k].title || k;
         }
