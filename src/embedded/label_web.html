@@ -166,7 +166,10 @@ h1 {
 
       var stringGroupInput = function (schema) {
         var el = document.createElement('input');
-        el.maxLength = schema.items.maxLength;
+        let max = (schema.items || {}).maxLength;
+        if ( max ) {
+          el.maxLength = max;
+        }
         return el;
       }
 

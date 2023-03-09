@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Fix html embedded step may not properly determine the directory when relative URLs are used.
+- Fix label-web step setting string maxLength to 0 when no maxLength property exists
 
 ## v0.15.0 (2023-03-02)
 
