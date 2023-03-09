@@ -300,7 +300,7 @@ h1 {
         } else {
           var el = document.createElement('div');
           inputTd.appendChild(el);
-          if ( 'json_schema' == label.type ) {
+          if ( label['json-schema'] ) {
             el.innerText = 'Unknown type in JSON schema: ' + schemaType;
           } else {
             el.innerText = 'Unknown label type: ' + label.type;
