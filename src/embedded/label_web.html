@@ -367,6 +367,10 @@ h1 {
         return el.querySelector('input').checked == true
       }
 
+      var stringGroupLabelAnswer = function(el) {
+        return el.querySelector('input').value
+      }
+
       var arrayGroupLabelAnswer = function(schema, el) {
         var enu = schema.items.enum;
         var typ = schema.items.type;
@@ -393,21 +397,32 @@ h1 {
         return acc;
       }
 
-      var groupLabelAnswer = function(label, el) {
-        var props = label['json-schema'].items.properties;
-        var table = el.firstChild.firstChild;
+      let groupLabelAnswer = function(label, el) {
+        let items = label['json-schema'].items || {};
+        let props = items.properties;
+        let table = el.firstChild.firstChild;
 
-        var rows = [];
-        for ( tr of table.childNodes ) {
+        let rows = [];
+        for ( const tr of table.childNodes ) {
           if ( 'TR' == tr.tagName ) {
-            var m = {};
-            var i = 0;
-            for ( k in props ) {
+            let m = {};
+            let i = 0;
+
+            let order = [];
+            if (items.srvcOrder) {
+              order = items.srvcOrder.values();
+            } else {
+              order = Object.keys(props)
+            }
+
+            for ( const k of order ) {
               i++;
-              var node = tr.childNodes[i];
-              var typ = props[k].type;
+              let node = tr.childNodes[i];
+              let typ = props[k].type;
               if ( 'boolean' == typ ) {
                 m[k] = booleanGroupLabelAnswer(node);
+              } else if ( 'string' == typ ) {
+                m[k] = stringGroupLabelAnswer(node);
               } else if ( 'array' == typ ) {
                 m[k] = arrayGroupLabelAnswer(props[k], node);
               }
