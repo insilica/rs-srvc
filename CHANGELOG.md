@@ -5,6 +5,7 @@
 - Show json-schema title property for group labels in label-web
 - Use the srvcOrder json-schema property to control the order of columns in group labels
 - Support strings not in arrays in group labels
+- Read the `SRVC_TOKEN` environment variable to set `Authorization: Bearer` tokens for some HTTP requests. This token is used for requests caused by the `base-uri`, `flow-uri`, `label-uri`, and `step-uri` properties, as well as requests to the db when the db is a URL. It is not used for other requests due to security considerations.
 
 ## v0.15.0 (2023-03-02)
 

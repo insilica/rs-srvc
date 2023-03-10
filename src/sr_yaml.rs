@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -110,14 +111,20 @@ pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
 }
 
 pub fn get_object<T: DeserializeOwned>(client: &Client, url: &str) -> Result<T> {
-    let response = client
-        .get(url)
+    let mut request = client.get(url);
+
+    if let Ok(token) = env::var("SRVC_TOKEN") {
+        request = request.header("Authorization", format!("Bearer {}", token));
+    }
+
+    let response = request
         .send()
         .chain_err(|| format!("Error while retrieving URL: {}", url))?;
     let status = response.status().as_u16();
     let text = response
         .text()
         .chain_err(|| "Error getting response text")?;
+
     if status == 200 {
         match serde_json::from_str(&text) {
             Ok(v) => Ok(v),

@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::BufReader;
@@ -127,10 +128,16 @@ fn run_remote(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -
 
         if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
             let json = serde_json::to_string(&event).chain_err(|| "Serialization failed")?;
-            let response = client
+            let mut request = client
                 .post(&url)
                 .header("Content-Type", "application/json")
-                .body(json)
+                .body(json);
+
+            if let Ok(token) = env::var("SRVC_TOKEN") {
+                request = request.header("Authorization", format!("Bearer {}", token));
+            }
+
+            let response = request
                 .send()
                 .chain_err(|| "Error sending event to remote")?;
             let status = response.status().as_u16();
