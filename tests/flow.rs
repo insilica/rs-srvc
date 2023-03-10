@@ -192,7 +192,7 @@ fn test_label_json_schema() -> std::result::Result<(), rexpect::errors::Error> {
 fn test_label_json_schema_url() -> std::result::Result<(), rexpect::errors::Error> {
     let dir = "test-resources/label-json-schema-url";
     common::remove_sink(dir).unwrap();
-    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 400)?;
+    let mut p = common::spawn(dir, vec!["flow", "label"], 1661192610, 2000)?;
     p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
     p.send_line("yes")?;
     p.exp_string("Eye irritation? [Yes/No/Skip]")?;
@@ -263,7 +263,7 @@ fn test_generator_order_labels_existing() -> Result<()> {
 
 #[test]
 fn test_generator_url() -> Result<()> {
-    test_flow("generator-url", "generator-url", 400)
+    test_flow("generator-url", "generator-url", 2000)
 }
 
 #[cfg(unix)]
@@ -272,7 +272,7 @@ fn test_generator_url_404() -> Result<()> {
     test_flow_err(
         "generator-url-404",
         "generator-url",
-        400,
+        2000,
         "Error: Unexpected 404 status for http://127.0.0.1:8877/generator-url/404.jsonl\nError: Step failed with exit code 1\n",
         true
     )
