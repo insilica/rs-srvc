@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufReader, ErrorKind, Read, Write};
 use std::path::PathBuf;
@@ -126,20 +126,32 @@ async fn post_submit_label_answers(
     request: Json<SubmitLabelAnswersRequest>,
 ) -> std::io::Result<HttpResponse> {
     let app_ctx = &mut app_ctx_mutex.lock().unwrap();
+    let mut hashes = HashSet::new();
     match app_ctx.current_doc_events.to_owned() {
         Some(events) => {
             for event in events {
-                serde_json::to_writer(&mut app_ctx.writer, &event)?;
-                app_ctx.writer.write(b"\n")?;
+                let hash = event.hash.clone().expect("Hash not set");
+                if !hashes.contains(&hash) {
+                    serde_json::to_writer(&mut app_ctx.writer, &event)?;
+                    app_ctx.writer.write(b"\n")?;
+                    hashes.insert(hash);
+                }
             }
         }
         None => {}
     };
     match request.answers.to_owned() {
         Some(events) => {
-            for event in events {
-                serde_json::to_writer(&mut app_ctx.writer, &event)?;
-                app_ctx.writer.write(b"\n")?;
+            for mut event in events {
+                event::ensure_hash(&mut event)
+                    .chain_err(|| "")
+                    .expect("Hash mismatch");
+                let hash = event.hash.clone().expect("Hash not set");
+                if !hashes.contains(&hash) {
+                    serde_json::to_writer(&mut app_ctx.writer, &event)?;
+                    app_ctx.writer.write(b"\n")?;
+                    hashes.insert(hash);
+                }
             }
         }
         None => {}

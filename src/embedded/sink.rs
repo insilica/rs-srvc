@@ -32,21 +32,6 @@ pub fn read_hashes(file: File) -> Result<HashSet<String>> {
     Ok(hashes)
 }
 
-pub fn ensure_hash(event: &mut Event) -> Result<()> {
-    let expected_hash = lib_sr::event::event_hash(event.clone())?;
-    let hash = event.hash.clone().unwrap_or("".to_string());
-    if hash == "" {
-        event.hash = Some(expected_hash);
-    } else if expected_hash != hash {
-        return Err(format!(
-            "Incorrect event hash. Expected: \"{}\". Found: \"{}\".",
-            expected_hash, hash
-        )
-        .into());
-    }
-    Ok(())
-}
-
 fn validation_error_message(e: jsonschema::ValidationError) -> String {
     // Work around lifetime complications caused by jsonschema's
     // ValidationError referencing the schema data
@@ -92,7 +77,7 @@ fn validate_answer(
 
 fn prep_event(labels: &mut HashMap<String, Event>, result: Result<Event>) -> Result<Event> {
     let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
-    ensure_hash(&mut event)?;
+    event::ensure_hash(&mut event)?;
     if event.r#type == "label" {
         labels.insert(event.hash.as_ref().unwrap().to_string(), event.clone());
     } else if event.r#type == "label-answer" {

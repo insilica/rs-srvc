@@ -68,3 +68,18 @@ pub fn events(reader: impl BufRead) -> impl Iterator<Item = Result<Event>> {
             Err(e) => Err(e),
         })
 }
+
+pub fn ensure_hash(event: &mut Event) -> Result<()> {
+    let expected_hash = event_hash(event.clone())?;
+    let hash = event.hash.clone().unwrap_or("".to_string());
+    if hash == "" {
+        event.hash = Some(expected_hash);
+    } else if expected_hash != hash {
+        return Err(format!(
+            "Incorrect event hash. Expected: \"{}\". Found: \"{}\".",
+            expected_hash, hash
+        )
+        .into());
+    }
+    Ok(())
+}
