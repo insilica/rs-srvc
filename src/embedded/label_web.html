@@ -1,484 +1,491 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <style>html, body {
-            padding:10px 20px;
-            margin:0;
-         }
 
-         button {
-             margin: 4pt;
-         }
+<head>
+  <style>
+    html,
+    body {
+      padding: 10px 20px;
+      margin: 0;
+    }
 
-         h1 {
-             font-size:22px;
-             margin-top:30px;
-             margin-bottom:20px;
-         }
+    button {
+      margin: 4pt;
+    }
 
-         #outer-container {
-             position:relative;
-         }
+    h1 {
+      font-size: 22px;
+      margin-top: 30px;
+      margin-bottom: 20px;
+    }
 
-         #content {
-             max-width:920px;
-             font-size:17px;
-             line-height:27px;
-         }
-         ul {
-             padding: 0;
-         }
-         li {
-             list-style: none;
-         }
+    #outer-container {
+      position: relative;
+    }
 
+    #content {
+      max-width: 920px;
+      font-size: 17px;
+      line-height: 27px;
+    }
 
+    ul {
+      padding: 0;
+    }
 
-
-         #labels td, thead {
-             font-family: sans-serif;
-             font-weight: bold;
-         }
-
-         li tr + tr {
-             position: relative;
-         }
-         li tr + tr:after {
-             content: '';
-             display: block;
-             width: 100%;
-             border-bottom: 1px solid #ccc;
-             position: absolute;
-             top: 0;
-             left: 0;
-         }
-         li td ul {
-             margin: 10px 0;
-         }
-         li td ul li + li {
-             margin-top: 4px;
-         }
-
-         input, select {
-             font-size: 14px;
-             line-height: 18px;
-             background-color: #fff;
-             border: 1px solid #ccc;
-             border-radius: 4px;
-             padding: 7px 10px;
-             margin-right: 4px;
-         }
-
-         td button {
-             cursor: pointer;
-             display: inline-block;
-             vertical-align: middle;
-             margin: 0;
-             border: none;
-             font-size: 16px;
-             padding: 7px 10px;
-         }
-
-         .btn-add {
-             background-color: #86e1ff;
-             border-top: 1px solid #ccc;
-             border-bottom: 1px solid #ccc;
-             border-left: 1px solid #ccc;
-             border-top-left-radius: 5px;
-             border-bottom-left-radius: 5px;
-         }
-
-         .btn-del {
-             border-top: 1px solid #ccc;
-             border-right: 1px solid #ccc;
-             border-bottom: 1px solid #ccc;
-             border-top-right-radius: 5px;
-             border-bottom-right-radius: 5px;
-             margin-right: 4px;
-         }
-
-         td button:hover {
-             background-color: #eee;
-             color: #333;
-         }
+    li {
+      list-style: none;
+    }
 
 
 
 
-        </style>
+    #labels td,
+    thead {
+      font-family: sans-serif;
+      font-weight: bold;
+    }
+
+    li tr+tr {
+      position: relative;
+    }
+
+    li tr+tr:after {
+      content: '';
+      display: block;
+      width: 100%;
+      border-bottom: 1px solid #ccc;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    li td ul {
+      margin: 10px 0;
+    }
+
+    li td ul li+li {
+      margin-top: 4px;
+    }
+
+    input,
+    select {
+      font-size: 14px;
+      line-height: 18px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 7px 10px;
+      margin-right: 4px;
+    }
+
+    td button {
+      cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      border: none;
+      font-size: 16px;
+      padding: 7px 10px;
+    }
+
+    .btn-add {
+      background-color: #86e1ff;
+      border-top: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+      border-left: 1px solid #ccc;
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+    }
+
+    .btn-del {
+      border-top: 1px solid #ccc;
+      border-right: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      margin-right: 4px;
+    }
+
+    td button:hover {
+      background-color: #eee;
+      color: #333;
+    }
+  </style>
 </head>
+
 <body>
-<div id="outer-container">
-  <form id="labels-form">
+  <div id="outer-container">
+    <form id="labels-form">
+      <div>
+        <table id="labels"></table>
+      </div>
+      <div>
+        <button id="submit-labels" type="submit">Submit</button>
+      </div>
+    </form>
+    <hr>
     <div>
-      <table id="labels"></table>
+      <p><a id="document-uri" target="_blank"></a></p>
+      <h2 id="document-title"></h2>
+      <div id="document-abstract"></div>
     </div>
-    <div>
-      <button id="submit-labels" type="submit">Submit</button>
-    </div>
-  </form>
-  <hr>
-  <div>
-    <p><a id="document-uri" target="_blank"></a></p>
-    <h2 id="document-title"></h2>
-    <div id="document-abstract"></div>
   </div>
-</div>
-<script type="text/javascript">
- (function() {
-     var config = null
-     var currentDocEvents = null
-     var labels = null
-     var docUriEl = document.getElementById('document-uri')
-     var docTitleEl = document.getElementById('document-title')
-     var docAbstractEl = document.getElementById('document-abstract')
-     var formEl = document.getElementById('labels-form')
-     var labelsEl = document.getElementById('labels')
-     var submitEl = document.getElementById('submit-labels')
+  <script type="text/javascript">
+    (function () {
+      var config = null
+      var currentDocEvents = null
+      var labels = null
+      var docUriEl = document.getElementById('document-uri')
+      var docTitleEl = document.getElementById('document-title')
+      var docAbstractEl = document.getElementById('document-abstract')
+      var formEl = document.getElementById('labels-form')
+      var labelsEl = document.getElementById('labels')
+      var submitEl = document.getElementById('submit-labels')
 
-     var booleanInput = function (label) {
-         var el = document.createElement('input')
-         el.id = label['hash'];
-         el.type = 'checkbox'
-         return el
-     }
+      var booleanInput = function (label) {
+        var el = document.createElement('input')
+        el.id = label['hash'];
+        el.type = 'checkbox'
+        return el
+      }
 
-     var categoricalInput = function (label) {
-         var el = document.createElement('select');
-         el.id = label['hash'];
-         el.appendChild(document.createElement('option'));
-         (label['categories'] || []).forEach(function (category) {
-             var option = document.createElement('option')
-             option.innerText = category
-             el.append(option)
-         })
-         return el
-     }
+      var categoricalInput = function (label) {
+        var el = document.createElement('select');
+        el.id = label['hash'];
+        el.appendChild(document.createElement('option'));
+        (label['categories'] || []).forEach(function (category) {
+          var option = document.createElement('option')
+          option.innerText = category
+          el.append(option)
+        })
+        return el
+      }
 
-     var stringInput = function (label) {
-         var el = document.createElement('input');
-         el.id = label['hash'];
-         let max = label['json-schema']['maxLength'];
-         if ( max ) {
-             el.maxLength = max;
-         }
-         return el
-     }
+      var stringInput = function (label) {
+        var el = document.createElement('input');
+        el.id = label['hash'];
+        let max = label['json-schema']['maxLength'];
+        if (max) {
+          el.maxLength = max;
+        }
+        return el
+      }
 
-     var insertArrayInput = function (label, ul, insertAfter) {
-         var li = document.createElement('li');
-         if ( insertAfter ) {
-             ul.insertBefore(li, insertAfter.nextSibling)
-         } else {
-             ul.appendChild(li);
-         }
+      var insertArrayInput = function (label, ul, insertAfter) {
+        var li = document.createElement('li');
+        if (insertAfter) {
+          ul.insertBefore(li, insertAfter.nextSibling)
+        } else {
+          ul.appendChild(li);
+        }
 
-         var itemsType = (label['json-schema'].items || {})['type'];
-         var enu = (label['json-schema']['items'] || {})['enum'];
-         if ( enu ) {
-             var select = document.createElement('select');
-             li.appendChild(select);
-             select.appendChild(document.createElement('option'));
-             for ( i in enu ) {
-                 var option = document.createElement('option');
-                 option.innerText = enu[i];
-                 select.append(option);
-             }
-         } else if ( 'boolean' == itemsType) {
-             var input = document.createElement('input');
-             input.type = 'checkbox';
-             li.appendChild(input);
-         } else if ( 'object'  == itemsType) {
-             li.appendChild(groupInput(label));
-         } else if ( 'string' == itemsType) {
-             var input = document.createElement('input');
-             li.appendChild(input);
-         }
+        var itemsType = (label['json-schema'].items || {})['type'];
+        var enu = (label['json-schema']['items'] || {})['enum'];
+        if (enu) {
+          var select = document.createElement('select');
+          li.appendChild(select);
+          select.appendChild(document.createElement('option'));
+          for (i in enu) {
+            var option = document.createElement('option');
+            option.innerText = enu[i];
+            select.append(option);
+          }
+        } else if ('boolean' == itemsType) {
+          var input = document.createElement('input');
+          input.type = 'checkbox';
+          li.appendChild(input);
+        } else if ('object' == itemsType) {
+          li.appendChild(groupInput(label));
+        } else if ('string' == itemsType) {
+          var input = document.createElement('input');
+          li.appendChild(input);
+        }
 
-         if ( 'object' != itemsType ) {
-             var addButton = document.createElement('button');
-             li.appendChild(addButton);
-             addButton.innerText = '+';
-             addButton.classList.add('btn-add');
-             addButton.addEventListener('click', function(ev) {
-                 insertArrayInput(label, ul, li);
-                 ev.preventDefault();
-             })
+        if ('object' != itemsType) {
+          var addButton = document.createElement('button');
+          li.appendChild(addButton);
+          addButton.innerText = '+';
+          addButton.classList.add('btn-add');
+          addButton.addEventListener('click', function (ev) {
+            insertArrayInput(label, ul, li);
+            ev.preventDefault();
+          })
 
-             var delButton = document.createElement('button');
-             li.appendChild(delButton);
-             delButton.innerText = '-';
-             delButton.classList.add('btn-del');
-             delButton.addEventListener('click', function(ev) {
-                 removeArrayInput(label, ul, li);
-                 ev.preventDefault();
-             })
-         }
+          var delButton = document.createElement('button');
+          li.appendChild(delButton);
+          delButton.innerText = '-';
+          delButton.classList.add('btn-del');
+          delButton.addEventListener('click', function (ev) {
+            removeArrayInput(label, ul, li);
+            ev.preventDefault();
+          })
+        }
 
-         return li;
-     };
+        return li;
+      };
 
-     var removeArrayInput = function(label, ul, li) {
-         ul.removeChild(li);
-         if ( !ul.firstChild) {
-             insertArrayInput(label, ul);
-         }
-     };
+      var removeArrayInput = function (label, ul, li) {
+        ul.removeChild(li);
+        if (!ul.firstChild) {
+          insertArrayInput(label, ul);
+        }
+      };
 
-     var arrayInput = function (label) {
-         var ul = document.createElement('ul');
-         ul.id = label['hash'];
-         insertArrayInput(label, ul);
-         return ul;
-     };
+      var arrayInput = function (label) {
+        var ul = document.createElement('ul');
+        ul.id = label['hash'];
+        insertArrayInput(label, ul);
+        return ul;
+      };
 
-     var booleanGroupInput = function () {
-         var el = document.createElement('input')
-         el.type = 'checkbox'
-         return el
-     }
+      var booleanGroupInput = function () {
+        var el = document.createElement('input')
+        el.type = 'checkbox'
+        return el
+      }
 
-     var enumGroupInput = function (schema) {
-         var el = document.createElement('select');
-         el.appendChild(document.createElement('option'));
-         for ( x in schema.items.enum ) {
-             var option = document.createElement('option');
-             option.innerText = schema.items.enum[x];
-             el.append(option);
-         }
-         return el;
-     };
+      var enumGroupInput = function (schema) {
+        var el = document.createElement('select');
+        el.appendChild(document.createElement('option'));
+        for (x in schema.items.enum) {
+          var option = document.createElement('option');
+          option.innerText = schema.items.enum[x];
+          el.append(option);
+        }
+        return el;
+      };
 
-     var stringGroupInput = function (schema) {
-         var el = document.createElement('input');
-         let max = (schema.items || {}).maxLength;
-         if ( max ) {
-             el.maxLength = max;
-         }
-         return el;
-     }
+      var stringGroupInput = function (schema) {
+        var el = document.createElement('input');
+        let max = (schema.items || {}).maxLength;
+        if (max) {
+          el.maxLength = max;
+        }
+        return el;
+      }
 
-     var insertArrayGroupInput = function(schema, ul, insertAfter) {
-         var li = document.createElement('li');
-         if ( insertAfter ) {
-             ul.insertBefore(li, insertAfter.nextSibling)
-         } else {
-             ul.appendChild(li);
-         }
+      var insertArrayGroupInput = function (schema, ul, insertAfter) {
+        var li = document.createElement('li');
+        if (insertAfter) {
+          ul.insertBefore(li, insertAfter.nextSibling)
+        } else {
+          ul.appendChild(li);
+        }
 
-         var enu = (schema.items || {})['enum'];
-         var typ = (schema.items || {})['type'];
-         if ( enu ) {
-             li.appendChild(enumGroupInput(schema));
-         } else if ( 'boolean' == typ ) {
-             li.appendChild(booleanGroupInput(schema));
-         } else if ( 'string' == typ ) {
-             li.appendChild(stringGroupInput(schema));
-         }
+        var enu = (schema.items || {})['enum'];
+        var typ = (schema.items || {})['type'];
+        if (enu) {
+          li.appendChild(enumGroupInput(schema));
+        } else if ('boolean' == typ) {
+          li.appendChild(booleanGroupInput(schema));
+        } else if ('string' == typ) {
+          li.appendChild(stringGroupInput(schema));
+        }
 
-         var addButton = document.createElement('button');
-         li.appendChild(addButton);
-         addButton.innerText = '+';
-         addButton.classList.add('btn-add');
-         addButton.addEventListener('click', function(ev) {
-             insertArrayGroupInput(schema, ul, li);
-             ev.preventDefault();
-         })
+        var addButton = document.createElement('button');
+        li.appendChild(addButton);
+        addButton.innerText = '+';
+        addButton.classList.add('btn-add');
+        addButton.addEventListener('click', function (ev) {
+          insertArrayGroupInput(schema, ul, li);
+          ev.preventDefault();
+        })
 
-         var delButton = document.createElement('button');
-         li.appendChild(delButton);
-         delButton.innerText = '-';
-         delButton.classList.add('btn-del');
-         delButton.addEventListener('click', function(ev) {
-             removeArrayGroupInput(schema, ul, li);
-             ev.preventDefault();
-         })
-     };
+        var delButton = document.createElement('button');
+        li.appendChild(delButton);
+        delButton.innerText = '-';
+        delButton.classList.add('btn-del');
+        delButton.addEventListener('click', function (ev) {
+          removeArrayGroupInput(schema, ul, li);
+          ev.preventDefault();
+        })
+      };
 
-     var removeArrayGroupInput = function(schema, ul, li) {
-         ul.removeChild(li);
-         if ( !ul.firstChild) {
-             insertArrayGroupInput(schema, ul);
-         }
-     };
+      var removeArrayGroupInput = function (schema, ul, li) {
+        ul.removeChild(li);
+        if (!ul.firstChild) {
+          insertArrayGroupInput(schema, ul);
+        }
+      };
 
-     var arrayGroupInput = function (schema) {
-         var ul = document.createElement('ul');
-         insertArrayGroupInput(schema, ul);
-         return ul;
-     };
+      var arrayGroupInput = function (schema) {
+        var ul = document.createElement('ul');
+        insertArrayGroupInput(schema, ul);
+        return ul;
+      };
 
-     let insertGroupRow = function (table, label, insertAfter) {
-         let items = label['json-schema'].items || {};
-         let props = items.properties;
-         let tr = document.createElement('tr');
-         table.appendChild(tr);
-         let td = document.createElement('td');
-         tr.appendChild(td);
+      let insertGroupRow = function (table, label, insertAfter) {
+        let items = label['json-schema'].items || {};
+        let props = items.properties;
+        let tr = document.createElement('tr');
+        table.appendChild(tr);
+        let td = document.createElement('td');
+        tr.appendChild(td);
 
-         let addButton = document.createElement('button');
-         td.appendChild(addButton);
-         addButton.innerText = '+';
-         addButton.classList.add('btn-add');
-         addButton.addEventListener('click', function (ev) {
-             insertGroupRow(table, label, insertAfter);
-             ev.preventDefault();
-         });
+        let addButton = document.createElement('button');
+        td.appendChild(addButton);
+        addButton.innerText = '+';
+        addButton.classList.add('btn-add');
+        addButton.addEventListener('click', function (ev) {
+          insertGroupRow(table, label, insertAfter);
+          ev.preventDefault();
+        });
 
-         let delButton = document.createElement('button');
-         td.appendChild(delButton);
-         delButton.innerText = '-';
-         delButton.classList.add('btn-del');
-         delButton.addEventListener('click', function (ev) {
-             removeGroupRow(label, table, tr);
-             ev.preventDefault();
-         });
+        let delButton = document.createElement('button');
+        td.appendChild(delButton);
+        delButton.innerText = '-';
+        delButton.classList.add('btn-del');
+        delButton.addEventListener('click', function (ev) {
+          removeGroupRow(label, table, tr);
+          ev.preventDefault();
+        });
 
-         let order = [];
-         if (items.srvcOrder) {
-             order = items.srvcOrder.values();
-         } else {
-             order = Object.keys(props)
-         }
+        let order = [];
+        if (items.srvcOrder) {
+          order = items.srvcOrder.values();
+        } else {
+          order = Object.keys(props)
+        }
 
-         for (const k of order) {
-             let schema = props[k];
-             let td = document.createElement('td');
-             tr.appendChild(td);
-             if ( 'boolean' == schema.type ) {
-                 td.appendChild(booleanGroupInput());
-             } else if ( 'array' == schema.type ) {
-                 td.appendChild(arrayGroupInput(schema));
-             } else if ( 'string' == schema.type ) {
-                 td.appendChild(stringGroupInput(schema));
-             }
-         }
-     };
+        for (const k of order) {
+          let schema = props[k];
+          let td = document.createElement('td');
+          tr.appendChild(td);
+          if ('boolean' == schema.type) {
+            td.appendChild(booleanGroupInput());
+          } else if ('array' == schema.type) {
+            td.appendChild(arrayGroupInput(schema));
+          } else if ('string' == schema.type) {
+            td.appendChild(stringGroupInput(schema));
+          }
+        }
+      };
 
-     var removeGroupRow = function(label, table, tr) {
-         table.removeChild(tr);
-         console.log(table);
-         if ( table.firstChild == table.lastChild ) {
-             insertGroupRow(table, label);
-         }
-     };
+      var removeGroupRow = function (label, table, tr) {
+        table.removeChild(tr);
+        console.log(table);
+        if (table.firstChild == table.lastChild) {
+          insertGroupRow(table, label);
+        }
+      };
 
-     let groupInput = function (label) {
-         let items = label['json-schema'].items || {};
-         let props = items.properties;
-         let table = document.createElement('table');
-         let thead = document.createElement('thead');
-         table.appendChild(thead);
-         let th = document.createElement('th');
-         thead.appendChild(th);
+      let groupInput = function (label) {
+        let items = label['json-schema'].items || {};
+        let props = items.properties;
+        let table = document.createElement('table');
+        let thead = document.createElement('thead');
+        table.appendChild(thead);
+        let th = document.createElement('th');
+        thead.appendChild(th);
 
-         let order = [];
-         if (items.srvcOrder) {
-             order = items.srvcOrder.values();
-         } else {
-             order = Object.keys(props)
-         }
+        let order = [];
+        if (items.srvcOrder) {
+          order = items.srvcOrder.values();
+        } else {
+          order = Object.keys(props)
+        }
 
-         for (const k of order) {
-             let th = document.createElement('th');
-             thead.appendChild(th);
-             th.innerText = props[k].title || k;
-         }
-         insertGroupRow(table, label);
+        for (const k of order) {
+          let th = document.createElement('th');
+          thead.appendChild(th);
+          th.innerText = props[k].title || k;
+        }
+        insertGroupRow(table, label);
 
-         return table;
-     };
+        return table;
+      };
 
-     var labelInput = function (label) {
-         var tr = document.createElement('tr');
-         var questionTd = document.createElement('td');
-         questionTd.innerText = label['question'];
-         var inputTd = document.createElement('td');
-         var schemaType = (label['json-schema'] || {})['type'];
-         if ( 'boolean' == schemaType || 'boolean' == label.type ) {
-             inputTd.appendChild(booleanInput(label));
-         } else if ( 'array' == schemaType ) {
-             inputTd.appendChild(arrayInput(label));
-         } else if ( 'categorical' == label.type ) {
-             inputTd.appendChild(categoricalInput(label));
-         } else if ( 'string' == schemaType || 'string' == label.type ) {
-             inputTd.appendChild(stringInput(label));
-         } else {
-             var el = document.createElement('div');
-             inputTd.appendChild(el);
-             if ( label['json-schema'] ) {
-                 el.innerText = 'Unknown type in JSON schema: ' + schemaType;
-             } else {
-                 el.innerText = 'Unknown label type: ' + label.type;
-             }
-         }
-         tr.appendChild(questionTd);
-         tr.appendChild(inputTd);
-         return tr;
-     };
+      var labelInput = function (label) {
+        var tr = document.createElement('tr');
+        var questionTd = document.createElement('td');
+        questionTd.innerText = label['question'];
+        var inputTd = document.createElement('td');
+        var schemaType = (label['json-schema'] || {})['type'];
+        if ('boolean' == schemaType || 'boolean' == label.type) {
+          inputTd.appendChild(booleanInput(label));
+        } else if ('array' == schemaType) {
+          inputTd.appendChild(arrayInput(label));
+        } else if ('categorical' == label.type) {
+          inputTd.appendChild(categoricalInput(label));
+        } else if ('string' == schemaType || 'string' == label.type) {
+          inputTd.appendChild(stringInput(label));
+        } else {
+          var el = document.createElement('div');
+          inputTd.appendChild(el);
+          if (label['json-schema']) {
+            el.innerText = 'Unknown type in JSON schema: ' + schemaType;
+          } else {
+            el.innerText = 'Unknown label type: ' + label.type;
+          }
+        }
+        tr.appendChild(questionTd);
+        tr.appendChild(inputTd);
+        return tr;
+      };
 
-     var loadConfig = function () {
-         var req = new XMLHttpRequest()
-         req.addEventListener("load", function (resp) {
-             config = JSON.parse(req.response)
-             labels = config['current-labels'] || config['current_labels'] || []
-             labels.forEach(function (label) {
-                 labelsEl.appendChild(labelInput(label))
-             })
-         })
-         req.open("GET", "/srvc/config")
-         req.send()
-     }
+      var loadConfig = function () {
+        var req = new XMLHttpRequest()
+        req.addEventListener("load", function (resp) {
+          config = JSON.parse(req.response)
+          labels = config['current-labels'] || config['current_labels'] || []
+          labels.forEach(function (label) {
+            labelsEl.appendChild(labelInput(label))
+          })
+        })
+        req.open("GET", "/srvc/config")
+        req.send()
+      }
 
-     const loadCurrentDocEvents = function () {
-         var req = new XMLHttpRequest();
-         req.addEventListener("load", function (resp) {
-             formEl.reset();
-             currentDocEvents = JSON.parse(req.response) || [];
-             const doc = currentDocEvents.length ? currentDocEvents[0] : {};
-             const data = (doc['data'] || {});
-             docUriEl.setAttribute('href', doc['uri']);
-             docUriEl.innerText = doc['uri'] || "";
-             docTitleEl.innerText = data['title'] || "";
-             docAbstractEl.innerText = data['abstract'] || "";
-             currentDocEvents.forEach(function (event) {
-                 if ( 'label-answer' == event['type']
-                   && doc['hash'] == (event['data'] || {})['document']) {
-                     // TODO: Add pre-existing answers
-                 }
-             });
+      const loadCurrentDocEvents = function () {
+        var req = new XMLHttpRequest();
+        req.addEventListener("load", function (resp) {
+          formEl.reset();
+          currentDocEvents = JSON.parse(req.response) || [];
+          const doc = currentDocEvents.length ? currentDocEvents[0] : {};
+          const data = (doc['data'] || {});
+          docUriEl.setAttribute('href', doc['uri']);
+          docUriEl.innerText = doc['uri'] || "";
+          docTitleEl.innerText = data['title'] || "";
+          docAbstractEl.innerText = data['abstract'] || "";
+          currentDocEvents.forEach(function (event) {
+            if ('label-answer' == event['type']
+              && doc['hash'] == (event['data'] || {})['document']) {
+              // TODO: Add pre-existing answers
+            }
+          });
 
-             if (!currentDocEvents.length) {
-                 document.getElementById('document-title').innerText = 'No More Documents';
-                 document.getElementById('submit-labels').remove();
-             }
-         });
-         req.open("GET", "/srvc/current-doc-events");
-         req.send();
-     };
+          if (!currentDocEvents.length) {
+            document.getElementById('document-title').innerText = 'No More Documents';
+            document.getElementById('submit-labels').remove();
+          }
+        });
+        req.open("GET", "/srvc/current-doc-events");
+        req.send();
+      };
 
-      var stringGroupLabelAnswer = function(el) {
+      var stringGroupLabelAnswer = function (el) {
         return el.querySelector('input').value
       }
 
-      var arrayGroupLabelAnswer = function(schema, el) {
+      var arrayGroupLabelAnswer = function (schema, el) {
         var enu = schema.items.enum;
         var typ = schema.items.type;
         var acc = [];
-        if ( enu ) {
-          if ( 'string' == typ ) {
+        if (enu) {
+          if ('string' == typ) {
             var inputs = el.querySelectorAll('select');
             for (const input of inputs) {
-              if ( input.value ) {
+              if (input.value) {
                 acc.push(input.value)
               }
             }
           }
         } else {
-          if ( 'string' == typ ) {
+          if ('string' == typ) {
             var inputs = el.querySelectorAll('input');
             for (const input of inputs) {
-              if ( input.value ) {
+              if (input.value) {
                 acc.push(input.value)
               }
             }
@@ -487,14 +494,14 @@
         return acc;
       }
 
-      let groupLabelAnswer = function(label, el) {
+      let groupLabelAnswer = function (label, el) {
         let items = label['json-schema'].items || {};
         let props = items.properties;
         let table = el.firstChild.firstChild;
 
         let rows = [];
-        for ( const tr of table.childNodes ) {
-          if ( 'TR' == tr.tagName ) {
+        for (const tr of table.childNodes) {
+          if ('TR' == tr.tagName) {
             let m = {};
             let i = 0;
 
@@ -505,15 +512,15 @@
               order = Object.keys(props)
             }
 
-            for ( const k of order ) {
+            for (const k of order) {
               i++;
               let node = tr.childNodes[i];
               let typ = props[k].type;
-              if ( 'boolean' == typ ) {
+              if ('boolean' == typ) {
                 m[k] = booleanGroupLabelAnswer(node);
-              } else if ( 'string' == typ ) {
+              } else if ('string' == typ) {
                 m[k] = stringGroupLabelAnswer(node);
-              } else if ( 'array' == typ ) {
+              } else if ('array' == typ) {
                 m[k] = arrayGroupLabelAnswer(props[k], node);
               }
             }
@@ -523,71 +530,76 @@
         return rows;
       }
 
-     var arrayLabelAnswer = function(label, el) {
-         var itemsType = (label['json-schema'].items || {})['type'];
-         var vals = [];
-         for ( const li of el.childNodes ) {
-             if ( 'LI' == li.tagName ) {
-                 var val = (li.firstChild || {}).value;
-                 if ( val && 'boolean' == itemsType ) {
-                     vals.push(li.firstChild.checked)
-                 } else if ( val && 'string' == itemsType ) {
-                     vals.push(val);
-                 } else if ( 'object' == itemsType ) {
-                     vals = groupLabelAnswer(label, el);
-                 }
-             }
-         }
-         return vals;
-     };
+      var arrayLabelAnswer = function (label, el) {
+        var itemsType = (label['json-schema'].items || {})['type'];
+        var vals = [];
+        for (const li of el.childNodes) {
+          if ('LI' == li.tagName) {
+            var val = (li.firstChild || {}).value;
+            if (val && 'boolean' == itemsType) {
+              vals.push(li.firstChild.checked)
+            } else if (val && 'string' == itemsType) {
+              vals.push(val);
+            } else if ('object' == itemsType) {
+              vals = groupLabelAnswer(label, el);
+            }
+          }
+        }
+        return vals;
+      };
 
-     var labelAnswer = function(label) {
-         var answer;
-         var el = document.getElementById(label.hash);
-         var schemaType = (label['json-schema'] || {})['type'];
-         if ( 'boolean' == schemaType || 'boolean' == label.type ) {
-             answer = el.checked || false;
-         } else if ( 'array' == schemaType ) {
-             answer = arrayLabelAnswer(label, el);
-         } else if ( 'categorical' == label.type ) {
-             answer = el.value || null;
-         } else if ( 'string' == schemaType || 'string' == label.type ) {
-             answer = el.value || '';
-         } else {
-             if ( 'json_schema' == label.type ) {
-                 throw Error('Unknown type in JSON schema: ' + schemaType);
-             } else {
-                 throw Error('Unknown label type: ' + label.type);
-             }
-         }
-         return {"data": {"answer": answer,
-                          "document": currentDocEvents[0].hash,
-                          "label": label.hash,
-                          "reviewer": config.reviewer,
-                          "timestamp": Math.floor(Date.now() / 1000)},
-                 "type": "label-answer"};
-     };
+      var labelAnswer = function (label) {
+        var answer;
+        var el = document.getElementById(label.hash);
+        var schemaType = (label['json-schema'] || {})['type'];
+        if ('boolean' == schemaType || 'boolean' == label.type) {
+          answer = el.checked || false;
+        } else if ('array' == schemaType) {
+          answer = arrayLabelAnswer(label, el);
+        } else if ('categorical' == label.type) {
+          answer = el.value || null;
+        } else if ('string' == schemaType || 'string' == label.type) {
+          answer = el.value || '';
+        } else {
+          if ('json_schema' == label.type) {
+            throw Error('Unknown type in JSON schema: ' + schemaType);
+          } else {
+            throw Error('Unknown label type: ' + label.type);
+          }
+        }
+        return {
+          "data": {
+            "answer": answer,
+            "document": currentDocEvents[0].hash,
+            "label": label.hash,
+            "reviewer": config.reviewer,
+            "timestamp": Math.floor(Date.now() / 1000)
+          },
+          "type": "label-answer"
+        };
+      };
 
-     var labelAnswers = function() {
-         return (labels || []).map(labelAnswer);
-     };
+      var labelAnswers = function () {
+        return (labels || []).map(labelAnswer);
+      };
 
-     var submitDoc = function(event) {
-         event.preventDefault()
-         var req = new XMLHttpRequest()
-         req.addEventListener("load", function (resp) {
-             loadCurrentDocEvents()
-         })
-         req.open("POST", "/srvc/submit-label-answers")
-         req.setRequestHeader("Content-Type", "application/json")
-         req.send(JSON.stringify({"answers":labelAnswers()}))
-     }
+      var submitDoc = function (event) {
+        event.preventDefault()
+        var req = new XMLHttpRequest()
+        req.addEventListener("load", function (resp) {
+          loadCurrentDocEvents()
+        })
+        req.open("POST", "/srvc/submit-label-answers")
+        req.setRequestHeader("Content-Type", "application/json")
+        req.send(JSON.stringify({ "answers": labelAnswers() }))
+      }
 
-     submitEl.addEventListener("click", submitDoc)
+      submitEl.addEventListener("click", submitDoc)
 
-     loadConfig()
-     loadCurrentDocEvents()
- })();
-</script>
+      loadConfig()
+      loadCurrentDocEvents()
+    })();
+  </script>
 </body>
+
 </html>
