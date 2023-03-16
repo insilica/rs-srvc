@@ -158,7 +158,10 @@
      var stringInput = function (label) {
          var el = document.createElement('input');
          el.id = label['hash'];
-         el.maxLength = label['json-schema']['maxLength'];
+         let max = label['json-schema']['maxLength'];
+         if ( max ) {
+             el.maxLength = max;
+         }
          return el
      }
 
