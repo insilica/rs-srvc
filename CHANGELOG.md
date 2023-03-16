@@ -9,6 +9,7 @@
 - Show "no more documents" message in label-web instead of blank page
 - Improve styling of group labels
 - Populate label-web inputs when answers exist
+- Don't submit a new answer when the current one matches the most recent answer (in label-web)
 
 ## v0.15.0 (2023-03-02)
 
