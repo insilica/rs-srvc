@@ -575,7 +575,7 @@
         } else if ('string' == schemaType || 'string' == label.type) {
           answer = el.value || '';
         } else {
-          if ('json_schema' == label.type) {
+          if (label['json-schema']) {
             throw Error('Unknown type in JSON schema: ' + schemaType);
           } else {
             throw Error('Unknown label type: ' + label.type);
