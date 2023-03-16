@@ -11,6 +11,7 @@
 - Populate label-web inputs when answers exist
 - Don't submit a new answer when the current one matches the most recent answer (in label-web)
 - Avoid writing duplicate events in html step submit-label-answers
+- Add a Skip button to label-web
 
 ## v0.15.0 (2023-03-02)
 

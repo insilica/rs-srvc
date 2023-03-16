@@ -122,6 +122,7 @@
       </div>
       <div>
         <button id="submit-labels" type="submit">Submit</button>
+        <button id="skip-document">Skip</button>
       </div>
     </form>
     <hr>
@@ -135,12 +136,13 @@
     (function () {
       let config = null;
       let currentDocEvents = null;
-      var docUriEl = document.getElementById('document-uri')
-      var docTitleEl = document.getElementById('document-title')
-      var docAbstractEl = document.getElementById('document-abstract')
-      var formEl = document.getElementById('labels-form')
-      var labelsEl = document.getElementById('labels')
-      var submitEl = document.getElementById('submit-labels')
+      let docUriEl = document.getElementById('document-uri');
+      let docTitleEl = document.getElementById('document-title');
+      let docAbstractEl = document.getElementById('document-abstract');
+      let formEl = document.getElementById('labels-form');
+      let labelsEl = document.getElementById('labels');
+      let submitEl = document.getElementById('submit-labels');
+      let skipEl = document.getElementById('skip-document');
 
       const booleanInput = (label, answer) => {
         let el = document.createElement('input');
@@ -667,18 +669,30 @@
         return Promise.all((await config)['current-labels'].map(labelAnswer));
       };
 
-      const submitDoc = async (event) => {
-        event.preventDefault()
-        var req = new XMLHttpRequest()
+      const skipDoc = (event) => {
+        event.preventDefault();
+        var req = new XMLHttpRequest();
         req.addEventListener("load", function (resp) {
           loadCurrentDocEvents()
-        })
-        req.open("POST", "/srvc/submit-label-answers")
-        req.setRequestHeader("Content-Type", "application/json")
-        req.send(JSON.stringify({ "answers": await labelAnswers() }))
-      }
+        });
+        req.open("POST", "/srvc/submit-label-answers");
+        req.setRequestHeader("Content-Type", "application/json");
+        req.send(JSON.stringify({ "answers": [] }));
+      };
 
-      submitEl.addEventListener("click", submitDoc)
+      const submitDoc = async (event) => {
+        event.preventDefault();
+        var req = new XMLHttpRequest();
+        req.addEventListener("load", function (resp) {
+          loadCurrentDocEvents()
+        });
+        req.open("POST", "/srvc/submit-label-answers");
+        req.setRequestHeader("Content-Type", "application/json");
+        req.send(JSON.stringify({ "answers": await labelAnswers() }));
+      };
+
+      skipEl.addEventListener('click', skipDoc);
+      submitEl.addEventListener('click', submitDoc);
 
       loadConfig()
       loadCurrentDocEvents()
