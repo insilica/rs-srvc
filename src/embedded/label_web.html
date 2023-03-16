@@ -464,6 +464,10 @@
         req.send();
       };
 
+      let booleanGroupLabelAnswer = function (el) {
+        return el.querySelector('input').checked == true
+      }
+
       var stringGroupLabelAnswer = function (el) {
         return el.querySelector('input').value
       }
