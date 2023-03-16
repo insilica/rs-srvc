@@ -133,8 +133,8 @@
   </div>
   <script type="text/javascript">
     (function () {
-      let config = null
-      var currentDocEvents = null
+      let config = null;
+      let currentDocEvents = null;
       var docUriEl = document.getElementById('document-uri')
       var docTitleEl = document.getElementById('document-title')
       var docAbstractEl = document.getElementById('document-abstract')
@@ -476,32 +476,35 @@
       };
 
       const loadCurrentDocEvents = function () {
-        var req = new XMLHttpRequest();
-        req.addEventListener("load", function (resp) {
-          formEl.reset();
-          currentDocEvents = JSON.parse(req.response) || [];
-          const doc = currentDocEvents.length ? currentDocEvents[0] : {};
-          const data = (doc['data'] || {});
-          docUriEl.setAttribute('href', doc['uri']);
-          docUriEl.innerText = doc['uri'] || "";
-          docTitleEl.innerText = data['title'] || "";
-          docAbstractEl.innerText = data['abstract'] || "";
-          answers = []
-          currentDocEvents.forEach(function (event) {
-            if ('label-answer' == event['type']
-              && doc['hash'] == (event['data'] || {})['document']) {
-              answers.push(event)
+        currentDocEvents = new Promise((resolve, reject) => {
+          let req = new XMLHttpRequest();
+          req.addEventListener("load", function (resp) {
+            formEl.reset();
+            currentDocEvents = JSON.parse(req.response) || [];
+            resolve(currentDocEvents);
+            const doc = currentDocEvents.length ? currentDocEvents[0] : {};
+            const data = (doc['data'] || {});
+            docUriEl.setAttribute('href', doc['uri']);
+            docUriEl.innerText = doc['uri'] || "";
+            docTitleEl.innerText = data['title'] || "";
+            docAbstractEl.innerText = data['abstract'] || "";
+            answers = []
+            currentDocEvents.forEach(function (event) {
+              if ('label-answer' == event['type']
+                && doc['hash'] == (event['data'] || {})['document']) {
+                answers.push(event)
+              }
+            });
+            makeLabelInputs(answers)
+
+            if (!currentDocEvents.length) {
+              document.getElementById('document-title').innerText = 'No More Documents';
+              document.getElementById('submit-labels').remove();
             }
           });
-          makeLabelInputs(answers)
-
-          if (!currentDocEvents.length) {
-            document.getElementById('document-title').innerText = 'No More Documents';
-            document.getElementById('submit-labels').remove();
-          }
+          req.open("GET", "/srvc/current-doc-events");
+          req.send();
         });
-        req.open("GET", "/srvc/current-doc-events");
-        req.send();
       };
 
       let booleanGroupLabelAnswer = function (el) {
