@@ -142,76 +142,85 @@
       var labelsEl = document.getElementById('labels')
       var submitEl = document.getElementById('submit-labels')
 
-      var booleanInput = function (label) {
-        var el = document.createElement('input')
+      const booleanInput = (label, answer) => {
+        let el = document.createElement('input');
         el.id = label['hash'];
-        el.type = 'checkbox'
-        return el
-      }
+        el.type = 'checkbox';
+        if (answer) {
+          el.checked = true;
+        }
+        return el;
+      };
 
-      var categoricalInput = function (label) {
-        var el = document.createElement('select');
+      const categoricalInput = (label, answer) => {
+        let el = document.createElement('select');
         el.id = label['hash'];
         el.appendChild(document.createElement('option'));
         (label['categories'] || []).forEach(function (category) {
-          var option = document.createElement('option')
-          option.innerText = category
-          el.append(option)
-        })
-        return el
-      }
+          let option = document.createElement('option');
+          option.innerText = category;
+          if (answer === category) {
+            option.selected = true;
+          }
+          el.append(option);
+        });
+        return el;
+      };
 
-      var stringInput = function (label) {
-        var el = document.createElement('input');
+      const stringInput = (label, ansmer) => {
+        let el = document.createElement('input');
         el.id = label['hash'];
+        if (answer) {
+          el.value = answer;
+        }
         let max = label['json-schema']['maxLength'];
         if (max) {
           el.maxLength = max;
         }
-        return el
-      }
+        return el;
+      };
 
-      var insertArrayInput = function (label, ul, insertAfter) {
-        var li = document.createElement('li');
+      const insertArrayInput = (label, answer, ul, insertAfter) => {
+        let li = document.createElement('li');
         if (insertAfter) {
           ul.insertBefore(li, insertAfter.nextSibling)
         } else {
           ul.appendChild(li);
         }
 
-        var itemsType = (label['json-schema'].items || {})['type'];
-        var enu = (label['json-schema']['items'] || {})['enum'];
+        let itemsType = (label['json-schema'].items || {})['type'];
+        let enu = (label['json-schema']['items'] || {})['enum'];
         if (enu) {
-          var select = document.createElement('select');
+          let select = document.createElement('select');
           li.appendChild(select);
           select.appendChild(document.createElement('option'));
           for (i in enu) {
-            var option = document.createElement('option');
+            let option = document.createElement('option');
             option.innerText = enu[i];
             select.append(option);
           }
         } else if ('boolean' == itemsType) {
-          var input = document.createElement('input');
+          let input = document.createElement('input');
           input.type = 'checkbox';
           li.appendChild(input);
         } else if ('object' == itemsType) {
-          li.appendChild(groupInput(label));
+          li.appendChild(groupInput(label, answer));
         } else if ('string' == itemsType) {
-          var input = document.createElement('input');
+          let input = document.createElement('input');
           li.appendChild(input);
         }
 
         if ('object' != itemsType) {
-          var addButton = document.createElement('button');
+          let addButton = document.createElement('button');
           li.appendChild(addButton);
           addButton.innerText = '+';
           addButton.classList.add('btn-add');
           addButton.addEventListener('click', function (ev) {
-            insertArrayInput(label, ul, li);
+            insertArrayInput(label, null, ul, li);
             ev.preventDefault();
           })
 
-          var delButton = document.createElement('button');
+          let delButton = document.createElement('button');
           li.appendChild(delButton);
           delButton.innerText = '-';
           delButton.classList.add('btn-del');
@@ -224,74 +233,84 @@
         return li;
       };
 
-      var removeArrayInput = function (label, ul, li) {
+      const removeArrayInput = (label, ul, li) => {
         ul.removeChild(li);
         if (!ul.firstChild) {
-          insertArrayInput(label, ul);
+          insertArrayInput(label, null, ul);
         }
       };
 
-      var arrayInput = function (label) {
-        var ul = document.createElement('ul');
+      const arrayInput = (label, answer) => {
+        let ul = document.createElement('ul');
         ul.id = label['hash'];
-        insertArrayInput(label, ul);
+        insertArrayInput(label, answer, ul);
         return ul;
       };
 
-      var booleanGroupInput = function () {
-        var el = document.createElement('input')
-        el.type = 'checkbox'
-        return el
-      }
+      const booleanGroupInput = (answer) => {
+        let el = document.createElement('input');
+        el.type = 'checkbox';
+        if (answer) {
+          el.checked = true;
+        }
+        return el;
+      };
 
-      var enumGroupInput = function (schema) {
-        var el = document.createElement('select');
+      const enumGroupInput = (schema, answer) => {
+        let el = document.createElement('select');
         el.appendChild(document.createElement('option'));
-        for (x in schema.items.enum) {
-          var option = document.createElement('option');
-          option.innerText = schema.items.enum[x];
+        for (const x in schema.items.enum) {
+          let option = document.createElement('option');
+          let s = schema.items.enum[x];
+          option.innerText = s;
+          if (answer === s) {
+            option.selected = true;
+          }
           el.append(option);
         }
         return el;
       };
 
-      var stringGroupInput = function (schema) {
-        var el = document.createElement('input');
+      const stringGroupInput = (schema, answer) => {
+        let el = document.createElement('input');
         let max = (schema.items || {}).maxLength;
+        if (answer) {
+          el.value = answer;
+        }
         if (max) {
           el.maxLength = max;
         }
         return el;
-      }
+      };
 
-      var insertArrayGroupInput = function (schema, ul, insertAfter) {
-        var li = document.createElement('li');
+      const insertArrayGroupInput = (schema, answer, ul, insertAfter) => {
+        let li = document.createElement('li');
         if (insertAfter) {
           ul.insertBefore(li, insertAfter.nextSibling)
         } else {
           ul.appendChild(li);
         }
 
-        var enu = (schema.items || {})['enum'];
-        var typ = (schema.items || {})['type'];
+        let enu = (schema.items || {})['enum'];
+        let typ = (schema.items || {})['type'];
         if (enu) {
-          li.appendChild(enumGroupInput(schema));
+          li.appendChild(enumGroupInput(schema, answer));
         } else if ('boolean' == typ) {
-          li.appendChild(booleanGroupInput(schema));
+          li.appendChild(booleanGroupInput(schema, answer));
         } else if ('string' == typ) {
-          li.appendChild(stringGroupInput(schema));
+          li.appendChild(stringGroupInput(schema, answer));
         }
 
-        var addButton = document.createElement('button');
+        let addButton = document.createElement('button');
         li.appendChild(addButton);
         addButton.innerText = '+';
         addButton.classList.add('btn-add');
         addButton.addEventListener('click', function (ev) {
-          insertArrayGroupInput(schema, ul, li);
+          insertArrayGroupInput(schema, null, ul, li);
           ev.preventDefault();
         })
 
-        var delButton = document.createElement('button');
+        let delButton = document.createElement('button');
         li.appendChild(delButton);
         delButton.innerText = '-';
         delButton.classList.add('btn-del');
@@ -301,20 +320,23 @@
         })
       };
 
-      var removeArrayGroupInput = function (schema, ul, li) {
+      const removeArrayGroupInput = (schema, ul, li) => {
         ul.removeChild(li);
         if (!ul.firstChild) {
-          insertArrayGroupInput(schema, ul);
+          insertArrayGroupInput(schema, null, ul);
         }
       };
 
-      var arrayGroupInput = function (schema) {
-        var ul = document.createElement('ul');
-        insertArrayGroupInput(schema, ul);
+      const arrayGroupInput = (schema, answer) => {
+        let ul = document.createElement('ul');
+        answer = (answer && answer.length) ? answer : [null];
+        for (const v of answer) {
+          insertArrayGroupInput(schema, v, ul);
+        }
         return ul;
       };
 
-      let insertGroupRow = function (table, label, insertAfter) {
+      const insertGroupRow = (table, label, answer, insertAfter) => {
         let items = label['json-schema'].items || {};
         let props = items.properties;
         let tr = document.createElement('tr');
@@ -327,7 +349,7 @@
         addButton.innerText = '+';
         addButton.classList.add('btn-add');
         addButton.addEventListener('click', function (ev) {
-          insertGroupRow(table, label, insertAfter);
+          insertGroupRow(table, label, null, insertAfter);
           ev.preventDefault();
         });
 
@@ -351,25 +373,26 @@
           let schema = props[k];
           let td = document.createElement('td');
           tr.appendChild(td);
+          let v = answer ? answer[k] : null;
+
           if ('boolean' == schema.type) {
-            td.appendChild(booleanGroupInput());
+            td.appendChild(booleanGroupInput(v));
           } else if ('array' == schema.type) {
-            td.appendChild(arrayGroupInput(schema));
+            td.appendChild(arrayGroupInput(schema, v));
           } else if ('string' == schema.type) {
-            td.appendChild(stringGroupInput(schema));
+            td.appendChild(stringGroupInput(schema, v));
           }
         }
       };
 
-      var removeGroupRow = function (label, table, tr) {
+      const removeGroupRow = (label, table, tr) => {
         table.removeChild(tr);
-        console.log(table);
         if (table.firstChild == table.lastChild) {
           insertGroupRow(table, label);
         }
       };
 
-      let groupInput = function (label) {
+      const groupInput = (label, answer) => {
         let items = label['json-schema'].items || {};
         let props = items.properties;
         let table = document.createElement('table');
@@ -390,25 +413,29 @@
           thead.appendChild(th);
           th.innerText = props[k].title || k;
         }
-        insertGroupRow(table, label);
+
+        answer = (answer && answer.length) ? answer : [null];
+        for (const row of answer) {
+          insertGroupRow(table, label, row);
+        }
 
         return table;
       };
 
-      var labelInput = function (label) {
+      const labelInput = (label, answer) => {
         var tr = document.createElement('tr');
         var questionTd = document.createElement('td');
         questionTd.innerText = label['question'];
         var inputTd = document.createElement('td');
         var schemaType = (label['json-schema'] || {})['type'];
         if ('boolean' == schemaType || 'boolean' == label.type) {
-          inputTd.appendChild(booleanInput(label));
+          inputTd.appendChild(booleanInput(label, answer));
         } else if ('array' == schemaType) {
-          inputTd.appendChild(arrayInput(label));
+          inputTd.appendChild(arrayInput(label, answer));
         } else if ('categorical' == label.type) {
-          inputTd.appendChild(categoricalInput(label));
+          inputTd.appendChild(categoricalInput(label, answer));
         } else if ('string' == schemaType || 'string' == label.type) {
-          inputTd.appendChild(stringInput(label));
+          inputTd.appendChild(stringInput(label, answer));
         } else {
           var el = document.createElement('div');
           inputTd.appendChild(el);
@@ -427,10 +454,13 @@
         let cfg = await config;
         answers = answers.filter((m) => {
           return cfg.reviewer == m['data']['reviewer'];
-        })
+        });
         labelsEl.innerText = '';
         for (const label of cfg['current-labels']) {
-          labelsEl.appendChild(labelInput(label))
+          let answersForLabel = answers.filter((m) => {
+            return label['hash'] == m['data']['label'];
+          }).sort((a, b) => b['data']['timestamp'] - a['data']['timestamp']);
+          labelsEl.appendChild(labelInput(label, answersForLabel.length ? answersForLabel[0]['data']['answer'] : null));
         }
       }
 

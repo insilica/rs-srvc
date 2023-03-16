@@ -8,6 +8,7 @@
 - Read the `SRVC_TOKEN` environment variable to set `Authorization: Bearer` tokens for some HTTP requests. This token is used for requests caused by the `base-uri`, `flow-uri`, `label-uri`, and `step-uri` properties, as well as requests to the db when the db is a URL. It is not used for other requests due to security considerations.
 - Show "no more documents" message in label-web instead of blank page
 - Improve styling of group labels
+- Populate label-web inputs when answers exist
 
 ## v0.15.0 (2023-03-02)
 
