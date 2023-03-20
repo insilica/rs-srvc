@@ -1,4 +1,4 @@
-{ lib, rustPlatform, stdenv, CoreServices, Security, self-rev ? null }:
+{ lib, rustPlatform, stdenv, darwin, self-rev ? null }:
 
 rustPlatform.buildRustPackage rec {
   pname = "srvc";
@@ -8,7 +8,10 @@ rustPlatform.buildRustPackage rec {
 
   cargoLock.lockFile = ./Cargo.lock;
 
-  buildInputs = lib.optionals stdenv.isDarwin [ CoreServices Security ];
+  buildInputs = lib.optionals stdenv.isDarwin [
+    darwin.apple_sdk.frameworks.CoreServices
+    darwin.apple_sdk.frameworks.Security
+  ];
 
   doCheck = false;
 

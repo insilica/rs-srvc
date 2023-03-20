@@ -16,15 +16,7 @@
         pkgs = import nixpkgs { inherit system; };
         self-rev = if (self ? rev) then self.rev else "HEAD";
         docs-html = pkgs.callPackage ./docs/html.nix { inherit self-rev; };
-        srvc = pkgs.callPackage ./srvc.nix {
-          CoreServices = with pkgs;
-            lib.optionals stdenv.isDarwin
-            [ darwin.apple_sdk.frameworks.CoreServices ];
-          Security = with pkgs;
-            lib.optionals stdenv.isDarwin
-            [ darwin.apple_sdk.frameworks.Security ];
-          self-rev = self-rev;
-        };
+        srvc = pkgs.callPackage ./srvc.nix { self-rev = self-rev; };
       in with pkgs; {
         packages.default = srvc;
         packages = { inherit docs-html srvc; };
