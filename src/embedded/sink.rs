@@ -7,6 +7,7 @@ use std::io::LineWriter;
 use std::io::Write;
 use std::path::PathBuf;
 
+use log::{debug, info};
 use reqwest::blocking::Client;
 use serde::Serialize;
 
@@ -122,10 +123,13 @@ fn run_remote(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -
                 request = request.header("Authorization", format!("Bearer {}", token));
             }
 
+            info! {"Sending event to remote: {} {}", event.r#type, event.hash.expect("hash")};
             let response = request
                 .send()
                 .chain_err(|| "Error sending event to remote")?;
             let status = response.status().as_u16();
+            debug! {"Received {} response from remote", status};
+
             if status >= 400 {
                 let text = response
                     .text()

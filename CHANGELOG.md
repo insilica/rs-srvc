@@ -13,6 +13,7 @@
 - Avoid writing duplicate events in html step submit-label-answers
 - Add a Skip button to label-web
 - Flush events in html step after processing submit-label-answers
+- Add log messages when uploading events to a remote
 
 ## v0.15.0 (2023-03-02)
 
