@@ -457,12 +457,10 @@
         answers = (await currentDocEvents).filter((m) => {
           return m['type'] === 'label-answer' && cfg.reviewer === m['data']['reviewer'];
         });
-        for (const label of cfg['current-labels']) {
-          let answersForLabel = answers.filter((m) => {
-            return label['hash'] == m['data']['label'];
-          }).sort((a, b) => b['data']['timestamp'] - a['data']['timestamp']);
-          return answersForLabel.length ? answersForLabel[0] : null;
-        }
+        let answersForLabel = answers.filter((m) => {
+          return label['hash'] == m['data']['label'];
+        }).sort((a, b) => b['data']['timestamp'] - a['data']['timestamp']);
+        return answersForLabel.length ? answersForLabel[0] : null;
       }
 
       const makeLabelInputs = async () => {
