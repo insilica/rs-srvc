@@ -12,6 +12,7 @@
 - Don't submit a new answer when the current one matches the most recent answer (in label-web)
 - Avoid writing duplicate events in html step submit-label-answers
 - Add a Skip button to label-web
+- Flush events in html step after processing submit-label-answers
 
 ## v0.15.0 (2023-03-02)
 

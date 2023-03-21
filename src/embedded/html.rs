@@ -156,6 +156,7 @@ async fn post_submit_label_answers(
         }
         None => {}
     };
+    app_ctx.writer.flush()?;
     app_ctx.current_doc_events = app_ctx.doc_events.next().transpose()?;
     Ok(HttpResponse::Ok().json(hashmap! {"success" => true}))
 }
