@@ -57,6 +57,7 @@ pub fn events(reader: impl BufRead) -> impl Iterator<Item = Result<Event>> {
     reader
         .lines()
         .map(|line| parse_event_opt(line.chain_err(|| "Failed to read line")?.as_str()))
+        // Remove blank lines
         .filter(|x| match x {
             Ok(Some(_)) => true,
             Ok(None) => false,
