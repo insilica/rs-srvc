@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::io::BufRead;
 
+use log::trace;
 use multihash::MultihashDigest;
 use serde::Deserialize;
 use serde::Serialize;
@@ -56,7 +57,16 @@ pub fn parse_event_opt(s: &str) -> Result<Option<Event>> {
 pub fn events(reader: impl BufRead) -> impl Iterator<Item = Result<Event>> {
     reader
         .lines()
-        .map(|line| parse_event_opt(line.chain_err(|| "Failed to read line")?.as_str()))
+        .map(|line| match line.chain_err(|| "Failed to read line") {
+            Ok(line_str) => match parse_event_opt(&line_str) {
+                Ok(parsed_line) => Ok(parsed_line),
+                Err(e) => {
+                    trace! {"Failed to parse line as JSON: {}", line_str};
+                    Err(e)
+                }
+            },
+            Err(e) => Err(e),
+        })
         // Remove blank lines
         .filter(|x| match x {
             Ok(Some(_)) => true,

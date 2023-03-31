@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io;
-use std::io::{BufRead, BufReader, BufWriter, LineWriter, Write};
+use std::io::{BufReader, BufWriter, LineWriter, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::path::PathBuf;
 use std::process;
@@ -8,12 +8,12 @@ use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
+use log::trace;
 use serde::Serialize;
 use tempfile::TempDir;
 use uuid::Uuid;
 
-use lib_sr::errors::*;
-use lib_sr::event::Event;
+use lib_sr::{errors::*, event};
 use lib_sr::{Config, Flow, Opts, Step};
 
 use crate::sr_yaml;
@@ -39,19 +39,14 @@ fn writeln_err(s: &str) -> Result<()> {
     Ok(())
 }
 
-fn parse_event(s: &str) -> Result<Event> {
-    serde_json::from_str(s).chain_err(|| "Cannot parse event")
-}
-
 fn run_step_server(input_listener: TcpListener, output_listener: TcpListener) -> Result<()> {
+    trace! {"run_step_server"};
     let (input, _) = input_listener.accept().chain_err(|| "Listen error")?;
     let (output, _) = output_listener.accept().chain_err(|| "Listen error")?;
     let reader = BufReader::new(input);
     let mut writer = LineWriter::new(output);
 
-    let events = reader
-        .lines()
-        .map(|line| parse_event(line.chain_err(|| "Failed to read line")?.as_str()));
+    let events = event::events(reader);
     for result in events {
         let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
         let expected_hash = lib_sr::event::event_hash(event.clone())?;

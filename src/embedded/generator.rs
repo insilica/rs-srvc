@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
+use log::trace;
 use reqwest::blocking::Client;
 use rusqlite::Connection;
 use serde_json::{json, Value};
@@ -54,6 +55,7 @@ fn run_jsonl<F>(file_or_url: &str, config: &Config, f: &mut F) -> Result<()>
 where
     F: FnMut(Event) -> Result<()>,
 {
+    trace! {"run_jsonl"};
     let (reader, _, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
     let in_events = event::events(reader);
 
@@ -64,8 +66,17 @@ where
     let mut answers: HashMap<String, Vec<Event>> = HashMap::new();
     let mut events: Vec<Event> = Vec::new();
 
-    for result in in_events {
-        let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
+    for (i, result) in in_events.enumerate() {
+        let mut event = match result {
+            Ok(evt) => {
+                trace! {"Parsed event: {}", evt.hash.to_owned().unwrap_or(String::from("No hash"))};
+                evt
+            }
+            Err(e) => {
+                trace! {"run_jsonl event parse error"};
+                Err(e).chain_err(|| format!("Cannot parse line {} as JSON", i + 1))?
+            }
+        };
         let expected_hash = lib_sr::event::event_hash(event.clone())?;
         let hash = event.hash.clone().unwrap_or("".to_string());
         if hash == "" {
