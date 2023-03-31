@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.16.0 (2023-03-31)
+
 - Fix html embedded step sometimes not properly determining the directory when relative URLs are used.
 - Fix label-web step setting string maxLength to 0 when no maxLength property exists
 - Show json-schema title property for group labels in label-web
