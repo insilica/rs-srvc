@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.17.0 (2023-04-03)
+
 - Add env property to steps to control which steps have access to
   `SRVC_TOKEN`.
 - Use `SRVC_TOKEN` to set Authorization header in generator embedded step.
