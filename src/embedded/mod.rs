@@ -185,8 +185,13 @@ fn get_file_or_url(
 ) -> Result<(Box<dyn BufRead + Send + Sync>, Option<PathBuf>, Option<Url>)> {
     match Url::parse(file_or_url) {
         Ok(url) => {
-            let response = client
-                .get(url.clone())
+            let mut request = client.get(url.clone());
+
+            if let Ok(token) = env::var("SRVC_TOKEN") {
+                request = request.header("Authorization", format!("Bearer {}", token));
+            }
+
+            let response = request
                 .send()
                 .chain_err(|| format!("Failed to complete HTTP request to {}", url))?;
             let status = response.status().as_u16();
