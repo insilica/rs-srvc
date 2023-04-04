@@ -20,6 +20,7 @@ use crate::json_schema;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Step {
+    pub env: Option<Vec<String>>,
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
     pub labels: Option<Vec<String>>,
@@ -150,6 +151,7 @@ pub fn parse_step_data(step: Step) -> Result<lib_sr::Step> {
         None => step.run_embedded,
     };
     Ok(lib_sr::Step {
+        env: step.env,
         extra: step.extra,
         labels: step.labels.unwrap_or(Vec::new()),
         run: step.run,
@@ -179,6 +181,7 @@ pub fn parse_flow_data(client: &Client, flow: Flow) -> Result<lib_sr::Flow> {
         vec.push(step);
     }
     vec.push(lib_sr::Step {
+        env: Some(vec![String::from("SRVC_TOKEN")]),
         extra: HashMap::new(),
         labels: Vec::new(),
         run: None,

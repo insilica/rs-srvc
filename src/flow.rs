@@ -1,5 +1,4 @@
 use std::fs::File;
-use std::io;
 use std::io::{BufReader, BufWriter, LineWriter, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::path::PathBuf;
@@ -7,6 +6,7 @@ use std::process;
 use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
+use std::{env, io};
 
 use log::trace;
 use serde::Serialize;
@@ -186,14 +186,22 @@ pub fn run_step(
         None => "".into(),
     };
 
-    match process::Command::new(program)
-        .args(args)
+    let mut cmd = process::Command::new(program);
+    cmd.args(args)
         .env("SR_CONFIG", config_path)
         .env("SR_INPUT", sr_input)
         .env("SR_OUTPUT", sr_output)
-        .spawn()
-        .chain_err(|| "Failed to start step sub-process")
-    {
+        .env_remove("SRVC_TOKEN");
+
+    if let Some(env) = &step.env {
+        if env.contains(&String::from("SRVC_TOKEN")) {
+            if let Ok(token) = env::var("SRVC_TOKEN") {
+                cmd.env("SRVC_TOKEN", token);
+            }
+        }
+    }
+
+    match cmd.spawn().chain_err(|| "Failed to start step sub-process") {
         Ok(process) => Ok(StepProcess {
             step_server,
             process: process,

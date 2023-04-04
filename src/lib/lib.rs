@@ -22,6 +22,7 @@ pub mod sqlite;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Step {
+    pub env: Option<Vec<String>>,
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
     pub labels: Vec<String>,

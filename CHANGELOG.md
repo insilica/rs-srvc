@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Add env property to steps to control which steps have access to
+  `SRVC_TOKEN`.
+
 ## v0.16.0 (2023-03-31)
 
 - Fix html embedded step sometimes not properly determining the directory when relative URLs are used.
