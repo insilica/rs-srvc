@@ -4,34 +4,9 @@
 
 Sysrev version control
 
-## Install
+## Docs
 
-### Homebrew (macOS and Linux)
-
-[Install homebrew](https://brew.sh/), and run:
-
-```
-brew install insilica/srvc/srvc
-```
-
-### Nix (macOS and Linux)
-
-[Install Nix](https://nixos.org/), and run:
-
-```
-nix profile install nixpkgs#srvc
-```
-
-### Binary (macOS, Linux, and Windows)
-
-Download the binary for your platform from the [releases page](https://github.com/insilica/rs-srvc/releases). Extract it, make sure it is executable, and place it on your PATH.
-
-### From source
-
-[Install the Rust language tools](https://doc.rust-lang.org/cargo/getting-started/installation.html), and run:
-
-```
-cargo install --git https://github.com/insilica/rs-srvc.git
-```
-
-Make sure that the directory that cargo installs to is on your PATH.
+- [Intro](https://docs.sysrev.com/stable/index.html)
+- [Installation](https://docs.sysrev.com/stable/installation.html)
+- [Overview](https://docs.sysrev.com/stable/overview.html)
+- [Reference](https://docs.sysrev.com/stable/ref/index.html)
