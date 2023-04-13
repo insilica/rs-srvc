@@ -22,7 +22,7 @@ Install Nix_, and run:
 
 .. code-block:: shell
 
-    nix profile install github:insilica/rs-srvc
+    nix --extra-experimental-features "nix-command" profile install nixpkgs#srvc
 
 Binary (macOS, Linux, Windows)
 ==================================
