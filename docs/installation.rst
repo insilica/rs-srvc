@@ -32,8 +32,8 @@ sure it is executable, and place it on your PATH.
 
 .. _releases: https://github.com/insilica/rs-srvc/releases
 
-From source
-===========
+From source (Cargo)
+===================
 
 Install the Rust language tools_, and run:
 
@@ -44,3 +44,10 @@ Install the Rust language tools_, and run:
     cargo install --git https://github.com/insilica/rs-srvc.git
 
 Make sure that the directory that cargo installs to is on your PATH.
+
+From source (Nix)
+=================
+
+.. code-block:: shell
+
+    nix --extra-experimental-features "nix-command flakes" profile install github:insilica/rs-srvc
