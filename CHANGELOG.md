@@ -1,5 +1,10 @@
 ## Unreleased
 
+## v0.17.1 (2023-04-17)
+
+- New release to mitigate issues caused by accidentally overwriting the
+  v0.17.0 archives.
+
 ## v0.17.0 (2023-04-03)
 
 - Add env property to steps to control which steps have access to
