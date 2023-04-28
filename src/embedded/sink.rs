@@ -162,6 +162,7 @@ fn run_local_jsonl(config: &Config, in_events: impl Iterator<Item = Result<Event
         let hash = event.hash.clone().expect("Hash not set");
 
         if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
+            info! {"Writing event to sink: {} {}", event.r#type, hash};
             event
                 .serialize(&mut serde_json::Serializer::new(&mut writer))
                 .chain_err(|| "Event serialization failed")?;
@@ -186,6 +187,7 @@ fn run_local_sqlite(config: &Config, in_events: impl Iterator<Item = Result<Even
         let event = prep_event(&mut labels, result)?;
 
         if event.r#type != "control" || config.sink_all_events {
+            info! {"Writing event to sink: {} {}", event.r#type, event.hash.to_owned().expect("hash")};
             sqlite::insert_event(&conn, event)?;
         }
     }
@@ -207,6 +209,7 @@ pub fn run_with_events(
 }
 
 pub fn run() -> Result<()> {
+    debug! {"Starting sink step"};
     let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
     let config = embedded::get_config(&env.config)?;
     let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
