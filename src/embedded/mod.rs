@@ -16,6 +16,7 @@ use lib_sr::{common, event, Config};
 
 pub mod generator;
 pub mod html;
+pub mod http;
 pub mod label;
 pub mod label_web;
 pub mod run_using;

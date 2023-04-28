@@ -110,6 +110,12 @@ enum EmbeddedSteps {
         #[clap(forbid_empty_values = true)]
         file_or_url: String,
     },
+    /// Serve an HTTP endpoint as a map step
+    Http {
+        /// URL of the HTTP endpoint
+        #[clap(forbid_empty_values = true)]
+        url: String,
+    },
     /// Label documents
     Label {},
     /// Label documents using a web interface
@@ -158,6 +164,7 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
     match name {
         EmbeddedSteps::Generator { file_or_url } => embedded::generator::run(&file_or_url),
         EmbeddedSteps::Html { file_or_url } => embedded::html::run(&file_or_url),
+        EmbeddedSteps::Http { url } => embedded::http::run(&url),
         EmbeddedSteps::Label {} => embedded::label::run(),
         EmbeddedSteps::LabelWeb {} => embedded::label_web::run(),
         EmbeddedSteps::SkipReviewed {} => embedded::skip_reviewed::run(),

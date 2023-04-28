@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add `http` embedded step to use a remote URL as a mapping step.
+
 ## v0.17.1 (2023-04-17)
 
 - New release to mitigate issues caused by accidentally overwriting the
