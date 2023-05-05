@@ -80,7 +80,11 @@ fn file_hashes(path: &PathBuf) -> Result<HashSet<String>> {
     let mut hashes = HashSet::new();
     for event in event::events(reader) {
         match event {
-            Ok(event) => hashes.insert(event.hash.expect("No hash for event")),
+            Ok(event) => hashes.insert(
+                event
+                    .hash
+                    .expect(&format!("No hash for event in {}", path.to_string_lossy())),
+            ),
             Err(e) => Err(e)?,
         };
     }
