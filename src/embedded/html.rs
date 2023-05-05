@@ -39,6 +39,7 @@ struct AppContext {
 
 struct DocEventsIterator {
     in_events: Box<dyn Iterator<Item = Result<Event>> + Send + Sync>,
+    label_events: HashMap<String, Event>,
     next_doc: Option<Event>,
 }
 
@@ -57,12 +58,21 @@ impl Iterator for DocEventsIterator {
             None => {}
         }
         self.next_doc = None;
+
+        for (_, event) in self.label_events.iter() {
+            v.push(event.clone());
+        }
+
         loop {
             match self.in_events.next() {
                 Some(Ok(event)) => {
                     if event.r#type == "document" {
                         self.next_doc = Some(event);
                         return Some(Ok(v));
+                    } else if event.r#type == "label" {
+                        self.label_events
+                            .insert(event.hash.clone().expect("hash"), event.clone());
+                        v.push(event)
                     } else {
                         v.push(event)
                     }
@@ -269,6 +279,7 @@ async fn serve(
 ) -> std::io::Result<()> {
     let mut doc_events = DocEventsIterator {
         in_events: map_ctx.in_events,
+        label_events: HashMap::new(),
         next_doc: None,
     };
     let mut app_ctx = AppContext {
