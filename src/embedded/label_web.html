@@ -499,7 +499,7 @@
             answers = []
             currentDocEvents.forEach(function (event) {
               if ('label-answer' == event['type']
-                && doc['hash'] == (event['data'] || {})['document']) {
+                && doc['hash'] == (event['data'] || {})['event']) {
                 answers.push(event)
               }
             });
@@ -654,7 +654,7 @@
         return {
           "data": {
             "answer": answer,
-            "document": currentDocEvents[0].hash,
+            "event": currentDocEvents[0].hash,
             "label": label.hash,
             "reviewer": (await config).reviewer,
             "timestamp": Math.floor(Date.now() / 1000)

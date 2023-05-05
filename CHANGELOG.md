@@ -1,6 +1,18 @@
 ## Unreleased
 
 - Add `http` embedded step to use a remote URL as a mapping step.
+- (breaking) Rename `document` property in label-answer events to `event`.
+- (breaking) Require a value for the `answer` property in label-answer events. Change label steps to skip emitting a label-answer instead of emitting a label-answer with no `answer` property.
+- (breaking) Update SQLite sink format for the label-answer `event` property change.
+
+### Upgrading sinks
+
+JSONL sinks can be upgraded by renaming `sink.jsonl` to `old-sink.jsonl` and running `sr pull old-sink.jsonl --db sink.jsonl`
+
+SQLite sinks require running commands with two different versions of SRVC:
+1. Rename `sink.db` to `old-sink.db`
+2. With SRVC 0.17.1, run `sr pull old-sink.db --db old-sink.jsonl`
+3. With SRVC 0.18.0, run `sr pull old-sink.jsonl --db sink.db`
 
 ## v0.17.1 (2023-04-17)
 

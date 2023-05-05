@@ -15,7 +15,7 @@ use crate::embedded::MapContext;
 fn answer_data(label: &Label, doc: &Event, reviewer: String) -> HashMap<String, serde_json::Value> {
     let mut data: HashMap<String, serde_json::Value> = HashMap::new();
     data.insert(
-        String::from("document"),
+        String::from("event"),
         json!(doc.hash.as_ref().expect("Document must have a hash")),
     );
     data.insert(
@@ -31,7 +31,7 @@ fn read_boolean(
     doc: &Event,
     reviewer: String,
     timestamp_override: Option<u64>,
-) -> Result<Event> {
+) -> Result<Option<Event>> {
     let out = &mut io::stdout();
     let mut reader = BufReader::new(io::stdin());
     write!(out, "{} ", label.question).chain_err(|| "Write failed")?;
@@ -61,16 +61,14 @@ fn read_boolean(
             data.insert(String::from("answer"), json!(true));
             embedded::insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
-            break Ok(event);
+            break Ok(Some(event));
         } else if "no".starts_with(&s) {
             data.insert(String::from("answer"), json!(false));
             embedded::insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
-            break Ok(event);
+            break Ok(Some(event));
         } else if !label.required && "skip".starts_with(&s) {
-            embedded::insert_timestamp(&mut data, timestamp_override)?;
-            event.data = Some(json!(data));
-            break Ok(event);
+            break Ok(None);
         }
     }
 }
@@ -80,7 +78,7 @@ fn read_categorical(
     doc: &Event,
     reviewer: String,
     timestamp_override: Option<u64>,
-) -> Result<Event> {
+) -> Result<Option<Event>> {
     let out = &mut io::stdout();
     let mut reader = BufReader::new(io::stdin());
     writeln!(out, "{}", label.question).chain_err(|| "Write failed")?;
@@ -122,11 +120,9 @@ fn read_categorical(
                     data.insert(String::from("answer"), json!(cat));
                     embedded::insert_timestamp(&mut data, timestamp_override)?;
                     event.data = Some(json!(data));
-                    break Ok(event);
+                    break Ok(Some(event));
                 } else if !label.required && i == n {
-                    embedded::insert_timestamp(&mut data, timestamp_override)?;
-                    event.data = Some(json!(data));
-                    break Ok(event);
+                    break Ok(None);
                 }
             }
             Err(_) => {}
@@ -139,7 +135,7 @@ fn read_string(
     doc: &Event,
     reviewer: String,
     timestamp_override: Option<u64>,
-) -> Result<Event> {
+) -> Result<Option<Event>> {
     let out = &mut io::stdout();
     let mut reader = BufReader::new(io::stdin());
     write!(out, "{}? ", label.question).chain_err(|| "Write failed")?;
@@ -163,11 +159,9 @@ fn read_string(
             data.insert(String::from("answer"), json!(s));
             embedded::insert_timestamp(&mut data, timestamp_override)?;
             event.data = Some(json!(data));
-            break Ok(event);
+            break Ok(Some(event));
         } else if !label.required {
-            embedded::insert_timestamp(&mut data, timestamp_override)?;
-            event.data = Some(json!(data));
-            break Ok(event);
+            break Ok(None);
         }
     }
 }
@@ -177,7 +171,7 @@ fn read_answer(
     doc: &Event,
     reviewer: String,
     timestamp_override: Option<u64>,
-) -> Result<Event> {
+) -> Result<Option<Event>> {
     // label.type is allowed for backwards-compatibility, but new types
     // should not be added. Use json_schema instead.
     match label.extra.get("type").map(|v| v.as_str()).flatten() {
@@ -227,9 +221,13 @@ pub fn run() -> Result<()> {
         if event.r#type == "document" {
             print_doc(&event)?;
             for label in &labels {
-                let mut answer = read_answer(label, &event, reviewer.clone(), timestamp_override)?;
-                answer.hash = Some(event::event_hash(answer.clone())?);
-                embedded::write_event_dedupe(&mut writer, &answer, &mut hashes)?;
+                match read_answer(label, &event, reviewer.clone(), timestamp_override)? {
+                    Some(mut answer) => {
+                        answer.hash = Some(event::event_hash(answer.clone())?);
+                        embedded::write_event_dedupe(&mut writer, &answer, &mut hashes)?;
+                    }
+                    None => {}
+                };
             }
         }
     }

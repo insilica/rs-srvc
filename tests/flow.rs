@@ -214,7 +214,7 @@ fn test_simple() -> Result<()> {
 
 #[test]
 fn test_db_override() -> Result<()> {
-    let dir = test_dir("test-db-override");
+    let dir = test_dir("db-override");
     common::remove_sink(&dir)?;
     common::cmd(400)
         .current_dir(&dir)
@@ -281,6 +281,18 @@ fn test_generator_url_404() -> Result<()> {
 #[test]
 fn test_implicit_db() -> Result<()> {
     test_flow("implicit-db", "simple", 400)
+}
+
+/// Test that label-answers referencing label-answers are handled
+#[test]
+fn test_label_answer_answers() -> Result<()> {
+    test_flow("label-answer-answers", "simple", 400)
+}
+
+/// Test that label-answers referencing labels are handled
+#[test]
+fn test_label_label_answers() -> Result<()> {
+    test_flow("label-label-answers", "simple", 400)
 }
 
 #[test]

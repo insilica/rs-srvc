@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use log::trace;
-use rusqlite::{CachedStatement, Connection, OpenFlags, Row};
+use rusqlite::{params, CachedStatement, Connection, OpenFlags, Row};
 use serde_json::Value;
 
 use crate::errors::*;
@@ -18,12 +18,39 @@ pub fn prepare_cached<'a>(conn: &'a Connection, stmt: &str) -> Result<CachedStat
         .chain_err(|| "Failed to prepare SQL statement")
 }
 
+pub fn trigger_exists(conn: &Connection, trigger_name: &str) -> Result<bool> {
+    let mut stmt = conn
+        .prepare("SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?1")
+        .chain_err(|| "Failed to execute statement")?;
+    let mut rows = stmt
+        .query(params![trigger_name])
+        .chain_err(|| "Failed to execute query")?;
+
+    match rows.next().chain_err(|| "Failed to retrieve rows")? {
+        Some(_) => Ok(true),
+        None => Ok(false),
+    }
+}
+
+/// Return an error if the DB format is too old
+pub fn check_db_format(conn: &Connection) -> Result<()> {
+    if trigger_exists(conn, &"srvc_event_label_answer_document_constraint")? {
+        Err(Error::from(ErrorKind::SQLiteError(
+            "SQLite SRVC sink is too old and must be upgraded to work with this version of SRVC."
+                .into(),
+        )))
+    } else {
+        Ok(())
+    }
+}
+
 /// Open a read/write connection to a sqlite file. Creates or updates
 /// the schema as needed.
 pub fn open(path: &Path) -> Result<Connection> {
     let conn = Connection::open(path)
         .chain_err(|| format!("Failed to open sqlite file: {}", path.to_string_lossy()))?;
     load_schema(&conn)?;
+    check_db_format(&conn)?;
     Ok(conn)
 }
 
@@ -32,8 +59,12 @@ pub fn open_ro(path: &Path) -> Result<Connection> {
     // Check for file existence in order to give a more clear error message.
     // We don't care about the TOCTOU race condition in this case.
     match path.try_exists() {
-        Ok(true) => Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
-            .chain_err(|| format!("Failed to open sqlite file: {}", path.to_string_lossy())),
+        Ok(true) => {
+            let conn = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+                .chain_err(|| format!("Failed to open sqlite file: {}", path.to_string_lossy()))?;
+            check_db_format(&conn)?;
+            Ok(conn)
+        }
         _ => Err(format!("File does not exist: {}", path.to_string_lossy()).into()),
     }
 }

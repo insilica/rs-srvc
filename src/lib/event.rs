@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::io::BufRead;
 
 use log::trace;
+use log::warn;
 use multihash::MultihashDigest;
 use serde::Deserialize;
 use serde::Serialize;
@@ -20,6 +21,19 @@ pub struct Event {
     pub uri: Option<String>,
 }
 
+#[skip_serializing_none]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct LabelAnswerData {
+    pub answer: serde_json::Value,
+    #[serde(alias = "document")]
+    pub event: String,
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+    pub label: String,
+    pub reviewer: String,
+    pub timestamp: u64,
+}
+
 pub fn event_hash(mut event: Event) -> Result<String> {
     event.hash = None;
     let bytes = serde_ipld_dagcbor::to_vec(&event).chain_err(|| "Failed to serialize event")?;
@@ -28,9 +42,47 @@ pub fn event_hash(mut event: Event) -> Result<String> {
     Ok(base58.into_string())
 }
 
+pub fn process_event_data(mut event: Event) -> Result<Event> {
+    if event.r#type == "label-answer" {
+        // Check that label-answers have the required data
+        match event.data {
+            Some(data) => {
+                let answer_data: LabelAnswerData = serde_json::from_value(data.clone())
+                    .chain_err(|| "Failed to parse label-answer data")?;
+                // Canonicalize label-answer data
+                event.data = Some(
+                    serde_json::to_value(answer_data)
+                        .chain_err(|| "Failed to serialize label-answer data")?,
+                );
+                // Update hashes of legacy answers that use document instead of event
+                if data.as_object().expect("data").contains_key("document") {
+                    let old_hash = event.hash.expect("old hash");
+                    warn!(
+                        "label-answer {} has deprecated document property instead of event",
+                        old_hash
+                    );
+                    event.hash = None;
+                    ensure_hash(&mut event)?;
+                    warn!(
+                        "Updated label-answer {}. New hash: {}",
+                        old_hash,
+                        event.hash.clone().expect("new hash")
+                    );
+                }
+                Ok(event)
+            }
+            None => Err(Error::from(ErrorKind::EventError(
+                "label-answer must have data".to_string(),
+            ))),
+        }
+    } else {
+        Ok(event)
+    }
+}
+
 pub fn parse_event(s: &str) -> Result<Event> {
     match serde_json::from_str(s) {
-        Ok(event) => Ok(event),
+        Ok(event) => process_event_data(event),
         Err(e) => {
             if s.len() == 0 {
                 Err(e).chain_err(|| "Event deserialization failed (blank line)")
@@ -43,7 +95,7 @@ pub fn parse_event(s: &str) -> Result<Event> {
 
 pub fn parse_event_opt(s: &str) -> Result<Option<Event>> {
     match serde_json::from_str(s) {
-        Ok(event) => Ok(Some(event)),
+        Ok(event) => Ok(Some(process_event_data(event)?)),
         Err(e) => {
             if s.len() == 0 {
                 Ok(None)

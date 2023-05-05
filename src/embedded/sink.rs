@@ -84,9 +84,15 @@ fn prep_event(labels: &mut HashMap<String, Event>, result: Result<Event>) -> Res
     } else if event.r#type == "label-answer" {
         let data = event.data.as_ref().expect("data");
         let label_hash = data.get("label").expect("label").as_str().expect("string");
-        let label = labels
-            .get(label_hash)
-            .ok_or_else(|| format!("Label not found with hash: {}", label_hash))?;
+        let label = match labels.get(label_hash) {
+            Some(lbl) => Ok(lbl),
+            None => {
+                debug!("prep_event Label not found with hash: {}", label_hash);
+                debug!("prep_event event: {:?}", event);
+                debug!("prep_event labels: {:?}", labels);
+                Err(format!("Label not found with hash: {}", label_hash))
+            }
+        }?;
         match label
             .data
             .as_ref()

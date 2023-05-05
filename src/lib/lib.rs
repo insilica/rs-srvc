@@ -6,7 +6,18 @@
 extern crate error_chain;
 
 pub mod errors {
-    error_chain! {}
+    error_chain! {
+        errors {
+            EventError(t: String) {
+                description("Error processing event")
+                display("EventError: '{}'", t)
+            }
+            SQLiteError(t: String) {
+                description("SQlite error")
+                display("SQLiteError: '{}'", t)
+            }
+        }
+    }
 }
 
 use std::collections::HashMap;

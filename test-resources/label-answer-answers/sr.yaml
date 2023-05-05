@@ -1,0 +1,21 @@
+db: sink.jsonl
+
+reviewer: mailto:user@example.com
+
+labels:
+  acute_tox:
+    type: boolean
+    question: Acute toxicity?
+  answer-correct:
+    json-schema: boolean
+    question: Is the answer correct?
+  eye_irrit:
+    type: boolean
+    question: Eye irritation?
+
+flows:
+  simple:
+    steps:
+      - run-embedded: "generator-file docs.jsonl"
+
+      - run-embedded: "remove-reviewed"

@@ -18,7 +18,7 @@ use crate::embedded::GeneratorContext;
 
 const SELECT_DOCUMENTS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'document' ORDER BY uri NULLS LAST, hash";
 const SELECT_LABELS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label' ORDER BY data->>'$.id', hash";
-const SELECT_LABEL_ANSWERS_FOR_DOC: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->>'$.document' = ? ORDER BY data->>'$.timestamp', hash";
+const SELECT_LABEL_ANSWERS_FOR_DOC: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->>'$.event' = ? ORDER BY data->>'$.timestamp', hash";
 
 fn get_label_events(config: &Config) -> Result<Vec<Event>> {
     let mut labels: Vec<&Label> = config.labels.values().collect();
@@ -59,12 +59,13 @@ where
     let (reader, _, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
     let in_events = event::events(reader);
 
-    for event in get_label_events(config)? {
-        f(event)?;
-    }
-
     let mut answers: HashMap<String, Vec<Event>> = HashMap::new();
+    let mut labels: HashMap<String, Event> = HashMap::new();
     let mut events: Vec<Event> = Vec::new();
+
+    for event in get_label_events(config)? {
+        labels.insert(event.hash.clone().expect("hash"), event);
+    }
 
     for (i, result) in in_events.enumerate() {
         let mut event = match result {
@@ -90,12 +91,12 @@ where
         }
 
         if event.r#type == "label" {
-            f(event)?;
+            labels.insert(event.hash.clone().expect("hash"), event);
         } else if event.r#type == "label-answer" {
             match &event.data {
-                Some(data) => match data.get("document") {
-                    Some(doc_hash) => {
-                        let hash = doc_hash.as_str().expect("str").to_owned();
+                Some(data) => match data.get("event") {
+                    Some(event_hash) => {
+                        let hash = event_hash.as_str().expect("str").to_owned();
                         match answers.get_mut(&hash) {
                             Some(v) => v.push(event.clone()),
                             None => {
@@ -107,9 +108,9 @@ where
                     }
                     None => {
                         return Err(format!(
-                        "label-answer is missing the \"data.document\" property. Event hash: {}",
-                        event.hash.unwrap()
-                    )
+                            "label-answer is missing the \"data.event\" property. Event hash: {}",
+                            event.hash.unwrap()
+                        )
                         .into())
                     }
                 },
@@ -126,20 +127,49 @@ where
         }
     }
 
-    for event in events {
-        f(event.clone())?;
-        if event.r#type == "document" {
-            match answers.get(&event.hash.to_owned().expect("hash")) {
-                Some(doc_answers) => {
-                    for answer in doc_answers {
-                        f(answer.clone())?;
-                    }
-                }
-                None => {}
-            }
-        }
+    // Emit all labels before any label-answers
+    // Because a label-answer can depend on two different labels, it is not
+    // always possible to group every label with all of its answers.
+    let mut label_hashes: Vec<String> = Vec::new();
+    let mut lvec: Vec<_> = labels.into_iter().collect();
+    lvec.sort_by_key(|(k, _)| k.to_owned());
+    for (_, event) in lvec {
+        let event_hash = event.hash.clone().expect("hash");
+        label_hashes.push(event_hash);
+        f(event)?;
     }
 
+    for event_hash in label_hashes {
+        write_event_answers_jsonl(&event_hash, &answers, f)?;
+    }
+
+    for event in events {
+        let event_hash = event.hash.clone().expect("hash");
+        f(event)?;
+        write_event_answers_jsonl(&event_hash, &answers, f)?;
+    }
+
+    Ok(())
+}
+
+fn write_event_answers_jsonl<F>(
+    hash: &str,
+    answers: &HashMap<String, Vec<Event>>,
+    f: &mut F,
+) -> Result<()>
+where
+    F: FnMut(Event) -> Result<()>,
+{
+    match answers.get(hash) {
+        Some(event_answers) => {
+            for answer in event_answers {
+                let answer_hash = answer.hash.clone().expect("hash");
+                f(answer.to_owned())?;
+                write_event_answers_jsonl(&answer_hash, &answers, f)?;
+            }
+        }
+        None => {}
+    };
     Ok(())
 }
 
@@ -147,11 +177,9 @@ pub fn write_labels_sqlite<F>(conn: &Connection, config: &Config, f: &mut F) -> 
 where
     F: FnMut(Event) -> Result<()>,
 {
-    let mut label_hashes = HashSet::new();
+    let mut labels: HashMap<String, Event> = HashMap::new();
     for event in get_label_events(config)? {
-        let hash = event.hash.to_owned().expect("hash");
-        f(event)?;
-        label_hashes.insert(hash);
+        labels.insert(event.hash.clone().expect("hash"), event);
     }
 
     let mut stmt = sqlite::prepare_cached(&conn, SELECT_LABELS)?;
@@ -160,14 +188,29 @@ where
         .chain_err(|| format!("Failed to execute prepared statement: {}", SELECT_LABELS))?;
     while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
-        if !label_hashes.contains(&event.hash.to_owned().expect("hash")) {
-            f(event)?;
-        }
+        labels.insert(event.hash.clone().expect("hash"), event);
     }
+
+    // Emit all labels before any label-answers
+    // Because a label-answer can depend on two different labels, it is not
+    // always possible to group every label with all of its answers.
+    let mut label_hashes: Vec<String> = Vec::new();
+    let mut lvec: Vec<_> = labels.into_iter().collect();
+    lvec.sort_by_key(|(k, _)| k.to_owned());
+    for (_, event) in lvec {
+        let event_hash = event.hash.clone().expect("hash");
+        label_hashes.push(event_hash);
+        f(event)?;
+    }
+
+    for event_hash in label_hashes {
+        write_event_answers_sqlite(conn, f, &event_hash)?;
+    }
+
     Ok(())
 }
 
-fn write_document_answers_sqlite<F>(conn: &Connection, f: &mut F, doc_hash: &str) -> Result<()>
+fn write_event_answers_sqlite<F>(conn: &Connection, f: &mut F, doc_hash: &str) -> Result<()>
 where
     F: FnMut(Event) -> Result<()>,
 {
@@ -180,7 +223,9 @@ where
     })?;
     while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
+        let hash = event.hash.clone();
         f(event)?;
+        write_event_answers_sqlite(conn, f, &hash.expect("hash"))?;
     }
     Ok(())
 }
@@ -196,7 +241,7 @@ where
     while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
         f(event.clone())?;
-        write_document_answers_sqlite(&conn, f, &event.hash.expect("hash"))?;
+        write_event_answers_sqlite(&conn, f, &event.hash.expect("hash"))?;
     }
     Ok(())
 }
