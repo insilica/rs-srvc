@@ -1,5 +1,7 @@
 ## Unreleased
 
+## v0.18.0 (2023-05-11)
+
 - Add `http` embedded step to use a remote URL as a mapping step.
 - (breaking) Rename `document` property in label-answer events to `event`.
 - (breaking) Require a value for the `answer` property in label-answer events. Change label steps to skip emitting a label-answer instead of emitting a label-answer with no `answer` property.

@@ -38,7 +38,7 @@ If the :doc:`label <label>` has a ``json-schema`` property, ``answer`` must be v
 History
 =======
 
-Version 0.18.0_ (2023-05-04)
+Version 0.18.0_ (2023-05-11)
 ---------------------------
 
 .. _0.18.0: https://github.com/insilica/rs-srvc/releases/tag/v0.18.0
