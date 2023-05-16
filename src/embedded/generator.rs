@@ -276,8 +276,18 @@ where
 }
 
 pub fn run(file_or_url: &str) -> Result<()> {
-    let GeneratorContext { config, mut writer } = embedded::get_generator_context()?;
+    let GeneratorContext {
+        config,
+        in_events,
+        mut writer,
+    } = embedded::get_generator_context()?;
+
     let mut hashes = HashSet::new();
+
+    for event in in_events {
+        embedded::write_event_dedupe(&mut writer, &event?, &mut hashes)?;
+    }
+
     match Url::parse(file_or_url) {
         Ok(_) => {
             let mut f_dedupe =

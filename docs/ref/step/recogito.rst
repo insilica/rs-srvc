@@ -33,11 +33,13 @@ Example ``sr.yaml``:
     flows:
       recogito:
         steps:
-          - uses: github:insilica/srvc-pubmed-search
-            query: angry bees
-
           - run-embedded: remove-reviewed
 
           - run-embedded: html https://static.sysrev.com/srvc/recogito/
             labels: [annotation]
             port: 5006
+
+    sources:
+      - step:
+          uses: github:insilica/srvc-pubmed-search
+          query: angry bees

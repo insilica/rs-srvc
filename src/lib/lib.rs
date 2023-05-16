@@ -64,6 +64,11 @@ pub struct Label {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Source {
+    pub step: Step,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Srvc {
     pub version: String,
 }
@@ -83,6 +88,7 @@ pub struct Config {
     pub reviewer: String,
     #[serde(rename = "sink-all-events")]
     pub sink_all_events: bool,
+    pub sources: Vec<Source>,
     pub srvc: Srvc,
 }
 

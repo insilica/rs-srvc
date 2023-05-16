@@ -24,10 +24,12 @@ Example ``sr.yaml``:
     flows:
       spacy:
         steps:
-          - uses: github:insilica/srvc-pubmed-search
-            query: angry bees
-
           - run-embedded: remove-reviewed
 
           - uses: github:sysrev/srvc-hello#spacy
             labels: [annotation]
+
+    sources:
+      - step:
+          uses: github:insilica/srvc-pubmed-search
+          query: angry bees

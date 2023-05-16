@@ -33,6 +33,7 @@ pub struct Env {
 
 pub struct GeneratorContext {
     config: Config,
+    in_events: Box<dyn Iterator<Item = Result<Event>> + Send + Sync>,
     writer: Box<dyn Write + Send + Sync>,
 }
 
@@ -116,7 +117,20 @@ pub fn get_generator_context() -> Result<GeneratorContext> {
     let output_addr = env.output.ok_or("Missing value for SR_OUTPUT")?;
     let writer = Box::new(output_writer(&output_addr)?);
 
-    Ok(GeneratorContext { config, writer })
+    let in_events = match env.input {
+        Some(input_addr) => Box::new(input_events(&input_addr)?),
+        None => {
+            let events: Box<dyn Iterator<Item = Result<Event>> + Send + Sync> =
+                Box::new(std::iter::empty());
+            events
+        }
+    };
+
+    Ok(GeneratorContext {
+        config,
+        in_events,
+        writer,
+    })
 }
 
 pub fn get_map_context() -> Result<MapContext> {

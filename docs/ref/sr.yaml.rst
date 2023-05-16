@@ -23,20 +23,18 @@ sr.yaml
         required: true
 
     flows:
-      pubmed-search:
-        steps:
-          - uses: github:insilica/srvc-pubmed-search
-            query: angry bees
-
       label:
         steps:
-          - run-embedded: generator sink.jsonl
-
           - run-embedded: remove-reviewed
 
           - run-embedded: label-web
             labels: [include, category]
             port: 5005
+
+    sources:
+      - step:
+          uses: github:insilica/srvc-pubmed-search
+          query: angry bees
 
 reviewer
 ========
@@ -57,7 +55,13 @@ In this case, it allows a reviewer to answer whether or not a document is releva
 flows
 =====
 
-This section defines two flows.
-The first uses the :doc:`PubMed search step </ref/step/pubmed-search/>` to import documents.
-The second allows a reviewer to provide answers for each label and document combination.
+This section defines a review flow named "label".
+The flow allows a reviewer to provide answers for each label and document combination.
 It uses the :doc:`generator step </ref/step/generator/>` to retrieve existing documents and answers, the :doc:`remove-reviewed step </ref/step/remove-reviewed>` to skip documents that have already been reviewed, and the :doc:`label-web step </ref/step/label-web/>` to allow the reviewer to assign answers to documents.
+
+sources
+=======
+
+This section defines a list of event sources.
+One source is provided.
+It uses the :doc:`PubMed search step </ref/step/pubmed-search/>` to import documents into the project.

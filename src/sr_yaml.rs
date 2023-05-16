@@ -64,6 +64,15 @@ pub struct Label {
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Source {
+    file: Option<String>,
+    step: Option<Step>,
+    #[serde(alias = "url")]
+    uri: Option<String>,
+}
+
+#[skip_serializing_none]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
     #[serde(
         alias = "base_url",
@@ -80,6 +89,7 @@ pub struct Config {
     pub reviewer: Option<String>,
     #[serde(alias = "sink-all-events", rename(serialize = "sink-all-events"))]
     pub sink_all_events: Option<bool>,
+    pub sources: Option<Vec<Source>>,
 }
 
 impl Config {
@@ -93,6 +103,7 @@ impl Config {
             labels: other.labels.or(self.labels),
             reviewer: other.reviewer.or(self.reviewer),
             sink_all_events: other.sink_all_events.or(self.sink_all_events),
+            sources: other.sources.or(self.sources),
         }
     }
 }
@@ -319,6 +330,37 @@ pub fn parse_labels(
     }
 }
 
+pub fn parse_source(client: &Client, source: Source) -> Result<lib_sr::Source> {
+    let step = match source.step {
+        Some(step) => parse_step(client, step)?,
+        None => {
+            let s = match source.file {
+                Some(s) => s,
+                None => source.uri.expect("uri"),
+            };
+            lib_sr::Step {
+                extra: HashMap::new(),
+                env: None,
+                labels: Vec::new(),
+                run: None,
+                run_embedded: Some(format!("generator {}", s)),
+            }
+        }
+    };
+
+    Ok(lib_sr::Source { step })
+}
+
+pub fn parse_sources(client: &Client, sources: Vec<Source>) -> Result<Vec<lib_sr::Source>> {
+    let mut steps = Vec::new();
+
+    for source in sources {
+        steps.push(parse_source(client, source)?)
+    }
+
+    Ok(steps)
+}
+
 pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
     let client = Client::new();
     let config = match &config.base_uri {
@@ -342,6 +384,7 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
             labels: parse_labels(&client, &config.labels)?,
             reviewer,
             sink_all_events: config.sink_all_events.unwrap_or(false),
+            sources: parse_sources(&client, config.sources.unwrap_or(Vec::new()))?,
             srvc: lib_sr::Srvc {
                 version: String::from(env!("CARGO_PKG_VERSION")),
             },

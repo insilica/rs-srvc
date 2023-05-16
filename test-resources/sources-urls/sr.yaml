@@ -1,0 +1,10 @@
+reviewer: mailto:user@example.com
+
+flows:
+  test:
+    steps:
+      - run-embedded: remove-reviewed
+
+sources:
+  - uri: http://127.0.0.1:8877/sources-urls/docs1.jsonl
+  - url: http://127.0.0.1:8877/sources-urls/docs2.jsonl

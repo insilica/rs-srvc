@@ -318,6 +318,31 @@ fn test_reviewer_uri_email() -> Result<()> {
 }
 
 #[test]
+fn test_sources_file() -> Result<()> {
+    test_flow("sources-file", "test", 400)
+}
+
+#[test]
+fn test_sources_files() -> Result<()> {
+    test_flow("sources-files", "test", 400)
+}
+
+#[test]
+fn test_sources_step_syntax() -> Result<()> {
+    test_flow("sources-step-syntax", "test", 400)
+}
+
+#[test]
+fn test_sources_urls() -> Result<()> {
+    test_flow("sources-urls", "test", 400)
+}
+
+#[test]
+fn test_sources_with_generator() -> Result<()> {
+    test_flow("sources-with-generator", "test", 400)
+}
+
+#[test]
 fn test_wrong_name() -> Result<()> {
     test_flow_err(
         "wrong-name",

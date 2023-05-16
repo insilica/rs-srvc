@@ -1,5 +1,8 @@
 ## Unreleased
 
+- (breaking) [#9](https://github.com/insilica/rs-srvc/issues/9): Add `sources` property to `sr.yaml`. The events from sources are implicitly added to the beginning of each flow.
+- (breaking) Allow stacking multiple generators by providing `SR_INPUT`. Change `generator` embedded step to pass events from SR_INPUT through before providing its own events.
+
 ## v0.18.0 (2023-05-11)
 
 - Add `http` embedded step to use a remote URL as a mapping step.

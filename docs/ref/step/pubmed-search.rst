@@ -21,11 +21,10 @@ For example, this flow uses a `query <https://pubmed.ncbi.nlm.nih.gov/?term=angr
 
     reviewer: mailto:user@example.com
 
-    flows:
-      import-pubmed:
-        steps:
-          - uses: github:insilica/srvc-pubmed-search
-            query: angry bees
+    sources:
+      - step:
+          uses: github:insilica/srvc-pubmed-search
+          query: angry bees
 
 Advanced queries
 ================
@@ -38,8 +37,7 @@ A `query <https://pubmed.ncbi.nlm.nih.gov/?term=(angry+bees)+AND+(brain)>`_ that
 
     reviewer: mailto:user@example.com
 
-    flows:
-      import-pubmed:
-        steps:
-          - uses: github:insilica/srvc-pubmed-search
-            query: (angry bees) AND (brain)
+    sources:
+      - step:
+          uses: github:insilica/srvc-pubmed-search
+          query: (angry bees) AND (brain)

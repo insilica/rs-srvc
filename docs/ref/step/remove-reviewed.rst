@@ -24,11 +24,13 @@ Example ``sr.yaml``:
     flows:
       label:
         steps:
-          - uses: github:insilica/srvc-pubmed-search
-            query: angry bees
-
           - run-embedded: remove-reviewed
 
           - run-embedded: label-web
             labels: [include]
             port: 5005
+
+    sources:
+      - step:
+          uses: github:insilica/srvc-pubmed-search
+          query: angry bees

@@ -285,11 +285,23 @@ fn wait_for_steps(mut processes: Vec<StepProcess>) -> Result<()> {
 }
 
 fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()> {
-    let exe_path = get_exe_path()?;
+    if flow.steps.is_empty() {
+        return Err("No steps in flow".into());
+    }
 
+    let mut steps = Vec::new();
+    let flow_steps = &flow.steps.clone();
+
+    for source in &config.sources {
+        steps.push(&source.step);
+    }
+    steps.extend(flow_steps);
+
+    let exe_path = get_exe_path()?;
     let last_step = &flow.steps.last();
     let mut processes = Vec::new();
-    for step in &flow.steps {
+
+    for step in steps {
         let is_last_step = last_step.filter(|x| x.to_owned() == step).is_some();
         let last_ss = processes
             .last()
@@ -298,7 +310,7 @@ fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()> {
         match run_step(
             config,
             &dir,
-            step,
+            &step,
             last_ss.map(|x| x.output_port),
             !is_last_step,
             exe_path.clone(),
@@ -311,11 +323,7 @@ fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()> {
         }
     }
 
-    if processes.len() == 0 {
-        Err("No steps in flow".into())
-    } else {
-        wait_for_steps(processes)
-    }
+    wait_for_steps(processes)
 }
 
 pub fn run_flow(flow: &Flow, config: &Config) -> Result<()> {
