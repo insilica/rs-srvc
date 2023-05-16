@@ -82,7 +82,9 @@ After you submit an answer, you should see that it has been appended to ``sink.j
 Collaborate
 =============
 
-One way to collaborate with other reviewers is to use a git repository for your SRVC project directory.
+A remote sink such as :doc:`Sysrev </ref/sysrev>` can be used to keep data in sync with other reviewers.
+
+Another way to collaborate with other reviewers is to use a git repository for your SRVC project directory.
 Reviewers can merge their work by merging their sink files.
 If there are any git conflicts, simply accept all additions from both reviewers.
 The SRVC data model allows for seamless merging.
