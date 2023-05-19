@@ -28,6 +28,7 @@ use serde_with::skip_serializing_none;
 
 pub mod common;
 pub mod event;
+pub mod generate;
 pub mod sqlite;
 
 #[skip_serializing_none]
