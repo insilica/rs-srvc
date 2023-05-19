@@ -18,6 +18,7 @@ use lib_sr::errors::*;
 use lib_sr::Opts;
 use url::form_urlencoded;
 
+mod api;
 mod embedded;
 mod flow;
 mod hash;
@@ -44,6 +45,29 @@ struct Cli {
 #[derive(Subcommand)]
 #[clap(version)]
 enum Commands {
+    /// Run an API server
+    Api {
+        /// File to write the bound addresses to
+        /// (E.g., when using --port 0)
+        #[clap(default_value = ".srvc-api-addr", long)]
+        address_file: String,
+        /// Override the default db file
+        #[clap(long)]
+        db: Option<String>,
+        /// Hostname(s) to listen on
+        #[clap(default_value = "127.0.0.1", long)]
+        host: Vec<String>,
+        /// Port to listen on
+        #[clap(default_value = "7070", long)]
+        port: u16,
+        /// Bearer tokens which grant read-only access to the API
+        #[clap(long)]
+        read_token: Vec<String>,
+        /// Bearer tokens which grant full access to the API
+        #[clap(long)]
+        token: Vec<String>,
+    },
+
     /// Open the documentation website
     Docs {
         /// Search query
@@ -196,6 +220,14 @@ fn opts(cli: &Cli) -> Opts {
 
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
+        Commands::Api {
+            address_file,
+            db,
+            host,
+            port,
+            read_token,
+            token,
+        } => api::run(opts, address_file, db, host, port, read_token, token),
         Commands::Docs { query } => open_docs(query),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
