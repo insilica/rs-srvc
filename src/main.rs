@@ -71,6 +71,10 @@ enum Commands {
         /// The name of the flow
         #[clap(forbid_empty_values = true)]
         name: String,
+
+        /// Override the default reviewer URI
+        #[clap(long)]
+        reviewer: Option<String>,
     },
 
     /// Run an embedded step
@@ -195,7 +199,7 @@ fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
         Commands::Docs { query } => open_docs(query),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
-        Commands::Flow { db, name } => flow::run(opts, db, name),
+        Commands::Flow { db, name, reviewer } => flow::run(opts, db, name, reviewer),
         Commands::Pull { db, file_or_url } => pull::run(opts, db, &file_or_url),
         Commands::RunEmbeddedStep { name } => run_embedded_step(name),
         Commands::Version {} => version(),
