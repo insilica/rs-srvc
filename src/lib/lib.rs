@@ -85,7 +85,7 @@ pub struct Config {
     pub extra: HashMap<String, serde_json::Value>,
     pub flows: HashMap<String, Flow>,
     pub labels: HashMap<String, Label>,
-    pub reviewer: String,
+    pub reviewer: Option<String>,
     #[serde(rename = "sink-all-events")]
     pub sink_all_events: bool,
     pub sources: Vec<Source>,

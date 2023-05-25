@@ -3,6 +3,7 @@
 - (breaking) [#9](https://github.com/insilica/rs-srvc/issues/9): Add `sources` property to `sr.yaml`. The events from sources are implicitly added to the beginning of each flow.
 - (breaking) Allow stacking multiple generators by providing `SR_INPUT`. Change `generator` embedded step to pass events from SR_INPUT through before providing its own events.
 - Add `--reviewer` option to `flow` command. This allows overriding the `reviewer` property in `sr.yaml`.
+- Allow commands other than `flow` to run without a `reviewer` set.
 
 ## v0.18.0 (2023-05-11)
 

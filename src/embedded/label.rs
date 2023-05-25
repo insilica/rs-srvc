@@ -212,7 +212,7 @@ pub fn run() -> Result<()> {
     } = embedded::get_map_context()?;
     let mut hashes = HashSet::new();
     let labels = config.current_labels.unwrap_or(Vec::new());
-    let reviewer = config.reviewer;
+    let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
 
     for result in in_events {
         let event = result?;

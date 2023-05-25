@@ -88,7 +88,7 @@ pub fn run() -> Result<()> {
         timestamp_override: _,
         mut writer,
     } = embedded::get_map_context()?;
-    let reviewer = config.reviewer;
+    let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
     let mut hashes = HashSet::new();
     let is_remote = embedded::is_remote_target(&config.db);
     let client = Client::new();

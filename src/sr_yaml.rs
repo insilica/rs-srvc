@@ -361,6 +361,23 @@ pub fn parse_sources(client: &Client, sources: Vec<Source>) -> Result<Vec<lib_sr
     Ok(steps)
 }
 
+pub fn validate_reviewer(reviewer: &str) -> Result<()> {
+    let reviewer_uri = Url::parse(reviewer);
+    match reviewer_uri {
+        Ok(_) => Ok(()),
+        Err(_) => {
+            let mut reviewer_err = String::from("\"reviewer\" is not a valid URI: ");
+            reviewer_err.push_str(&format!("{:?}", reviewer));
+            if !reviewer.contains(":") && reviewer.contains("@") && reviewer.contains(".") {
+                let mut try_reviewer = String::from("mailto:");
+                try_reviewer.push_str(&reviewer);
+                reviewer_err.push_str(&format!("\n  Try {:?}", try_reviewer));
+            }
+            Err(reviewer_err.into())
+        }
+    }
+}
+
 pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
     let client = Client::new();
     let config = match &config.base_uri {
@@ -370,34 +387,26 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
         }
         None => config,
     };
-    let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
-    let mut reviewer_err = String::from("\"reviewer\" is not a valid URI: ");
-    reviewer_err.push_str(&format!("{:?}", reviewer));
-    let reviewer_uri = Url::parse(&reviewer);
-    match reviewer_uri {
-        Ok(_) => Ok(lib_sr::Config {
-            current_labels: None,
-            current_step: None,
-            db: config.db.unwrap_or(String::from("sink.jsonl")),
-            extra: config.extra,
-            flows: parse_flows(&client, config.flows)?,
-            labels: parse_labels(&client, &config.labels)?,
-            reviewer,
-            sink_all_events: config.sink_all_events.unwrap_or(false),
-            sources: parse_sources(&client, config.sources.unwrap_or(Vec::new()))?,
-            srvc: lib_sr::Srvc {
-                version: String::from(env!("CARGO_PKG_VERSION")),
-            },
-        }),
-        Err(_) => {
-            if !reviewer.contains(":") && reviewer.contains("@") && reviewer.contains(".") {
-                let mut try_reviewer = String::from("mailto:");
-                try_reviewer.push_str(&reviewer);
-                reviewer_err.push_str(&format!("\n  Try {:?}", try_reviewer));
-            }
-            Err(reviewer_err.into())
-        }
-    }
+
+    match config.reviewer.clone() {
+        Some(reviewer) => validate_reviewer(&reviewer)?,
+        None => (),
+    };
+
+    Ok(lib_sr::Config {
+        current_labels: None,
+        current_step: None,
+        db: config.db.unwrap_or(String::from("sink.jsonl")),
+        extra: config.extra,
+        flows: parse_flows(&client, config.flows)?,
+        labels: parse_labels(&client, &config.labels)?,
+        reviewer: config.reviewer,
+        sink_all_events: config.sink_all_events.unwrap_or(false),
+        sources: parse_sources(&client, config.sources.unwrap_or(Vec::new()))?,
+        srvc: lib_sr::Srvc {
+            version: String::from(env!("CARGO_PKG_VERSION")),
+        },
+    })
 }
 
 pub fn get_config(filename: PathBuf) -> Result<Config> {

@@ -346,7 +346,14 @@ pub fn run(
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
     let mut config = sr_yaml::parse_config(yaml_config)?;
     config.db = db.unwrap_or(config.db);
-    config.reviewer = reviewer.unwrap_or(config.reviewer);
+
+    let reviewer = match reviewer {
+        Some(s) => s,
+        None => config.reviewer.ok_or("\"reviewer\" not set in config")?,
+    };
+    sr_yaml::validate_reviewer(&reviewer)?;
+    config.reviewer = Some(reviewer);
+
     let flow = config.flows.get(&flow_name);
     let flow = match flow {
         Some(flow) => Ok(flow),

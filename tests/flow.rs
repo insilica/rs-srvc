@@ -259,6 +259,33 @@ fn test_flow_reviewer_arg() -> std::result::Result<(), rexpect::errors::Error> {
     Ok(())
 }
 
+/// Test flow reviewer arg when sr.yaml does not contain reviewer
+#[cfg(unix)]
+#[test]
+fn test_flow_reviewer_arg2() -> std::result::Result<(), rexpect::errors::Error> {
+    let dir = "test-resources/flow-reviewer-arg2";
+    common::remove_sink(dir).unwrap();
+    let mut p = common::spawn(
+        dir,
+        vec!["flow", "test", "--reviewer", "mailto:override@example.com"],
+        1661192610,
+        400,
+    )?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
+    p.send_line("y")?;
+    p.exp_string("Eye irritation? [Yes/No/Skip]")?;
+    p.send_line("n")?;
+    p.exp_string("Substance")?;
+    p.exp_string("1. \"sodium laureth sulfate\"")?;
+    p.exp_string("7. Skip Question")?;
+    p.exp_string("?")?;
+    p.send_line("1")?;
+    p.exp_string("Acute toxicity? [Yes/No/Skip]")?;
+    p.send_control('c')?;
+    common::check_sink(dir, true).unwrap();
+    Ok(())
+}
+
 #[test]
 fn test_generator_blank_lines() -> Result<()> {
     test_flow("generator-blank-lines", "generator", 400)
