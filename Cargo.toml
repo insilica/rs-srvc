@@ -41,6 +41,8 @@ windows-win = "2.0"
 env_logger = "0.10.0"
 log = "0.4.17"
 webbrowser = { version = "0.8.7", features = ["hardened"] }
+futures = "0.3.28"
+bytes = "1.4.0"
 
 [dev-dependencies]
 assert_cmd = "2.0"

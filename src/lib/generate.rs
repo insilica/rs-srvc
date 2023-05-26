@@ -67,7 +67,7 @@ where
     for (i, result) in in_events.enumerate() {
         let mut event = match result {
             Ok(evt) => {
-                trace! {"Parsed event: {}", evt.hash.to_owned().unwrap_or(String::from("No hash"))};
+                trace! {"Parsed event: {} {}", evt.r#type, evt.hash.to_owned().unwrap_or(String::from("No hash"))};
                 evt
             }
             Err(e) => {
