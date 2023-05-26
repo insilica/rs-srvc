@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use jsonschema::{CompilationOptions, Draft, JSONSchema};
 use reqwest::blocking::Client;
 
-use lib_sr::errors::*;
+use crate::errors::*;
 
 lazy_static! {
     static ref EMBEDDED_DOCUMENTS: HashMap<&'static str, &'static str> = {

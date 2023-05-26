@@ -15,10 +15,9 @@ use lib_sr::event;
 use lib_sr::event::Event;
 use lib_sr::sqlite;
 use lib_sr::Config;
-use lib_sr::{common, errors::*};
+use lib_sr::{common, errors::*, json_schema};
 
 use crate::embedded;
-use crate::json_schema;
 
 pub fn read_hashes(file: File) -> Result<HashSet<String>> {
     let reader = BufReader::new(file);

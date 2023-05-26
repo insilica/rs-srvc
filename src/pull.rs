@@ -3,12 +3,9 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::thread;
 
-use lib_sr::errors::*;
-use lib_sr::event::Event;
-use lib_sr::Opts;
+use lib_sr::{errors::*, event::Event, sr_yaml, Opts};
 
 use crate::embedded::{generator, sink};
-use crate::sr_yaml;
 
 pub fn run(opts: &mut Opts, db: Option<String>, file_or_url: &str) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;

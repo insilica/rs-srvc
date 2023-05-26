@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate error_chain;
 #[macro_use]
-extern crate lazy_static;
-#[macro_use]
 extern crate maplit;
 
 use std::env;
@@ -11,19 +9,13 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use url::Url;
+use url::{form_urlencoded, Url};
 
-use lib_sr::common;
-use lib_sr::errors::*;
-use lib_sr::Opts;
-use url::form_urlencoded;
+use lib_sr::{common, errors::*, flow, sr_yaml, Opts};
 
 mod embedded;
-mod flow;
 mod hash;
-mod json_schema;
 mod pull;
-mod sr_yaml;
 
 const REV: Option<&'static str> = option_env!("SELF_REV");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");

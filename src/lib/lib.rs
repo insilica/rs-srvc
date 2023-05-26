@@ -4,6 +4,10 @@
 
 #[macro_use]
 extern crate error_chain;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate maplit;
 
 pub mod errors {
     error_chain! {
@@ -28,7 +32,10 @@ use serde_with::skip_serializing_none;
 
 pub mod common;
 pub mod event;
+pub mod flow;
+pub mod json_schema;
 pub mod sqlite;
+pub mod sr_yaml;
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

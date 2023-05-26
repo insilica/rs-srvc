@@ -13,10 +13,8 @@ use serde::Serialize;
 use tempfile::TempDir;
 use uuid::Uuid;
 
-use lib_sr::{errors::*, event};
-use lib_sr::{Config, Flow, Opts, Step};
-
-use crate::sr_yaml;
+use crate::{errors::*, event, sr_yaml};
+use crate::{Config, Flow, Opts, Step};
 
 #[derive(Debug)]
 pub struct StepProcess {
@@ -49,7 +47,7 @@ fn run_step_server(input_listener: TcpListener, output_listener: TcpListener) ->
     let events = event::events(reader);
     for result in events {
         let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
-        let expected_hash = lib_sr::event::event_hash(event.clone())?;
+        let expected_hash = event::event_hash(event.clone())?;
         let hash = event.hash.clone().unwrap_or("".to_string());
         if hash == "" {
             event.hash = Some(expected_hash);
@@ -284,7 +282,7 @@ fn wait_for_steps(mut processes: Vec<StepProcess>) -> Result<()> {
     }
 }
 
-fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()> {
+pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()> {
     if flow.steps.is_empty() {
         return Err("No steps in flow".into());
     }

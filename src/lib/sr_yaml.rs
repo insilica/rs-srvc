@@ -11,11 +11,8 @@ use serde::Serialize;
 use serde_with::skip_serializing_none;
 use url::Url;
 
-use lib_sr;
-use lib_sr::errors::*;
-use lib_sr::event;
-
-use crate::json_schema;
+use crate as lib_sr;
+use crate::{errors::*, event, json_schema};
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
