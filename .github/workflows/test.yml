@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [linux, macos, win-msvc]
+        build: [linux, macos]
         include:
         - build: linux
           os: ubuntu-20.04
@@ -29,9 +29,6 @@ jobs:
         - build: macos
           os: macos-12
           target: x86_64-apple-darwin
-        - build: win-msvc
-          os: windows-2022
-          target: x86_64-pc-windows-msvc
 
     steps:
     - name: Checkout repository
