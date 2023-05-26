@@ -2,11 +2,11 @@ use std::collections::HashSet;
 use std::env;
 use std::time::Duration;
 
+use anyhow::{Context, Error, Result};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use lib_sr::errors::*;
 use lib_sr::event::Event;
 use lib_sr::{event, Config};
 
@@ -43,23 +43,26 @@ fn do_request(
 
     let response = request
         .send()
-        .chain_err(|| format!("Failed to complete HTTP request to {}", url))?;
+        .with_context(|| format!("Failed to complete HTTP request to {}", url))?;
     let status = response.status().as_u16();
     if status == 200 {
         let eresp: EventsResponse = serde_json::from_str(
             &response
                 .text()
-                .chain_err(|| "Failed to get response text")?,
+                .with_context(|| "Failed to get response text")?,
         )
-        .chain_err(|| "Failed to parse response")?;
+        .with_context(|| "Failed to parse response")?;
         Ok(eresp.events)
     } else {
-        Err(format!("Unexpected {} status for {}", status, url).into())
+        Err(Error::msg(format!(
+            "Unexpected {} status for {}",
+            status, url
+        )))
     }
 }
 
 pub fn run(url_str: &str) -> Result<()> {
-    let url = Url::parse(url_str).chain_err(|| format! {"Cannot parse URL: {}", url_str})?;
+    let url = Url::parse(url_str).with_context(|| format! {"Cannot parse URL: {}", url_str})?;
 
     let MapContext {
         config,
@@ -72,7 +75,7 @@ pub fn run(url_str: &str) -> Result<()> {
     let client = Client::builder()
         .timeout(Duration::from_secs(300)) // multi-step LLM requests can take a long time
         .build()
-        .chain_err(|| "Failed to build reqwest Client")?;
+        .with_context(|| "Failed to build reqwest Client")?;
 
     // Write leading non-docs, then
     // group each document and its related events and send off a request, writing

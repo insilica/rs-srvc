@@ -9,8 +9,8 @@ use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
+use anyhow::{Context, Result};
 use assert_cmd::Command;
-use lib_sr::errors::*;
 use lib_sr::event;
 #[cfg(unix)]
 use rexpect::session::PtySession;
@@ -62,7 +62,8 @@ pub fn sqlite_sink_path(dir: &str) -> PathBuf {
 
 fn remove_file(path: &PathBuf) -> Result<()> {
     if path.exists() {
-        fs::remove_file(path).chain_err(|| format!("Failed to remove {}", path.to_string_lossy()))
+        fs::remove_file(path)
+            .with_context(|| format!("Failed to remove {}", path.to_string_lossy()))
     } else {
         Ok(())
     }
@@ -76,7 +77,7 @@ pub fn remove_sink(dir: &str) -> Result<()> {
 }
 
 fn file_hashes(path: &PathBuf) -> Result<HashSet<String>> {
-    let reader = BufReader::new(File::open(path).chain_err(|| "Failed to open file")?);
+    let reader = BufReader::new(File::open(path).with_context(|| "Failed to open file")?);
     let mut hashes = HashSet::new();
     for event in event::events(reader) {
         match event {

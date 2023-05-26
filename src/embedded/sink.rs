@@ -7,6 +7,7 @@ use std::io::LineWriter;
 use std::io::Write;
 use std::path::PathBuf;
 
+use anyhow::{Context, Error, Result};
 use log::{debug, info};
 use reqwest::blocking::Client;
 use serde::Serialize;
@@ -15,7 +16,7 @@ use lib_sr::event;
 use lib_sr::event::Event;
 use lib_sr::sqlite;
 use lib_sr::Config;
-use lib_sr::{common, errors::*, json_schema};
+use lib_sr::{common, json_schema};
 
 use crate::embedded;
 
@@ -25,7 +26,7 @@ pub fn read_hashes(file: File) -> Result<HashSet<String>> {
     let mut hashes = HashSet::new();
 
     for result in events {
-        let hash = result?.hash.ok_or("No hash for event")?;
+        let hash = result?.hash.ok_or(Error::msg("No hash for event"))?;
         hashes.insert(hash);
     }
 
@@ -61,11 +62,11 @@ fn validate_answer(
                 Ok(_) => (),
                 Err(errs) => {
                     for e in errs {
-                        Err(format!(
+                        Err(Error::msg(format!(
                             "label-answer {} failed JSON schema validation: {}",
                             event_hash,
                             validation_error_message(e)
-                        ))?
+                        )))?
                     }
                 }
             };
@@ -76,7 +77,7 @@ fn validate_answer(
 }
 
 fn prep_event(labels: &mut HashMap<String, Event>, result: Result<Event>) -> Result<Event> {
-    let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
+    let mut event = result.with_context(|| "Cannot parse line as JSON")?;
     event::ensure_hash(&mut event)?;
     if event.r#type == "label" {
         labels.insert(event.hash.as_ref().unwrap().to_string(), event.clone());
@@ -89,7 +90,10 @@ fn prep_event(labels: &mut HashMap<String, Event>, result: Result<Event>) -> Res
                 debug!("prep_event Label not found with hash: {}", label_hash);
                 debug!("prep_event event: {:?}", event);
                 debug!("prep_event labels: {:?}", labels);
-                Err(format!("Label not found with hash: {}", label_hash))
+                Err(Error::msg(format!(
+                    "Label not found with hash: {}",
+                    label_hash
+                )))
             }
         }?;
         match label
@@ -118,7 +122,7 @@ fn run_remote(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -
         let hash = event.hash.clone().expect("Hash not set");
 
         if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
-            let json = serde_json::to_string(&event).chain_err(|| "Serialization failed")?;
+            let json = serde_json::to_string(&event).with_context(|| "Serialization failed")?;
             let mut request = client
                 .post(&url)
                 .header("Content-Type", "application/json")
@@ -131,15 +135,18 @@ fn run_remote(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -
             info! {"Sending event to remote: {} {}", event.r#type, event.hash.expect("hash")};
             let response = request
                 .send()
-                .chain_err(|| "Error sending event to remote")?;
+                .with_context(|| "Error sending event to remote")?;
             let status = response.status().as_u16();
             debug! {"Received {} response from remote", status};
 
             if status >= 400 {
                 let text = response
                     .text()
-                    .chain_err(|| "Error getting response text")?;
-                return Err(format!("{} response at {} ({})", status, &url, text).into());
+                    .with_context(|| "Error getting response text")?;
+                return Err(Error::msg(format!(
+                    "{} response at {} ({})",
+                    status, &url, text
+                )));
             }
             hashes.insert(hash);
         };
@@ -159,7 +166,7 @@ fn run_local_jsonl(config: &Config, in_events: impl Iterator<Item = Result<Event
         .create(true)
         .append(true)
         .open(&config.db)
-        .chain_err(|| format!("Failed to open db: \"{}\"", config.db))?;
+        .with_context(|| format!("Failed to open db: \"{}\"", config.db))?;
     let mut writer = LineWriter::new(db_file);
 
     for result in in_events {
@@ -170,13 +177,15 @@ fn run_local_jsonl(config: &Config, in_events: impl Iterator<Item = Result<Event
             info! {"Writing event to sink: {} {}", event.r#type, hash};
             event
                 .serialize(&mut serde_json::Serializer::new(&mut writer))
-                .chain_err(|| "Event serialization failed")?;
+                .with_context(|| "Event serialization failed")?;
 
             #[cfg(unix)]
             let newline = b"\n";
             #[cfg(windows)]
             let newline = b"\r\n";
-            writer.write(newline).chain_err(|| "Buffer write failed")?;
+            writer
+                .write(newline)
+                .with_context(|| "Buffer write failed")?;
             hashes.insert(hash);
         };
     }
@@ -215,9 +224,9 @@ pub fn run_with_events(
 
 pub fn run() -> Result<()> {
     debug! {"Starting sink step"};
-    let env = embedded::get_env().chain_err(|| "Env var processing failed")?;
+    let env = embedded::get_env().with_context(|| "Env var processing failed")?;
     let config = embedded::get_config(&env.config)?;
-    let input_addr = env.input.ok_or("Missing value for SR_INPUT")?;
+    let input_addr = env.input.ok_or(Error::msg("Missing value for SR_INPUT"))?;
     let in_events = embedded::input_events(&input_addr)?;
     run_with_events(&config, in_events)
 }

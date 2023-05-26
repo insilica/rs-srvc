@@ -2,9 +2,9 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufReader;
 
+use anyhow::{Context, Error, Result};
 use reqwest::blocking::Client;
 
-use lib_sr::errors::*;
 use lib_sr::event;
 use lib_sr::event::Event;
 
@@ -46,15 +46,15 @@ pub fn remote_reviewed(
     let response = client
         .get(&url)
         .send()
-        .chain_err(|| "Error checking hash existence at remote")?;
+        .with_context(|| "Error checking hash existence at remote")?;
     let status = response.status().as_u16();
     if status == 200 {
         let text = response
             .text()
-            .chain_err(|| "Error getting response text")?;
+            .with_context(|| "Error getting response text")?;
         for line in text.lines() {
             let answer: Event =
-                serde_json::from_str(line).chain_err(|| "Error deserializing label-answer")?;
+                serde_json::from_str(line).with_context(|| "Error deserializing label-answer")?;
             match answer
                 .data
                 .expect("label-answer must have data")
@@ -76,8 +76,11 @@ pub fn remote_reviewed(
     } else {
         let text = response
             .text()
-            .chain_err(|| "Error getting response text")?;
-        Err(format!("Unexpected {} response at {} ({})", status, &url, text).into())
+            .with_context(|| "Error getting response text")?;
+        Err(Error::msg(format!(
+            "Unexpected {} response at {} ({})",
+            status, &url, text
+        )))
     }
 }
 
@@ -88,7 +91,9 @@ pub fn run() -> Result<()> {
         timestamp_override: _,
         mut writer,
     } = embedded::get_map_context()?;
-    let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
+    let reviewer = config
+        .reviewer
+        .ok_or(Error::msg("\"reviewer\" not set in config"))?;
     let mut hashes = HashSet::new();
     let is_remote = embedded::is_remote_target(&config.db);
     let client = Client::new();

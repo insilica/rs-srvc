@@ -1,32 +1,32 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use anyhow::{Context, Error, Result};
 use log::trace;
 use rusqlite::{params, CachedStatement, Connection, OpenFlags, Row};
 use serde_json::Value;
 
-use crate::errors::*;
 use crate::event::Event;
 
 fn load_schema(conn: &Connection) -> Result<()> {
     conn.execute_batch(include_str!("schema/sqlite.sql"))
-        .chain_err(|| "Failed to load sqlite schema")
+        .with_context(|| "Failed to load sqlite schema")
 }
 
 pub fn prepare_cached<'a>(conn: &'a Connection, stmt: &str) -> Result<CachedStatement<'a>> {
     conn.prepare_cached(stmt)
-        .chain_err(|| "Failed to prepare SQL statement")
+        .with_context(|| "Failed to prepare SQL statement")
 }
 
 pub fn trigger_exists(conn: &Connection, trigger_name: &str) -> Result<bool> {
     let mut stmt = conn
         .prepare("SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?1")
-        .chain_err(|| "Failed to execute statement")?;
+        .with_context(|| "Failed to execute statement")?;
     let mut rows = stmt
         .query(params![trigger_name])
-        .chain_err(|| "Failed to execute query")?;
+        .with_context(|| "Failed to execute query")?;
 
-    match rows.next().chain_err(|| "Failed to retrieve rows")? {
+    match rows.next().with_context(|| "Failed to retrieve rows")? {
         Some(_) => Ok(true),
         None => Ok(false),
     }
@@ -35,10 +35,9 @@ pub fn trigger_exists(conn: &Connection, trigger_name: &str) -> Result<bool> {
 /// Return an error if the DB format is too old
 pub fn check_db_format(conn: &Connection) -> Result<()> {
     if trigger_exists(conn, &"srvc_event_label_answer_document_constraint")? {
-        Err(Error::from(ErrorKind::SQLiteError(
-            "SQLite SRVC sink is too old and must be upgraded to work with this version of SRVC."
-                .into(),
-        )))
+        Err(Error::msg(
+            "SQLite SRVC sink is too old and must be upgraded to work with this version of SRVC.",
+        ))
     } else {
         Ok(())
     }
@@ -48,7 +47,7 @@ pub fn check_db_format(conn: &Connection) -> Result<()> {
 /// the schema as needed.
 pub fn open(path: &Path) -> Result<Connection> {
     let conn = Connection::open(path)
-        .chain_err(|| format!("Failed to open sqlite file: {}", path.to_string_lossy()))?;
+        .with_context(|| format!("Failed to open sqlite file: {}", path.to_string_lossy()))?;
     load_schema(&conn)?;
     check_db_format(&conn)?;
     Ok(conn)
@@ -61,11 +60,16 @@ pub fn open_ro(path: &Path) -> Result<Connection> {
     match path.try_exists() {
         Ok(true) => {
             let conn = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
-                .chain_err(|| format!("Failed to open sqlite file: {}", path.to_string_lossy()))?;
+                .with_context(|| {
+                    format!("Failed to open sqlite file: {}", path.to_string_lossy())
+                })?;
             check_db_format(&conn)?;
             Ok(conn)
         }
-        _ => Err(format!("File does not exist: {}", path.to_string_lossy()).into()),
+        _ => Err(Error::msg(format!(
+            "File does not exist: {}",
+            path.to_string_lossy()
+        ))),
     }
 }
 
@@ -74,7 +78,7 @@ pub fn open_ro(path: &Path) -> Result<Connection> {
 pub fn close(conn: Connection) -> Result<()> {
     match conn.close() {
         Ok(_) => Ok(()),
-        Err((conn, e)) => Err(e).chain_err(|| {
+        Err((conn, e)) => Err(e).with_context(|| {
             format!(
                 "Failed to close sqlite connection to: {}",
                 conn.path()
@@ -92,18 +96,18 @@ pub fn insert_event(conn: &Connection, event: Event) -> Result<usize> {
         .data
         .map(|v| serde_json::to_string(&v))
         .transpose()
-        .chain_err(|| format!("Failed to serialize data property of event: {}", hash))?;
+        .with_context(|| format!("Failed to serialize data property of event: {}", hash))?;
     let extra = if event.extra.is_empty() {
         String::from("{}")
     } else {
-        let v = serde_json::to_value(event.extra).chain_err(|| {
+        let v = serde_json::to_value(event.extra).with_context(|| {
             format!(
                 "Failed to convert HashMap to serde_json::Value for event: {}",
                 hash
             )
         })?;
         serde_json::to_string(&v)
-            .chain_err(|| format!("Failed to serialize extra properties for event: {}", hash))?
+            .with_context(|| format!("Failed to serialize extra properties for event: {}", hash))?
     };
     match conn.execute(
         "INSERT INTO srvc_event (hash, data, extra, type, uri) VALUES (?, ?, ?, ?, ?) ON CONFLICT (hash) DO NOTHING",
@@ -113,7 +117,7 @@ pub fn insert_event(conn: &Connection, event: Event) -> Result<usize> {
             trace!("Modified {} rows", rows);
             Ok(rows)
         }
-        Err(e) => Err(e).chain_err(|| format!("Error inserting event: {}", hash)),
+        Err(e) => Err(e).with_context(|| format!("Error inserting event: {}", hash)),
     }
 }
 
@@ -144,5 +148,5 @@ pub fn parse_event_rusqlite(row: &Row) -> rusqlite::Result<Event> {
 }
 
 pub fn parse_event(row: &Row) -> Result<Event> {
-    parse_event_rusqlite(row).chain_err(|| "Failed to parse event row data")
+    parse_event_rusqlite(row).with_context(|| "Failed to parse event row data")
 }

@@ -4,6 +4,7 @@
 - (breaking) Allow stacking multiple generators by providing `SR_INPUT`. Change `generator` embedded step to pass events from SR_INPUT through before providing its own events.
 - Add `--reviewer` option to `flow` command. This allows overriding the `reviewer` property in `sr.yaml`.
 - Allow commands other than `flow` to run without a `reviewer` set.
+- (breaking) Convert error handling to use anyhow crate
 
 ## v0.18.0 (2023-05-11)
 

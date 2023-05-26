@@ -8,12 +8,13 @@ use std::thread;
 use std::time::Duration;
 use std::{env, io};
 
+use anyhow::{Context, Error, Result};
 use log::trace;
 use serde::Serialize;
 use tempfile::TempDir;
 use uuid::Uuid;
 
-use crate::{errors::*, event, sr_yaml};
+use crate::{event, sr_yaml};
 use crate::{Config, Flow, Opts, Step};
 
 #[derive(Debug)]
@@ -29,56 +30,56 @@ pub struct StepServer {
 }
 
 fn write_str_pretty(v: &impl serde::Serialize) -> Result<String> {
-    serde_json::to_string_pretty(v).chain_err(|| "Serialization failed")
+    serde_json::to_string_pretty(v).with_context(|| "Serialization failed")
 }
 
 fn writeln_err(s: &str) -> Result<()> {
-    writeln!(io::stderr(), "{}", s).chain_err(|| "Failed to write to stderr")?;
+    writeln!(io::stderr(), "{}", s).with_context(|| "Failed to write to stderr")?;
     Ok(())
 }
 
 fn run_step_server(input_listener: TcpListener, output_listener: TcpListener) -> Result<()> {
     trace! {"run_step_server"};
-    let (input, _) = input_listener.accept().chain_err(|| "Listen error")?;
-    let (output, _) = output_listener.accept().chain_err(|| "Listen error")?;
+    let (input, _) = input_listener.accept().with_context(|| "Listen error")?;
+    let (output, _) = output_listener.accept().with_context(|| "Listen error")?;
     let reader = BufReader::new(input);
     let mut writer = LineWriter::new(output);
 
     let events = event::events(reader);
     for result in events {
-        let mut event = result.chain_err(|| "Cannot parse line as JSON")?;
+        let mut event = result.with_context(|| "Cannot parse line as JSON")?;
         let expected_hash = event::event_hash(event.clone())?;
         let hash = event.hash.clone().unwrap_or("".to_string());
         if hash == "" {
             event.hash = Some(expected_hash);
         } else if expected_hash != hash {
-            return Err(format!(
+            return Err(Error::msg(format!(
                 "Incorrect event hash. Expected: \"{}\". Found: \"{}\".",
                 expected_hash, hash
-            )
-            .into());
+            )));
         }
         event
             .serialize(&mut serde_json::Serializer::new(&mut writer))
-            .chain_err(|| "Event serialization failed")?;
-        writer.write(b"\n").chain_err(|| "Buffer write failed")?;
+            .with_context(|| "Event serialization failed")?;
+        writer.write(b"\n").with_context(|| "Buffer write failed")?;
     }
     Ok(())
 }
 
 fn make_listener(addr: &SocketAddr) -> Result<TcpListener> {
-    TcpListener::bind(&addr).chain_err(|| format!("Failed to open TcpListener on {}", addr))
+    TcpListener::bind(&addr).with_context(|| format!("Failed to open TcpListener on {}", addr))
 }
 
 fn get_port(listener: &TcpListener) -> Result<u16> {
     Ok(listener
         .local_addr()
-        .chain_err(|| "Failed to get local SocketAddr")?
+        .with_context(|| "Failed to get local SocketAddr")?
         .port())
 }
 
 fn make_step_server() -> Result<StepServer> {
-    let addr = SocketAddr::from_str("127.0.0.1:0").chain_err(|| "Failed to create SocketAddr")?;
+    let addr =
+        SocketAddr::from_str("127.0.0.1:0").with_context(|| "Failed to create SocketAddr")?;
     let input_listener = make_listener(&addr)?;
     let output_listener = make_listener(&addr)?;
     let input_port = get_port(&input_listener)?;
@@ -100,9 +101,9 @@ pub fn make_config(config: &Config, dir: &tempfile::TempDir) -> Result<PathBuf> 
     filename.push_str(&Uuid::new_v4().to_string());
     filename.push_str(".json");
     let path = dir.path().join(filename);
-    let file = File::create(&path).chain_err(|| "Failed to create config file for step")?;
+    let file = File::create(&path).with_context(|| "Failed to create config file for step")?;
     let writer = BufWriter::new(file);
-    serde_json::to_writer(writer, config).chain_err(|| "Failed to write config for step")?;
+    serde_json::to_writer(writer, config).with_context(|| "Failed to write config for step")?;
     Ok(path)
 }
 
@@ -112,7 +113,7 @@ pub fn step_config(config: Config, step: Step) -> Result<Config> {
         let label = config
             .labels
             .get(label_id)
-            .ok_or(format!("Label not defined: {}", label_id))?;
+            .ok_or(Error::msg(format!("Label not defined: {}", label_id)))?;
         labels.push(label.to_owned());
     }
     Ok(Config {
@@ -125,9 +126,9 @@ pub fn step_config(config: Config, step: Step) -> Result<Config> {
 #[cfg(unix)]
 pub fn get_exe_path() -> Result<PathBuf> {
     Ok(std::env::current_exe()
-        .chain_err(|| "Failed to get current exe path")?
+        .with_context(|| "Failed to get current exe path")?
         .canonicalize()
-        .chain_err(|| "Failed to canonicalize current exe path")?)
+        .with_context(|| "Failed to canonicalize current exe path")?)
 }
 
 // std::env::current_exe() returns paths like "\\\\?\\C:\\Users\\"
@@ -136,7 +137,7 @@ pub fn get_exe_path() -> Result<PathBuf> {
 pub fn get_exe_path() -> Result<PathBuf> {
     let handle = windows_win::raw::process::get_current_handle();
     let path = windows_win::raw::process::get_exe_path(handle)
-        .chain_err(|| "Failed to get current exe path")?;
+        .with_context(|| "Failed to get current exe path")?;
     Ok(PathBuf::from(path))
 }
 
@@ -146,14 +147,18 @@ pub fn get_run_command(step: &Step, exe_path: PathBuf) -> Result<(PathBuf, Vec<S
             let mut runcmd = "run-embedded-step ".to_string();
             runcmd.push_str(&embedded);
             let args = shell_words::split(&runcmd)
-                .chain_err(|| format!("Failed to parse run_embedded command: {}", embedded))?;
+                .with_context(|| format!("Failed to parse run_embedded command: {}", embedded))?;
             (exe_path, args)
         }
         None => {
-            let runcmd = step.run.as_ref().ok_or("Step has no run phase")?.to_owned();
+            let runcmd = step
+                .run
+                .as_ref()
+                .ok_or(Error::msg("Step has no run phase"))?
+                .to_owned();
             let args = shell_words::split(&runcmd)
-                .chain_err(|| format!("Failed to parse run command: {}", runcmd))?;
-            let program = args.first().ok_or("No command to run")?;
+                .with_context(|| format!("Failed to parse run command: {}", runcmd))?;
+            let program = args.first().ok_or(Error::msg("No command to run"))?;
             (program.into(), Vec::from(&args[1..]))
         }
     })
@@ -199,7 +204,10 @@ pub fn run_step(
         }
     }
 
-    match cmd.spawn().chain_err(|| "Failed to start step sub-process") {
+    match cmd
+        .spawn()
+        .with_context(|| "Failed to start step sub-process")
+    {
         Ok(process) => Ok(StepProcess {
             step_server,
             process: process,
@@ -220,17 +228,19 @@ fn end_steps(processes: Vec<StepProcess>) -> Result<()> {
                 if status.code().is_none() {
                     match process.process.kill() {
                         Ok(_) => {}
-                        Err(e) => error = Some(Err(e).chain_err(|| "Failed to kill child process")),
+                        Err(e) => {
+                            error = Some(Err(e).with_context(|| "Failed to kill child process"))
+                        }
                     }
                 }
             }
             Ok(None) => match process.process.kill() {
                 Ok(_) => {}
-                Err(e) => error = Some(Err(e).chain_err(|| "Failed to kill child process")),
+                Err(e) => error = Some(Err(e).with_context(|| "Failed to kill child process")),
             },
             Err(e) => {
                 let _ = process.process.kill();
-                error = Some(Err(e).chain_err(|| "Failed to read exit status of child process"))
+                error = Some(Err(e).with_context(|| "Failed to read exit status of child process"))
             }
         }
     }
@@ -257,7 +267,7 @@ fn wait_for_steps(mut processes: Vec<StepProcess>) -> Result<()> {
                     }
                 }
                 Ok(None) => next_processes.push(process),
-                Err(e) => return Err(e).chain_err(|| "Error waiting for child process"),
+                Err(e) => return Err(e).with_context(|| "Error waiting for child process"),
             }
         }
         processes = next_processes;
@@ -269,14 +279,13 @@ fn wait_for_steps(mut processes: Vec<StepProcess>) -> Result<()> {
     match exit_status {
         Some(status) => {
             end_steps(processes)?;
-            Err(format!(
+            Err(Error::msg(format!(
                 "Step failed with exit code {}",
                 status
                     .code()
                     .map(|i| i.to_string())
                     .unwrap_or(String::from("None"))
-            )
-            .into())
+            )))
         }
         None => Ok(()),
     }
@@ -284,7 +293,7 @@ fn wait_for_steps(mut processes: Vec<StepProcess>) -> Result<()> {
 
 pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()> {
     if flow.steps.is_empty() {
-        return Err("No steps in flow".into());
+        return Err(Error::msg("No steps in flow"));
     }
 
     let mut steps = Vec::new();
@@ -328,10 +337,10 @@ pub fn run_flow(flow: &Flow, config: &Config) -> Result<()> {
     let dir = tempfile::Builder::new()
         .prefix("srvc-")
         .tempdir()
-        .chain_err(|| "Failed to create temporary directory")?;
+        .with_context(|| "Failed to create temporary directory")?;
     let result = run_flow_in_dir(flow, config, &dir);
     dir.close()
-        .chain_err(|| "Failed to delete temporary directory")?;
+        .with_context(|| "Failed to delete temporary directory")?;
     return result;
 }
 
@@ -347,7 +356,9 @@ pub fn run(
 
     let reviewer = match reviewer {
         Some(s) => s,
-        None => config.reviewer.ok_or("\"reviewer\" not set in config")?,
+        None => config
+            .reviewer
+            .ok_or(Error::msg("\"reviewer\" not set in config"))?,
     };
     sr_yaml::validate_reviewer(&reviewer)?;
     config.reviewer = Some(reviewer);
@@ -355,10 +366,10 @@ pub fn run(
     let flow = config.flows.get(&flow_name);
     let flow = match flow {
         Some(flow) => Ok(flow),
-        None => Err(format!(
+        None => Err(Error::msg(format!(
             "No flow named \"{}\" in \"{}\"",
             flow_name, &opts.config
-        )),
+        ))),
     }?;
     run_flow(flow, &config)?;
     Ok(())

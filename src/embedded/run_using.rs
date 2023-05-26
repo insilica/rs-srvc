@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use lib_sr::errors::*;
+use anyhow::{Context, Result};
 
 pub fn run(uses: &str) -> Result<()> {
     Command::new("nix")
@@ -13,7 +13,7 @@ pub fn run(uses: &str) -> Result<()> {
             &uses,
         ])
         .status()
-        .chain_err(|| "Failed to start step sub-process")?;
+        .with_context(|| "Failed to start step sub-process")?;
 
     Ok(())
 }

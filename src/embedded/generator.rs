@@ -1,16 +1,17 @@
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
+use anyhow::{Context, Error, Result};
 use log::trace;
 use reqwest::blocking::Client;
 use rusqlite::Connection;
 use serde_json::{json, Value};
 use url::Url;
 
+use lib_sr::common;
 use lib_sr::event;
 use lib_sr::event::Event;
 use lib_sr::sqlite;
-use lib_sr::{common, errors::*};
 use lib_sr::{Config, Label};
 
 use crate::embedded;
@@ -28,9 +29,9 @@ fn get_label_events(config: &Config) -> Result<Vec<Event>> {
 
     for label in labels {
         let data: Value = serde_json::from_str(
-            &serde_json::to_string(&label).chain_err(|| "Serialization failure")?,
+            &serde_json::to_string(&label).with_context(|| "Serialization failure")?,
         )
-        .chain_err(|| "Deserialization failure")?;
+        .with_context(|| "Deserialization failure")?;
         let mut data_m = data.as_object().unwrap().clone();
         let hash = data_m
             .get("hash")
@@ -75,7 +76,7 @@ where
             }
             Err(e) => {
                 trace! {"run_jsonl event parse error"};
-                Err(e).chain_err(|| format!("Cannot parse line {} as JSON", i + 1))?
+                Err(e).with_context(|| format!("Cannot parse line {} as JSON", i + 1))?
             }
         };
         let expected_hash = lib_sr::event::event_hash(event.clone())?;
@@ -83,11 +84,10 @@ where
         if hash == "" {
             event.hash = Some(expected_hash);
         } else if expected_hash != hash {
-            return Err(format!(
+            return Err(Error::msg(format!(
                 "Incorrect event hash. Expected: \"{}\". Found: \"{}\".",
                 expected_hash, hash
-            )
-            .into());
+            )));
         }
 
         if event.r#type == "label" {
@@ -107,19 +107,17 @@ where
                         }
                     }
                     None => {
-                        return Err(format!(
+                        return Err(Error::msg(format!(
                             "label-answer is missing the \"data.event\" property. Event hash: {}",
                             event.hash.unwrap()
-                        )
-                        .into())
+                        )))
                     }
                 },
                 None => {
-                    return Err(format!(
+                    return Err(Error::msg(format!(
                         "label-answer is missing the \"data\" property. Event hash: {}",
                         event.hash.unwrap()
-                    )
-                    .into())
+                    )))
                 }
             }
         } else {
@@ -185,8 +183,8 @@ where
     let mut stmt = sqlite::prepare_cached(&conn, SELECT_LABELS)?;
     let mut rows = stmt
         .query([])
-        .chain_err(|| format!("Failed to execute prepared statement: {}", SELECT_LABELS))?;
-    while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
+        .with_context(|| format!("Failed to execute prepared statement: {}", SELECT_LABELS))?;
+    while let Some(row) = rows.next().with_context(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
         labels.insert(event.hash.clone().expect("hash"), event);
     }
@@ -215,13 +213,13 @@ where
     F: FnMut(Event) -> Result<()>,
 {
     let mut stmt = sqlite::prepare_cached(&conn, SELECT_LABEL_ANSWERS_FOR_DOC)?;
-    let mut rows = stmt.query([doc_hash]).chain_err(|| {
+    let mut rows = stmt.query([doc_hash]).with_context(|| {
         format!(
             "Failed to execute prepared statement: {}",
             SELECT_LABEL_ANSWERS_FOR_DOC
         )
     })?;
-    while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
+    while let Some(row) = rows.next().with_context(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
         let hash = event.hash.clone();
         f(event)?;
@@ -237,8 +235,8 @@ where
     let mut stmt = sqlite::prepare_cached(&conn, SELECT_DOCUMENTS)?;
     let mut rows = stmt
         .query([])
-        .chain_err(|| format!("Failed to execute prepared statement: {}", SELECT_DOCUMENTS))?;
-    while let Some(row) = rows.next().chain_err(|| "Failed to get next row")? {
+        .with_context(|| format!("Failed to execute prepared statement: {}", SELECT_DOCUMENTS))?;
+    while let Some(row) = rows.next().with_context(|| "Failed to get next row")? {
         let event = sqlite::parse_event(row)?;
         f(event.clone())?;
         write_event_answers_sqlite(&conn, f, &event.hash.expect("hash"))?;

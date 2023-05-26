@@ -2,9 +2,9 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::io::{BufRead, BufReader, Write};
 
+use anyhow::{Context, Error, Result};
 use serde_json::json;
 
-use lib_sr::errors::*;
 use lib_sr::event;
 use lib_sr::event::Event;
 use lib_sr::Label;
@@ -34,7 +34,7 @@ fn read_boolean(
 ) -> Result<Option<Event>> {
     let out = &mut io::stdout();
     let mut reader = BufReader::new(io::stdin());
-    write!(out, "{} ", label.question).chain_err(|| "Write failed")?;
+    write!(out, "{} ", label.question).with_context(|| "Write failed")?;
 
     let mut data = answer_data(label, doc, reviewer);
     let mut event = Event {
@@ -46,15 +46,15 @@ fn read_boolean(
     };
     loop {
         if label.required {
-            write!(out, "[Yes/No]").chain_err(|| "Write failed")?;
+            write!(out, "[Yes/No]").with_context(|| "Write failed")?;
         } else {
-            write!(out, "[Yes/No/Skip]").chain_err(|| "Write failed")?;
+            write!(out, "[Yes/No/Skip]").with_context(|| "Write failed")?;
         };
-        out.flush().chain_err(|| "Flush failed")?;
+        out.flush().with_context(|| "Flush failed")?;
         let mut line = String::new();
         reader
             .read_line(&mut line)
-            .chain_err(|| "read_line failed")?;
+            .with_context(|| "read_line failed")?;
         let s = line.trim().to_lowercase();
         if s.is_empty() {
         } else if "yes".starts_with(&s) {
@@ -81,7 +81,7 @@ fn read_categorical(
 ) -> Result<Option<Event>> {
     let out = &mut io::stdout();
     let mut reader = BufReader::new(io::stdin());
-    writeln!(out, "{}", label.question).chain_err(|| "Write failed")?;
+    writeln!(out, "{}", label.question).with_context(|| "Write failed")?;
 
     let empty_vec = Vec::new();
     let categories = match label.extra.get("categories") {
@@ -90,11 +90,11 @@ fn read_categorical(
     };
     let mut i = 1;
     for cat in categories {
-        writeln!(out, "{}. {}", i, cat).chain_err(|| "Write failed")?;
+        writeln!(out, "{}. {}", i, cat).with_context(|| "Write failed")?;
         i += 1;
     }
     if !label.required {
-        writeln!(out, "{}. Skip Question", i).chain_err(|| "Write failed")?;
+        writeln!(out, "{}. Skip Question", i).with_context(|| "Write failed")?;
     }
 
     let mut data = answer_data(label, doc, reviewer);
@@ -106,12 +106,12 @@ fn read_categorical(
         uri: None,
     };
     loop {
-        write!(out, "? ").chain_err(|| "Write failed")?;
-        out.flush().chain_err(|| "Flush failed")?;
+        write!(out, "? ").with_context(|| "Write failed")?;
+        out.flush().with_context(|| "Flush failed")?;
         let mut line = String::new();
         reader
             .read_line(&mut line)
-            .chain_err(|| "read_line failed")?;
+            .with_context(|| "read_line failed")?;
         match line.trim().parse::<usize>() {
             Ok(n) => {
                 if n == 0 {
@@ -138,8 +138,8 @@ fn read_string(
 ) -> Result<Option<Event>> {
     let out = &mut io::stdout();
     let mut reader = BufReader::new(io::stdin());
-    write!(out, "{}? ", label.question).chain_err(|| "Write failed")?;
-    out.flush().chain_err(|| "Flush failed")?;
+    write!(out, "{}? ", label.question).with_context(|| "Write failed")?;
+    out.flush().with_context(|| "Flush failed")?;
 
     let mut data = answer_data(label, doc, reviewer);
     let mut event = Event {
@@ -153,7 +153,7 @@ fn read_string(
         let mut line = String::new();
         reader
             .read_line(&mut line)
-            .chain_err(|| "read_line failed")?;
+            .with_context(|| "read_line failed")?;
         let s = line.trim();
         if !s.is_empty() {
             data.insert(String::from("answer"), json!(s));
@@ -184,22 +184,25 @@ fn read_answer(
             } else if "string" == t {
                 read_string(label, doc, reviewer, timestamp_override)
             } else {
-                Err(format!("Unknown label type ({}): {}", label.id, t).into())
+                Err(Error::msg(format!(
+                    "Unknown label type ({}): {}",
+                    label.id, t
+                )))
             }
         }
-        None => Err(format!("Unknown label type ({})", label.id).into()),
+        None => Err(Error::msg(format!("Unknown label type ({})", label.id))),
     }
 }
 
 fn print_doc(doc: &Event) -> Result<()> {
     serde_json::to_writer_pretty(&mut io::stdout(), &doc.data)
-        .chain_err(|| "Document write failed")?;
+        .with_context(|| "Document write failed")?;
     match &doc.uri {
-        Some(s) => write!(io::stdout(), "\n{}", s).chain_err(|| "Document write failed")?,
+        Some(s) => write!(io::stdout(), "\n{}", s).with_context(|| "Document write failed")?,
         None => {}
     }
-    write!(io::stdout(), "\n\n").chain_err(|| "Document write failed")?;
-    io::stdout().flush().chain_err(|| "Flush failed")?;
+    write!(io::stdout(), "\n\n").with_context(|| "Document write failed")?;
+    io::stdout().flush().with_context(|| "Flush failed")?;
     Ok(())
 }
 
@@ -212,7 +215,9 @@ pub fn run() -> Result<()> {
     } = embedded::get_map_context()?;
     let mut hashes = HashSet::new();
     let labels = config.current_labels.unwrap_or(Vec::new());
-    let reviewer = config.reviewer.ok_or("\"reviewer\" not set in config")?;
+    let reviewer = config
+        .reviewer
+        .ok_or(Error::msg("\"reviewer\" not set in config"))?;
 
     for result in in_events {
         let event = result?;

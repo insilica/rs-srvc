@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
+use anyhow::{Context, Error, Result};
 use jsonschema::{CompilationOptions, Draft, JSONSchema};
 use reqwest::blocking::Client;
-
-use crate::errors::*;
 
 lazy_static! {
     static ref EMBEDDED_DOCUMENTS: HashMap<&'static str, &'static str> = {
@@ -21,7 +20,7 @@ lazy_static! {
         let mut m = HashMap::new();
         for (name, s) in &*EMBEDDED_DOCUMENTS {
             let json: serde_json::Value = serde_json::from_str(s)
-                .chain_err(|| "Deserialization failed")
+                .with_context(|| "Deserialization failed")
                 .expect("Invalid JSON");
             m.insert(
                 format!("http://docs.sysrev.com/schema/{}.json", name),
@@ -74,7 +73,7 @@ fn validation_error_message(e: jsonschema::ValidationError) -> String {
 pub fn compile(schema: &serde_json::Value) -> Result<JSONSchema> {
     match OPTIONS.compile(schema) {
         Ok(jsonschema) => Ok(jsonschema),
-        Err(e) => Err(validation_error_message(e).into()),
+        Err(e) => Err(Error::msg(validation_error_message(e))),
     }
 }
 
@@ -85,19 +84,18 @@ pub fn get_schema_for_url(client: &Client, url: &str) -> Result<serde_json::Valu
             let response = client
                 .get(url)
                 .send()
-                .chain_err(|| format!("Error while retrieving json schema at URL: {}", url))?;
+                .with_context(|| format!("Error while retrieving json schema at URL: {}", url))?;
             let status = response.status().as_u16();
             let text = response
                 .text()
-                .chain_err(|| "Error getting response text")?;
+                .with_context(|| "Error getting response text")?;
             if status == 200 {
-                serde_json::from_str(&text).chain_err(|| "Could not parse reponse as JSON")
+                serde_json::from_str(&text).with_context(|| "Could not parse reponse as JSON")
             } else {
-                Err(format!(
+                Err(Error::msg(format!(
                     "Unexpected {} status response at {} ({})",
                     status, &url, text
-                )
-                .into())
+                )))
             }
         }
     }

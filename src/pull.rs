@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::thread;
 
-use lib_sr::{errors::*, event::Event, sr_yaml, Opts};
+use anyhow::{Context, Error, Result};
+use lib_sr::{event::Event, sr_yaml, Opts};
 
 use crate::embedded::{generator, sink};
 
@@ -29,13 +30,13 @@ pub fn run(opts: &mut Opts, db: Option<String>, file_or_url: &str) -> Result<()>
 
     let mut f = |event: Event| {
         tx.send(event)
-            .chain_err(|| "Failed to send event to channel")
+            .with_context(|| "Failed to send event to channel")
     };
     generator::run_f(file_or_url, &config, &mut f)?;
     drop(tx);
     match thread.join() {
         Ok(Ok(_)) => Ok(()),
         Ok(Err(e)) => Err(e),
-        Err(_) => Err("Failed to join thread".into()),
+        Err(_) => Err(Error::msg("Failed to join thread")),
     }
 }

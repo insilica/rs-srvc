@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate error_chain;
-#[macro_use]
 extern crate maplit;
 
 use std::env;
@@ -8,10 +6,11 @@ use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use url::{form_urlencoded, Url};
 
-use lib_sr::{common, errors::*, flow, sr_yaml, Opts};
+use lib_sr::{common, flow, sr_yaml, Opts};
 
 mod embedded;
 mod hash;
@@ -151,8 +150,8 @@ fn print_config(opts: &mut Opts, pretty: bool) -> Result<()> {
     } else {
         serde_json::to_writer(&mut io::stdout(), &config)
     }
-    .chain_err(|| "Failed to serialize config")?;
-    writeln!(io::stdout(), "").chain_err(|| "Failed to write newline")?;
+    .with_context(|| "Failed to serialize config")?;
+    writeln!(io::stdout(), "").with_context(|| "Failed to write newline")?;
     Ok(())
 }
 
@@ -170,11 +169,10 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
 }
 
 fn version() -> Result<()> {
-    writeln!(io::stdout(), "srvc {}", VERSION).chain_err(|| "Failed to write to stdout")?;
+    writeln!(io::stdout(), "srvc {}", VERSION).with_context(|| "Failed to write to stdout")?;
     match REV {
-        Some(rev) => {
-            writeln!(io::stdout(), "Revision {}", rev).chain_err(|| "Failed to write to stdout")?
-        }
+        Some(rev) => writeln!(io::stdout(), "Revision {}", rev)
+            .with_context(|| "Failed to write to stdout")?,
         _ => {}
     }
     Ok(())
@@ -203,17 +201,19 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
     let mut opts = opts(&cli);
 
-    match cli.dir.to_owned() {
-        Some(path) => env::set_current_dir(&path).chain_err(|| {
-            format!(
-                "Failed to set working directory: {}",
-                path.to_string_lossy()
-            )
-        })?,
-        None => {}
+    if let Some(path) = cli.dir.to_owned() {
+        env::set_current_dir(&path).context(format!(
+            "Failed to set working directory: {}",
+            path.to_string_lossy()
+        ))?;
     }
 
     run_command(cli, &mut opts)
 }
 
-quick_main!(run);
+fn main() {
+    if let Err(err) = run() {
+        eprintln!("Error: {:?}", err);
+        std::process::exit(1);
+    }
+}

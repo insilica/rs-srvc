@@ -2364,12 +2364,12 @@ version = "0.18.0"
 dependencies = [
  "actix-files",
  "actix-web",
+ "anyhow",
  "assert_cmd",
  "bs58",
  "clap 3.2.25",
  "ctor",
  "env_logger",
- "error-chain",
  "futures-util",
  "jsonschema",
  "lazy_static",

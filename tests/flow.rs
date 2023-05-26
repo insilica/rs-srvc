@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use lib_sr::errors::*;
+use anyhow::Result;
 
 mod common;
 
@@ -28,11 +28,7 @@ fn test_dir(resource_dir: &str) -> String {
 /// * `timeout_millis`: Timeout for the flow to complete, in milliseconds.
 ///     If the flow takes longer than this, the test will fail and exit.
 ///     This is ignored when $TEST_SRVC_DISABLE_TIMEOUT is set.
-fn test_flow(
-    resource_dir: &str,
-    flow_name: &str,
-    timeout_millis: u64,
-) -> lib_sr::errors::Result<()> {
+fn test_flow(resource_dir: &str, flow_name: &str, timeout_millis: u64) -> Result<()> {
     let dir = test_dir(resource_dir);
     common::remove_sink(&dir)?;
     common::cmd(timeout_millis)

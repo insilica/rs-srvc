@@ -1,28 +1,7 @@
-// `error_chain!` can recurse deeply
-#![recursion_limit = "1024"]
-#![allow(dead_code)]
-
-#[macro_use]
-extern crate error_chain;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate maplit;
-
-pub mod errors {
-    error_chain! {
-        errors {
-            EventError(t: String) {
-                description("Error processing event")
-                display("EventError: '{}'", t)
-            }
-            SQLiteError(t: String) {
-                description("SQlite error")
-                display("SQLiteError: '{}'", t)
-            }
-        }
-    }
-}
 
 use std::collections::HashMap;
 

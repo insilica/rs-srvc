@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 
+use anyhow::{Context, Error, Result};
 use reqwest::blocking::Client;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -12,7 +13,7 @@ use serde_with::skip_serializing_none;
 use url::Url;
 
 use crate as lib_sr;
-use crate::{errors::*, event, json_schema};
+use crate::{event, json_schema};
 
 #[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -110,12 +111,15 @@ pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
         Some(s) => {
             let s = s.trim();
             if s.is_empty() {
-                Err(format!("The {} label has a blank {}", id, k).into())
+                Err(Error::msg(format!("The {} label has a blank {}", id, k)))
             } else {
                 Ok(s.to_string())
             }
         }
-        None => Err(format!("The {} label does not have a {}", id, k).into()),
+        None => Err(Error::msg(format!(
+            "The {} label does not have a {}",
+            id, k
+        ))),
     }
 }
 
@@ -128,24 +132,23 @@ pub fn get_object<T: DeserializeOwned>(client: &Client, url: &str) -> Result<T> 
 
     let response = request
         .send()
-        .chain_err(|| format!("Error while retrieving URL: {}", url))?;
+        .with_context(|| format!("Error while retrieving URL: {}", url))?;
     let status = response.status().as_u16();
     let text = response
         .text()
-        .chain_err(|| "Error getting response text")?;
+        .with_context(|| "Error getting response text")?;
 
     if status == 200 {
         match serde_json::from_str(&text) {
             Ok(v) => Ok(v),
             Err(_) => serde_yaml::from_str(&text),
         }
-        .chain_err(|| "Could not parse reponse")
+        .with_context(|| "Could not parse reponse")
     } else {
-        Err(format!(
+        Err(Error::msg(format!(
             "Unexpected {} status response at {} ({})",
             status, &url, text
-        )
-        .into())
+        )))
     }
 }
 
@@ -180,7 +183,7 @@ pub fn parse_step(client: &Client, step: Step) -> Result<lib_sr::Step> {
 pub fn parse_flow_data(client: &Client, flow: Flow) -> Result<lib_sr::Flow> {
     let steps = &mut flow.steps.unwrap_or(Vec::new());
     if steps.len() == 0 {
-        return Err("No steps in flow".into());
+        return Err(Error::msg("No steps in flow"));
     }
 
     let mut vec = Vec::new();
@@ -237,8 +240,8 @@ pub fn parse_label_data(
         question: non_blank(id, "question", &label.question)?,
         required: label.required.unwrap_or(false),
     };
-    let data_s = serde_json::to_string(&label).chain_err(|| "Serialization failed")?;
-    let data = serde_json::from_str(&data_s).chain_err(|| "Deserialization failed")?;
+    let data_s = serde_json::to_string(&label).with_context(|| "Serialization failed")?;
+    let data = serde_json::from_str(&data_s).with_context(|| "Deserialization failed")?;
     let event = event::Event {
         data: data,
         extra: HashMap::new(),
@@ -275,11 +278,10 @@ lazy_static! {
 fn get_label_schema_for_alias(client: &Client, id: &str, alias: &str) -> Result<serde_json::Value> {
     match SCHEMA_ALIASES.get(alias) {
         Some(url) => json_schema::get_schema_for_url(client, url),
-        None => Err(format!(
+        None => Err(Error::msg(format!(
             "The {} label has an unknown value for json_schema: {}",
             id, alias
-        )
-        .into()),
+        ))),
     }
 }
 
@@ -370,7 +372,7 @@ pub fn validate_reviewer(reviewer: &str) -> Result<()> {
                 try_reviewer.push_str(&reviewer);
                 reviewer_err.push_str(&format!("\n  Try {:?}", try_reviewer));
             }
-            Err(reviewer_err.into())
+            Err(Error::msg(reviewer_err))
         }
     }
 }
@@ -408,9 +410,9 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
 
 pub fn get_config(filename: PathBuf) -> Result<Config> {
     let file = File::open(filename.clone())
-        .chain_err(|| format!("Failed to open config file: {}", filename.to_string_lossy()))?;
+        .with_context(|| format!("Failed to open config file: {}", filename.to_string_lossy()))?;
     let reader = BufReader::new(file);
-    serde_yaml::from_reader(reader).chain_err(|| {
+    serde_yaml::from_reader(reader).with_context(|| {
         format!(
             "Failed to parse config file as YAML: {}",
             filename.to_string_lossy()

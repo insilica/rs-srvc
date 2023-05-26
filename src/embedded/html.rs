@@ -11,6 +11,7 @@ use actix_web::{
     dev::PeerAddr, get, http::Method, middleware, routes, web, App, HttpRequest, HttpResponse,
     HttpServer,
 };
+use anyhow::{Context, Result};
 use futures_util::StreamExt;
 use log::{debug, info};
 use reqwest::blocking::Client;
@@ -20,7 +21,6 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use url::Url;
 
-use lib_sr::errors::*;
 use lib_sr::event::Event;
 use lib_sr::{event, Config};
 
@@ -154,7 +154,7 @@ async fn post_submit_label_answers(
         Some(events) => {
             for mut event in events {
                 event::ensure_hash(&mut event)
-                    .chain_err(|| "")
+                    .with_context(|| "")
                     .expect("Hash mismatch");
                 let hash = event.hash.clone().expect("Hash not set");
                 if !hashes.contains(&hash) {
@@ -350,7 +350,7 @@ pub fn run_with_html(html: String, path: Option<PathBuf>, url: Option<Url>) -> R
         .flatten()
         .unwrap_or(0) as u16;
 
-    serve(port, map_ctx, html, path, url).chain_err(|| "Error starting server")
+    serve(port, map_ctx, html, path, url).with_context(|| "Error starting server")
 }
 
 pub fn run(file_or_url: &str) -> Result<()> {
