@@ -395,11 +395,16 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
         None => (),
     };
 
+    let mut extra = config.extra;
+    extra.remove("current_labels");
+    extra.remove("current_step");
+    extra.remove("srvc");
+
     Ok(lib_sr::Config {
         current_labels: None,
         current_step: None,
         db: config.db.unwrap_or(String::from("sink.jsonl")),
-        extra: config.extra,
+        extra,
         flows: parse_flows(&client, config.flows)?,
         labels: parse_labels(&client, &config.labels)?,
         reviewer: config.reviewer,

@@ -1,4 +1,4 @@
-# Testing for this error:
+# Testing for this family of error:
 #
 # Error: Cannot parse config as JSON
 #
@@ -25,3 +25,4 @@ labels:
 reviewer: mailto:user@example.com
 sources:
   - file: docs.jsonl
+srvc: {"version":"0.19.0"}

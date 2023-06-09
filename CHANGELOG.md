@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Fix a crash when a label in sr.yaml has a `hash` or `id` property
+- Fix a crash when sr.yaml has a `current_labels`, `current_step`, or `srvc` property
 
 ## v0.19.0 (2023-06-01)
 
