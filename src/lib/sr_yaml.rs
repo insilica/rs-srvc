@@ -232,8 +232,15 @@ pub fn parse_label_data(
     label: &Label,
     json_schema: Option<serde_json::Value>,
 ) -> Result<lib_sr::Label> {
+    let mut extra = label.extra.clone();
+    if extra.contains_key("hash") {
+        extra.remove("hash");
+    }
+    if extra.contains_key("id") {
+        extra.remove("id");
+    }
     let mut label = lib_sr::Label {
-        extra: label.extra.clone(),
+        extra,
         hash: None,
         id: id.to_string(),
         json_schema,

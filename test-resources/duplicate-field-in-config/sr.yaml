@@ -1,0 +1,27 @@
+# Testing for this error:
+#
+# Error: Cannot parse config as JSON
+#
+# Caused by:
+#    duplicate field `hash` at line 1 column 102
+#
+# due to the config received by embedded step containing duplicate hash and id
+# {"current-labels":[{"id":"correct-rel","hash":"QmdMtiAtxvYrVkU9D4JxbdPu3VE4ZBxG1Mni2r1TYAzE5p","hash":"QmVki2uW9g4W4j5a1tkLdK75XKkWazv6UQZ5an9WoLJsAa","id":"correct-rel","json-schema": ...
+
+flows:
+  test:
+    steps:
+    - labels: [correct-rel]
+      run-embedded: label
+labels:
+  correct-rel:
+    hash: QmdMtiAtxvYrVkU9D4JxbdPu3VE4ZBxG1Mni2r1TYAzE5p
+    id: correct-rel
+    json-schema:
+      items: {type: boolean}
+      type: array
+    question: Mark correct relationships
+    required: false
+reviewer: mailto:user@example.com
+sources:
+  - file: docs.jsonl

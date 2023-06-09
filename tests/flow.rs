@@ -228,6 +228,11 @@ fn test_db_override() -> Result<()> {
     Ok(())
 }
 
+#[test]
+fn test_duplicate_field_in_config_file() -> Result<()> {
+    test_flow("duplicate-field-in-config", "test", 400)
+}
+
 /// Test flow reviewer arg when sr.yaml contains reviewer
 #[cfg(unix)]
 #[test]

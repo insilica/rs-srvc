@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Fix a crash when a label in sr.yaml has a `hash` or `id` property
+
 ## v0.19.0 (2023-06-01)
 
 - (breaking) [#9](https://github.com/insilica/rs-srvc/issues/9): Add `sources` property to `sr.yaml`. The events from sources are implicitly added to the beginning of each flow.
