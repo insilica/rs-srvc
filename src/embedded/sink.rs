@@ -8,7 +8,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use anyhow::{Context, Error, Result};
-use log::{debug, info};
+use log::{debug, error, info};
 use reqwest::blocking::Client;
 use serde::Serialize;
 
@@ -226,7 +226,10 @@ pub fn run() -> Result<()> {
     debug! {"Starting sink step"};
     let env = embedded::get_env().with_context(|| "Env var processing failed")?;
     let config = embedded::get_config(&env.config)?;
-    let input_addr = env.input.ok_or(Error::msg("Missing value for SR_INPUT"))?;
+    let input_addr = env.input.ok_or_else(|| {
+        error! {"Missing value for SR_INPUT"};
+        Error::msg("Missing value for SR_INPUT")
+    })?;
     let in_events = embedded::input_events(&input_addr)?;
     run_with_events(&config, in_events)
 }
