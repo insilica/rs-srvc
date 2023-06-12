@@ -23,6 +23,12 @@ static STATIC_CTOR: () = {
     http_server::wait_server_ready(8877).unwrap()
 };
 
+pub fn test_dir(resource_dir: &str) -> String {
+    let mut dir = String::from("test-resources/");
+    dir.push_str(resource_dir);
+    return dir;
+}
+
 pub fn cmd(timeout_millis: u64) -> Command {
     let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
     if env::var("TEST_SRVC_DISABLE_TIMEOUT").is_err() {

@@ -4,14 +4,9 @@ use std::{
 };
 
 use anyhow::Result;
+use common::test_dir;
 
 mod common;
-
-fn test_dir(resource_dir: &str) -> String {
-    let mut dir = String::from("test-resources/");
-    dir.push_str(resource_dir);
-    return dir;
-}
 
 /// Test a simple flow that doesn't read from stdin or print to
 /// stdout or stderr.

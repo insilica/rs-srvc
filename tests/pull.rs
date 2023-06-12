@@ -1,14 +1,9 @@
 use std::{fs, path::Path};
 
 use anyhow::Result;
+use common::test_dir;
 
 mod common;
-
-fn test_dir(resource_dir: &str) -> String {
-    let mut dir = String::from("test-resources/");
-    dir.push_str(resource_dir);
-    return dir;
-}
 
 #[test]
 fn test_pull_stdout() -> Result<()> {
