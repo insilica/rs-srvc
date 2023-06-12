@@ -1,11 +1,11 @@
 use std::collections::{HashMap, HashSet};
-use std::env;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::BufReader;
 use std::io::LineWriter;
 use std::io::Write;
 use std::path::PathBuf;
+use std::{env, io};
 
 use anyhow::{Context, Error, Result};
 use log::{debug, error, info};
@@ -155,19 +155,34 @@ fn run_remote(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -
     Ok(())
 }
 
+fn open_jsonl(db: &str) -> Result<Box<dyn Write + Send + Sync>> {
+    if db == "-" {
+        debug!("Writing to stdout");
+        Ok(Box::new(io::stdout()))
+    } else {
+        debug!("Opening {}", db);
+        let db_file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(db)
+            .with_context(|| format!("Failed to open db: \"{}\"", db))?;
+        Ok(Box::new(LineWriter::new(db_file)))
+    }
+}
+
 fn run_local_jsonl(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -> Result<()> {
-    let maybe_db = File::open(&config.db);
+    let maybe_db = if &config.db == "-" {
+        None
+    } else {
+        Some(File::open(&config.db))
+    };
     let mut hashes = match maybe_db {
-        Err(_) => HashSet::new(), // The file may not exist yet
-        Ok(file) => read_hashes(file)?,
+        None => HashSet::new(),         // The file is stdout
+        Some(Err(_)) => HashSet::new(), // The file may not exist yet
+        Some(Ok(file)) => read_hashes(file)?,
     };
     let mut labels = HashMap::new();
-    let db_file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&config.db)
-        .with_context(|| format!("Failed to open db: \"{}\"", config.db))?;
-    let mut writer = LineWriter::new(db_file);
+    let mut writer = open_jsonl(&config.db)?;
 
     for result in in_events {
         let event = prep_event(&mut labels, result)?;

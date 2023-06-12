@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Support writing to stdout in the pull command and in the sink step when `-` is specified as the db
+
 ## v0.19.1 (2023-06-09)
 
 - Fix a crash when a label in sr.yaml has a `hash` or `id` property

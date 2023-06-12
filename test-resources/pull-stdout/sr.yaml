@@ -1,0 +1,14 @@
+db: "-"
+reviewer: mailto:user@example.com
+
+labels:
+  acute-tox:
+    json-schema: boolean
+    question: Acute toxicity?
+
+flows:
+  test:
+    steps:
+      - run-embedded: generator docs.jsonl
+
+      - run-embedded: remove-reviewed

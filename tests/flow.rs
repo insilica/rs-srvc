@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 
@@ -370,6 +373,33 @@ fn test_reviewer_uri_email() -> Result<()> {
         "Error: \"reviewer\" is not a valid URI: \"user@example.com\"\n  Try \"mailto:user@example.com\"\n",
         false,
     )
+}
+
+#[test]
+fn test_sink_stdout() -> Result<()> {
+    let flow_name = "test";
+    let resource_dir = "sink-stdout";
+    let timeout_millis = 2000;
+    let dir = test_dir(resource_dir);
+    let expected_stdout = fs::read_to_string(Path::new(&dir).join("stdout.jsonl"))?;
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", flow_name])
+        .assert()
+        .success()
+        .stdout(expected_stdout.clone())
+        .stderr("");
+
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", "--db", "-", flow_name])
+        .assert()
+        .success()
+        .stdout(expected_stdout)
+        .stderr("");
+    Ok(())
 }
 
 #[test]
