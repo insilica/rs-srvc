@@ -42,16 +42,6 @@ enum Commands {
         query: Vec<String>,
     },
 
-    /// Add hashes to a stream of events
-    Hash {},
-
-    /// Print the full, canonicalized config in JSON format
-    PrintConfig {
-        /// Whether to pretty-print the JSON
-        #[clap(long)]
-        pretty: bool,
-    },
-
     /// Run a flow
     #[clap(alias = "review")]
     Flow {
@@ -68,11 +58,14 @@ enum Commands {
         reviewer: Option<String>,
     },
 
-    /// Run an embedded step
-    RunEmbeddedStep {
-        /// The name of an embedded step
-        #[clap(subcommand)]
-        name: EmbeddedSteps,
+    /// Add hashes to a stream of events
+    Hash {},
+
+    /// Print the full, canonicalized config in JSON format
+    PrintConfig {
+        /// Whether to pretty-print the JSON
+        #[clap(long)]
+        pretty: bool,
     },
 
     /// Pull events into the project from a file or URL
@@ -84,6 +77,13 @@ enum Commands {
         /// Path to a file or URL containing review events
         #[clap(forbid_empty_values = true)]
         file_or_url: String,
+    },
+
+    /// Run an embedded step
+    RunEmbeddedStep {
+        /// The name of an embedded step
+        #[clap(subcommand)]
+        name: EmbeddedSteps,
     },
 
     /// Print the srvc version
@@ -162,9 +162,9 @@ fn run_embedded_step(name: EmbeddedSteps) -> Result<()> {
         EmbeddedSteps::Http { url } => embedded::http::run(&url),
         EmbeddedSteps::Label {} => embedded::label::run(),
         EmbeddedSteps::LabelWeb {} => embedded::label_web::run(),
-        EmbeddedSteps::SkipReviewed {} => embedded::skip_reviewed::run(),
         EmbeddedSteps::RunUsing { uses } => embedded::run_using::run(&uses),
         EmbeddedSteps::Sink {} => embedded::sink::run(),
+        EmbeddedSteps::SkipReviewed {} => embedded::skip_reviewed::run(),
     }
 }
 
@@ -187,9 +187,9 @@ fn opts(cli: &Cli) -> Opts {
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
         Commands::Docs { query } => open_docs(query),
+        Commands::Flow { db, name, reviewer } => flow::run(opts, db, name, reviewer),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
-        Commands::Flow { db, name, reviewer } => flow::run(opts, db, name, reviewer),
         Commands::Pull { db, file_or_url } => pull::run(opts, db, &file_or_url),
         Commands::RunEmbeddedStep { name } => run_embedded_step(name),
         Commands::Version {} => version(),
