@@ -315,6 +315,44 @@ fn test_generator_order_labels_existing() -> Result<()> {
 }
 
 #[test]
+fn test_generator_stdin() -> Result<()> {
+    let flow_name = "test";
+    let resource_dir = "generator-stdin";
+    let timeout_millis = 2000;
+    let dir = test_dir(resource_dir);
+    let stdin = fs::read_to_string(Path::new(&dir).join("stdin.jsonl"))?;
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", flow_name])
+        .write_stdin(stdin.clone())
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, true)?;
+
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", "--db", "sink.db", flow_name])
+        .write_stdin(stdin)
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["pull", "--db", "sink.jsonl", "sink.db"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, false)?;
+    Ok(())
+}
+
+#[test]
 fn test_generator_url() -> Result<()> {
     test_flow("generator-url", "generator-url", 2000)
 }

@@ -1,10 +1,10 @@
 use std::collections::{HashMap, HashSet};
-use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader, LineWriter, Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{env, io};
 
 use anyhow::{Context, Error, Result};
 use reqwest::blocking::Client;
@@ -226,11 +226,15 @@ fn get_file_or_url(
             }
         }
         Err(_) => {
-            let path = PathBuf::from(file_or_url);
-            let file = File::open(&path)
-                .with_context(|| format!("Failed to open file {}", file_or_url))?;
-            let reader = BufReader::new(file);
-            Ok((Box::new(reader), Some(path), None))
+            if file_or_url == "-" {
+                Ok((Box::new(BufReader::new(io::stdin())), None, None))
+            } else {
+                let path = PathBuf::from(file_or_url);
+                let file = File::open(&path)
+                    .with_context(|| format!("Failed to open file {}", file_or_url))?;
+                let reader = BufReader::new(file);
+                Ok((Box::new(reader), Some(path), None))
+            }
         }
     }
 }

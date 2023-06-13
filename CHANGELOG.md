@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Support writing to stdout in the pull command and in the sink step when `-` is specified as the db
+- Support reading from stdin in generator and html steps when `-` is specified as the source
 
 ## v0.19.1 (2023-06-09)
 
