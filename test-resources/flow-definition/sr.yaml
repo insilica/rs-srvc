@@ -1,0 +1,11 @@
+reviewer: mailto:user@example.com
+
+labels:
+  acute-tox:
+    json-schema: boolean
+    question: Acute toxicity?
+
+flows:
+  test-override-existing:
+    steps:
+      - run-embedded: generator dne.jsonl

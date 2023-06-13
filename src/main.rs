@@ -49,6 +49,10 @@ enum Commands {
         #[clap(long)]
         db: Option<String>,
 
+        /// Provide the flow definition in JSON format
+        #[clap(long)]
+        def: Option<String>,
+
         /// The name of the flow
         #[clap(forbid_empty_values = true)]
         name: String,
@@ -187,7 +191,12 @@ fn opts(cli: &Cli) -> Opts {
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
         Commands::Docs { query } => open_docs(query),
-        Commands::Flow { db, name, reviewer } => flow::run(opts, db, name, reviewer),
+        Commands::Flow {
+            db,
+            def,
+            name,
+            reviewer,
+        } => flow::run(opts, db, def, name, reviewer),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
         Commands::Pull { db, file_or_url } => pull::run(opts, db, &file_or_url),

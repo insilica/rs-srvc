@@ -10,6 +10,7 @@ use std::{env, io};
 
 use anyhow::{Context, Error, Result};
 use log::trace;
+use reqwest::blocking::Client;
 use serde::Serialize;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -347,6 +348,7 @@ pub fn run_flow(flow: &Flow, config: &Config) -> Result<()> {
 pub fn run(
     opts: &mut Opts,
     db: Option<String>,
+    def: Option<String>,
     flow_name: String,
     reviewer: Option<String>,
 ) -> Result<()> {
@@ -363,6 +365,12 @@ pub fn run(
     sr_yaml::validate_reviewer(&reviewer)?;
     config.reviewer = Some(reviewer);
 
+    if let Some(s) = def {
+        let flow_sr_yaml = serde_json::from_str(&s)?;
+        let client = Client::builder().timeout(Duration::from_secs(30)).build()?;
+        let flow = sr_yaml::parse_flow(&client, flow_sr_yaml)?;
+        config.flows.insert(flow_name.clone(), flow);
+    }
     let flow = config.flows.get(&flow_name);
     let flow = match flow {
         Some(flow) => Ok(flow),

@@ -231,6 +231,103 @@ fn test_duplicate_field_in_config_file() -> Result<()> {
     test_flow("duplicate-field-in-config", "test", 400)
 }
 
+/// Test passing the flow definition as an argument
+#[test]
+fn test_flow_definition() -> Result<()> {
+    let flow_name = "test-as-arg";
+    let resource_dir = "flow-definition";
+    let timeout_millis = 2000;
+    let dir = test_dir(resource_dir);
+    let flow_json = "{\"steps\":[{\"run-embedded\":\"generator docs.jsonl\"}]}";
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", flow_name, "--def", flow_json])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, true)?;
+
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", "--db", "sink.db", flow_name, "--def", flow_json])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["pull", "--db", "sink.jsonl", "sink.db"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, false)?;
+
+    // Test passing the flow definition as an argument when a flow with
+    // the same name exists in sr.yaml
+    let flow_name = "test-override-existing";
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", flow_name, "--def", flow_json])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, true)?;
+
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", "--db", "sink.db", flow_name, "--def", flow_json])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["pull", "--db", "sink.jsonl", "sink.db"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, false)?;
+
+    // Test passing the flow definition as an argument containing a URI
+    let flow_name = "test-uri";
+    let flow_json = "{\"uri\":\"http://127.0.0.1:8877/flow-definition/flow-uri.json\"}";
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", flow_name, "--def", flow_json])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, true)?;
+
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", "--db", "sink.db", flow_name, "--def", flow_json])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["pull", "--db", "sink.jsonl", "sink.db"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, false)?;
+    Ok(())
+}
+
 /// Test flow reviewer arg when sr.yaml contains reviewer
 #[cfg(unix)]
 #[test]
