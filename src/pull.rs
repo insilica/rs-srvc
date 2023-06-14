@@ -8,12 +8,18 @@ use lib_sr::{event::Event, sr_yaml, Opts};
 
 use crate::embedded::{generator, sink};
 
-pub fn run(opts: &mut Opts, db: Option<String>, file_or_url: &str) -> Result<()> {
+pub fn run(
+    opts: &mut Opts,
+    db: Option<String>,
+    file_or_url: &str,
+    sink_control_events: bool,
+) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
     let mut config = sr_yaml::parse_config(yaml_config)?;
     config.db = db.unwrap_or(config.db);
     // Don't add any sr.yaml labels to the db
     config.labels = HashMap::new();
+    config.sink_control_events = sink_control_events;
 
     let (tx, rx) = mpsc::sync_channel::<Event>(16);
 

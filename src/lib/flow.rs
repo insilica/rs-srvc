@@ -361,11 +361,13 @@ pub fn run(
     def: Option<String>,
     flow_name: String,
     reviewer: Option<String>,
+    sink_control_events: bool,
     use_free_ports: bool,
 ) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
     let mut config = sr_yaml::parse_config(yaml_config)?;
     config.db = db.unwrap_or(config.db);
+    config.sink_control_events = sink_control_events;
 
     let reviewer = match reviewer {
         Some(s) => s,

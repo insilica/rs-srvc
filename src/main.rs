@@ -61,6 +61,10 @@ enum Commands {
         #[clap(long)]
         reviewer: Option<String>,
 
+        /// Write control events to the db
+        #[clap(long)]
+        sink_control_events: bool,
+
         /// Instruct steps to use free ports, ignoring any port set in sr.yaml
         #[clap(long)]
         use_free_ports: bool,
@@ -85,6 +89,10 @@ enum Commands {
         /// Path to a file or URL containing review events
         #[clap(forbid_empty_values = true)]
         file_or_url: String,
+
+        /// Write control events to the db
+        #[clap(long)]
+        sink_control_events: bool,
     },
 
     /// Run an embedded step
@@ -200,11 +208,24 @@ fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
             def,
             name,
             reviewer,
+            sink_control_events,
             use_free_ports,
-        } => flow::run(opts, db, def, name, reviewer, use_free_ports),
+        } => flow::run(
+            opts,
+            db,
+            def,
+            name,
+            reviewer,
+            sink_control_events,
+            use_free_ports,
+        ),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
-        Commands::Pull { db, file_or_url } => pull::run(opts, db, &file_or_url),
+        Commands::Pull {
+            db,
+            file_or_url,
+            sink_control_events,
+        } => pull::run(opts, db, &file_or_url, sink_control_events),
         Commands::RunEmbeddedStep { name } => run_embedded_step(name),
         Commands::Version {} => version(),
     }

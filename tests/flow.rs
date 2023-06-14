@@ -506,6 +506,53 @@ fn test_reviewer_uri_email() -> Result<()> {
 }
 
 #[test]
+fn test_sink_control_events() -> Result<()> {
+    let flow_name = "test";
+    let resource_dir = "sink-control-events";
+    let timeout_millis = 10000;
+    let dir = test_dir(resource_dir);
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&["flow", flow_name, "--sink-control-events"])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, true)?;
+
+    common::remove_sink(&dir)?;
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&[
+            "flow",
+            "--db",
+            "sink.db",
+            flow_name,
+            "--sink-control-events",
+        ])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::cmd(timeout_millis)
+        .current_dir(&dir)
+        .args(&[
+            "pull",
+            "--db",
+            "sink.jsonl",
+            "sink.db",
+            "--sink-control-events",
+        ])
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+    common::check_sink(&dir, false)?;
+    Ok(())
+}
+
+#[test]
 fn test_sink_stdout() -> Result<()> {
     let flow_name = "test";
     let resource_dir = "sink-stdout";
