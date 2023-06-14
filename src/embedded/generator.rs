@@ -19,7 +19,7 @@ use crate::embedded::GeneratorContext;
 
 const SELECT_DOCUMENTS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'document' ORDER BY uri NULLS LAST, hash";
 const SELECT_LABELS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label' ORDER BY data->>'$.id', hash";
-const SELECT_LABEL_ANSWERS_FOR_DOC: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->>'$.event' = ? ORDER BY data->>'$.timestamp', hash";
+const SELECT_LABEL_ANSWERS_FOR_EVENT: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->>'$.event' = ? ORDER BY data->>'$.timestamp', hash";
 
 fn get_label_events(config: &Config) -> Result<Vec<Event>> {
     let mut labels: Vec<&Label> = config.labels.values().collect();
@@ -212,11 +212,11 @@ fn write_event_answers_sqlite<F>(conn: &Connection, f: &mut F, doc_hash: &str) -
 where
     F: FnMut(Event) -> Result<()>,
 {
-    let mut stmt = sqlite::prepare_cached(&conn, SELECT_LABEL_ANSWERS_FOR_DOC)?;
+    let mut stmt = sqlite::prepare_cached(&conn, SELECT_LABEL_ANSWERS_FOR_EVENT)?;
     let mut rows = stmt.query([doc_hash]).with_context(|| {
         format!(
             "Failed to execute prepared statement: {}",
-            SELECT_LABEL_ANSWERS_FOR_DOC
+            SELECT_LABEL_ANSWERS_FOR_EVENT
         )
     })?;
     while let Some(row) = rows.next().with_context(|| "Failed to get next row")? {
