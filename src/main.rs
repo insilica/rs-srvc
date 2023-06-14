@@ -60,6 +60,10 @@ enum Commands {
         /// Override the default reviewer URI
         #[clap(long)]
         reviewer: Option<String>,
+
+        /// Instruct steps to use free ports, ignoring any port set in sr.yaml
+        #[clap(long)]
+        use_free_ports: bool,
     },
 
     /// Add hashes to a stream of events
@@ -196,7 +200,8 @@ fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
             def,
             name,
             reviewer,
-        } => flow::run(opts, db, def, name, reviewer),
+            use_free_ports,
+        } => flow::run(opts, db, def, name, reviewer, use_free_ports),
         Commands::Hash {} => hash::run(),
         Commands::PrintConfig { pretty } => print_config(opts, pretty),
         Commands::Pull { db, file_or_url } => pull::run(opts, db, &file_or_url),

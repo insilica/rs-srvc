@@ -334,6 +334,16 @@ pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()
     wait_for_steps(processes)
 }
 
+fn remove_step_ports(mut flow: Flow) -> Flow {
+    let mut acc = Vec::new();
+    for mut step in flow.steps {
+        step.extra.remove("port");
+        acc.push(step);
+    }
+    flow.steps = acc;
+    flow
+}
+
 pub fn run_flow(flow: &Flow, config: &Config) -> Result<()> {
     let dir = tempfile::Builder::new()
         .prefix("srvc-")
@@ -351,6 +361,7 @@ pub fn run(
     def: Option<String>,
     flow_name: String,
     reviewer: Option<String>,
+    use_free_ports: bool,
 ) -> Result<()> {
     let yaml_config = sr_yaml::get_config(PathBuf::from(&opts.config))?;
     let mut config = sr_yaml::parse_config(yaml_config)?;
@@ -378,7 +389,15 @@ pub fn run(
             "No flow named \"{}\" in \"{}\"",
             flow_name, &opts.config
         ))),
-    }?;
-    run_flow(flow, &config)?;
+    }?
+    .clone();
+    let flow = if use_free_ports {
+        let flow = remove_step_ports(flow);
+        config.flows.insert(flow_name, flow.clone());
+        flow
+    } else {
+        flow
+    };
+    run_flow(&flow, &config)?;
     Ok(())
 }
