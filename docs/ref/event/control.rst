@@ -17,7 +17,7 @@ Control events follow this format:
         "http-port": 31157,
         "timestamp": 1673392440
       },
-      "hash":"Qma84opq86nmbXTB5Lgof1wgYLXA9RQe4n9BidmmmyMs4x",
+      "hash": "Qma84opq86nmbXTB5Lgof1wgYLXA9RQe4n9BidmmmyMs4x",
       "type": "control"
     }
 
