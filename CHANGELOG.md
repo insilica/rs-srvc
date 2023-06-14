@@ -5,6 +5,7 @@
 - Support reading from stdin in generator and html steps when `-` is specified as the source
 - Add a `--def` argument to the `flow` command to provide or override the flow definition
 - Add a `--use-free-ports` argument to the `flow` command
+- (breaking) Rename `sink-all-events` property to `sink-control-events`. `sink-all-events` is still recognized as an alias.
 
 ## v0.19.1 (2023-06-09)
 

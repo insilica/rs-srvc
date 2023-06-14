@@ -72,8 +72,12 @@ pub struct Config {
     pub flows: HashMap<String, Flow>,
     pub labels: HashMap<String, Label>,
     pub reviewer: Option<String>,
-    #[serde(rename = "sink-all-events")]
-    pub sink_all_events: bool,
+    #[serde(
+        alias = "sink-all-events",
+        alias = "sink_all_events",
+        rename = "sink-control-events"
+    )]
+    pub sink_control_events: bool,
     pub sources: Vec<Source>,
     pub srvc: Srvc,
 }

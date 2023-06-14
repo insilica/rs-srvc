@@ -121,7 +121,7 @@ fn run_remote(config: &Config, in_events: impl Iterator<Item = Result<Event>>) -
         let event = prep_event(&mut labels, result)?;
         let hash = event.hash.clone().expect("Hash not set");
 
-        if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
+        if !hashes.contains(&hash) && event.r#type != "control" || config.sink_control_events {
             let json = serde_json::to_string(&event).with_context(|| "Serialization failed")?;
             let mut request = client
                 .post(&url)
@@ -188,7 +188,7 @@ fn run_local_jsonl(config: &Config, in_events: impl Iterator<Item = Result<Event
         let event = prep_event(&mut labels, result)?;
         let hash = event.hash.clone().expect("Hash not set");
 
-        if !hashes.contains(&hash) && event.r#type != "control" || config.sink_all_events {
+        if !hashes.contains(&hash) && event.r#type != "control" || config.sink_control_events {
             info! {"Writing event to sink: {} {}", event.r#type, hash};
             event
                 .serialize(&mut serde_json::Serializer::new(&mut writer))
@@ -215,7 +215,7 @@ fn run_local_sqlite(config: &Config, in_events: impl Iterator<Item = Result<Even
     for result in in_events {
         let event = prep_event(&mut labels, result)?;
 
-        if event.r#type != "control" || config.sink_all_events {
+        if event.r#type != "control" || config.sink_control_events {
             info! {"Writing event to sink: {} {}", event.r#type, event.hash.to_owned().expect("hash")};
             sqlite::insert_event(&conn, event)?;
         }

@@ -85,8 +85,12 @@ pub struct Config {
     pub flows: Option<HashMap<String, Flow>>,
     pub labels: Option<HashMap<String, Label>>,
     pub reviewer: Option<String>,
-    #[serde(alias = "sink-all-events", rename(serialize = "sink-all-events"))]
-    pub sink_all_events: Option<bool>,
+    #[serde(
+        alias = "sink-all-events",
+        alias = "sink_all_events",
+        rename = "sink-control-events"
+    )]
+    pub sink_control_events: Option<bool>,
     pub sources: Option<Vec<Source>>,
 }
 
@@ -100,7 +104,7 @@ impl Config {
             flows: other.flows.or(self.flows),
             labels: other.labels.or(self.labels),
             reviewer: other.reviewer.or(self.reviewer),
-            sink_all_events: other.sink_all_events.or(self.sink_all_events),
+            sink_control_events: other.sink_control_events.or(self.sink_control_events),
             sources: other.sources.or(self.sources),
         }
     }
@@ -408,7 +412,7 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
         flows: parse_flows(&client, config.flows)?,
         labels: parse_labels(&client, &config.labels)?,
         reviewer: config.reviewer,
-        sink_all_events: config.sink_all_events.unwrap_or(false),
+        sink_control_events: config.sink_control_events.unwrap_or(false),
         sources: parse_sources(&client, config.sources.unwrap_or(Vec::new()))?,
         srvc: lib_sr::Srvc {
             version: String::from(env!("CARGO_PKG_VERSION")),
