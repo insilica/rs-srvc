@@ -20,6 +20,7 @@ use crate::embedded::GeneratorContext;
 const SELECT_DOCUMENTS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'document' ORDER BY uri NULLS LAST, hash";
 const SELECT_LABELS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label' ORDER BY data->>'$.id', hash";
 const SELECT_LABEL_ANSWERS_FOR_EVENT: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type = 'label-answer' AND data->>'$.event' = ? ORDER BY data->>'$.timestamp', hash";
+const SELECT_OTHER_EVENTS: &str = "SELECT data, extra, hash, type, uri FROM srvc_event WHERE type <> 'document' AND type <> 'label' AND type <> 'label-answer' ORDER BY uri NULLS LAST, hash";
 
 fn get_label_events(config: &Config) -> Result<Vec<Event>> {
     let mut labels: Vec<&Label> = config.labels.values().collect();
@@ -228,6 +229,25 @@ where
     Ok(())
 }
 
+pub fn write_other_events_sqlite<F>(conn: &Connection, f: &mut F) -> Result<()>
+where
+    F: FnMut(Event) -> Result<()>,
+{
+    let mut stmt = sqlite::prepare_cached(&conn, SELECT_OTHER_EVENTS)?;
+    let mut rows = stmt.query([]).with_context(|| {
+        format!(
+            "Failed to execute prepared statement: {}",
+            SELECT_OTHER_EVENTS
+        )
+    })?;
+    while let Some(row) = rows.next().with_context(|| "Failed to get next row")? {
+        let event = sqlite::parse_event(row)?;
+        f(event.clone())?;
+        write_event_answers_sqlite(&conn, f, &event.hash.expect("hash"))?;
+    }
+    Ok(())
+}
+
 pub fn write_documents_sqlite<F>(conn: &Connection, f: &mut F) -> Result<()>
 where
     F: FnMut(Event) -> Result<()>,
@@ -251,6 +271,7 @@ where
     let conn = sqlite::open_ro(&PathBuf::from(file))?;
 
     write_labels_sqlite(&conn, config, f)?;
+    write_other_events_sqlite(&conn, f)?;
     write_documents_sqlite(&conn, f)?;
 
     sqlite::close(conn)?;
