@@ -1,6 +1,16 @@
-use std::env;
+use std::{
+    env,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use anyhow::{Context, Result};
+
+pub fn get_epoch_sec() -> Result<u64> {
+    Ok(SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .context("Failed to calculate timestamp")?
+        .as_secs())
+}
 
 pub fn get_timestamp_override() -> Result<Option<u64>> {
     Ok(match env::var("SR_TIMESTAMP_OVERRIDE") {

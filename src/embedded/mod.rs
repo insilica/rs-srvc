@@ -3,10 +3,10 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, LineWriter, Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, io};
 
 use anyhow::{Context, Error, Result};
+use lib_sr::common::get_epoch_sec;
 use reqwest::blocking::Client;
 use serde_json::json;
 use url::Url;
@@ -180,14 +180,6 @@ pub fn write_event_dedupe(
     }
     Ok(())
 }
-
-fn get_epoch_sec() -> Result<u64> {
-    Ok(SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .with_context(|| "Failed to calculate timestamp")?
-        .as_secs())
-}
-
 pub fn insert_timestamp(
     data: &mut HashMap<String, serde_json::Value>,
     timestamp_override: Option<u64>,
