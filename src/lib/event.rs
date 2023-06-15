@@ -10,7 +10,7 @@ use serde::Serialize;
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Event {
     pub data: Option<serde_json::Value>,
     #[serde(flatten)]

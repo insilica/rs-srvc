@@ -29,7 +29,7 @@ pub struct Step {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Flow {
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
