@@ -24,8 +24,8 @@ Control events follow this format:
 History
 =======
 
-Version 0.20.0_
----------------------------
+Version 0.20.0_ (2023-06-15)
+----------------------------
 
 .. _0.20.0: https://github.com/insilica/rs-srvc/releases/tag/v0.20.0
 
