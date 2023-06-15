@@ -195,13 +195,6 @@ pub fn parse_flow_data(client: &Client, flow: Flow) -> Result<lib_sr::Flow> {
         let step = parse_step(client, step.to_owned())?;
         vec.push(step);
     }
-    vec.push(lib_sr::Step {
-        env: Some(vec![String::from("SRVC_TOKEN")]),
-        extra: HashMap::new(),
-        labels: Vec::new(),
-        run: None,
-        run_embedded: Some(String::from("sink")),
-    });
     Ok(lib_sr::Flow {
         extra: flow.extra,
         steps: vec,

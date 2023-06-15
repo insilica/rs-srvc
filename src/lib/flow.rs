@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, LineWriter, Write};
 use std::net::{SocketAddr, TcpListener};
@@ -304,13 +305,20 @@ pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()
         steps.push(&source.step);
     }
     steps.extend(flow_steps);
+    let sink_step = Step {
+        env: Some(vec![String::from("SRVC_TOKEN")]),
+        extra: HashMap::new(),
+        labels: Vec::new(),
+        run: None,
+        run_embedded: Some(String::from("sink")),
+    };
+    steps.push(&sink_step);
 
     let exe_path = get_exe_path()?;
-    let last_step = &flow.steps.last();
     let mut processes = Vec::new();
 
     for step in steps {
-        let is_last_step = last_step.filter(|x| x.to_owned() == step).is_some();
+        let is_last_step = step == &sink_step;
         let last_ss = processes
             .last()
             .map(|x: &StepProcess| x.step_server.as_ref())

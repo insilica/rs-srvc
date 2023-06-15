@@ -1,5 +1,7 @@
 ## Unreleased
 
+- (breaking) No longer implicitly add sink steps to the config. The sink step is still processed as before, but the output of `print-config` has changed.
+
 ## v0.20.0 (2023-06-15)
 
 - Support writing to stdout in the pull command and in the sink step when `-` is specified as the db
