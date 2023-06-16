@@ -10,7 +10,7 @@
 - Add a `--def` argument to the `flow` command to provide or override the flow definition
 - Add a `--use-free-ports` argument to the `flow` command
 - (breaking) Rename `sink-all-events` property to `sink-control-events`. `sink-all-events` is still recognized as an alias.
-- Add `--sink-all-events` argument to `flow` and `pull` commands
+- Add `--sink-control-events` argument to `flow` and `pull` commands
 - Emit other event types (like control) from sqlite dbs in generator step
 
 ## v0.19.1 (2023-06-09)
