@@ -12,6 +12,7 @@ use url::{form_urlencoded, Url};
 
 use lib_sr::{common, flow, sr_yaml, Opts};
 
+mod edit_config;
 mod embedded;
 mod hash;
 mod pull;
@@ -40,6 +41,20 @@ enum Commands {
         /// Search query
         #[clap(multiple_values = true)]
         query: Vec<String>,
+    },
+
+    /// Edit the sr.yaml configuration
+    EditConfig {
+        /// Use an HTML editor at a file or url
+        editor: Option<String>,
+
+        /// Host to listen on
+        #[clap(default_value = "127.0.0.1", long)]
+        host: String,
+
+        /// Port to listen on
+        #[clap(default_value = "7777", long)]
+        port: u16,
     },
 
     /// Run a flow
@@ -203,6 +218,7 @@ fn opts(cli: &Cli) -> Opts {
 fn run_command(cli: Cli, opts: &mut Opts) -> Result<()> {
     match cli.command {
         Commands::Docs { query } => open_docs(query),
+        Commands::EditConfig { editor, host, port } => edit_config::run(opts, editor, host, port),
         Commands::Flow {
             db,
             def,

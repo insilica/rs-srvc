@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    html,
+    body {
+      padding: 10px 20px;
+      margin: 0;
+    }
+
+    button {
+      margin: 4pt;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-top: 30px;
+      margin-bottom: 20px;
+    }
+
+    #outer-container {
+      position: relative;
+    }
+
+    #content {
+      max-width: 920px;
+      font-size: 17px;
+      line-height: 27px;
+    }
+
+    ul {
+      padding: 0;
+    }
+
+    li {
+      list-style: none;
+    }
+
+
+
+
+    #labels td,
+    thead {
+      font-family: sans-serif;
+      font-weight: bold;
+    }
+
+    li tr+tr {
+      position: relative;
+    }
+
+    li tr+tr:after {
+      content: '';
+      display: block;
+      width: 100%;
+      border-bottom: 1px solid #ccc;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    li td ul {
+      margin: 10px 0;
+    }
+
+    li td ul li+li {
+      margin-top: 4px;
+    }
+
+    input,
+    select {
+      font-size: 14px;
+      line-height: 18px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 7px 10px;
+      margin-right: 4px;
+    }
+
+    td button {
+      cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      border: none;
+      font-size: 16px;
+      padding: 7px 10px;
+    }
+
+    .btn-add {
+      background-color: #86e1ff;
+      border-top: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+      border-left: 1px solid #ccc;
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+    }
+
+    .btn-del {
+      border-top: 1px solid #ccc;
+      border-right: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      margin-right: 4px;
+    }
+
+    td button:hover {
+      background-color: #eee;
+      color: #333;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="outer-container">
+    <form id="top-level-props-form" method="post">
+      <div>
+        <table id="top-level-props">
+          <tr>
+            <td><label for="base-uri">Config base URI:</label></td>
+            <td><input id="base-uri" name="base-uri"></td>
+          </tr>
+          <tr>
+            <td><label for="db">Database:</label></td>
+            <td><input id="db" name="db"></td>
+          </tr>
+          <tr>
+            <td><label for="reviewer">Reviewer:</label></td>
+            <td><input id="reviewer" name="reviewer"></td>
+          </tr>
+        </table>
+      </div>
+      <div>
+        <button id="submit-top-level-props" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+  <script type="text/javascript">
+    (function () {
+      let configs = null;
+      let yamlConfig = null;
+
+      let sel = (selector, source = document) => {
+        return source.querySelector(selector);
+      }
+
+      let setConfigVal = (el, new_val) => {
+        if (el.dataset.oldVal === undefined || el.dataset.oldVal === el.value) {
+          el.value = new_val || '';
+          el.dataset.oldVal = el.value;
+        } else if (new_val === el.value) {
+          el.dataset.oldVal = new_val
+        }
+      };
+
+      let setConfigVals = (cfgs) => {
+        let cfg = cfgs['config'];
+        let yaml = cfgs['yaml-config'];
+        setConfigVal(sel('#base-uri'), yaml['base-uri']);
+        setConfigVal(sel('#db'), cfg['db']);
+        setConfigVal(sel('#reviewer'), yaml['reviewer']);
+      };
+
+      let loadConfigs = () => {
+        configs = new Promise((resolve, reject) => {
+          let req = new XMLHttpRequest();
+          req.addEventListener("load", function (resp) {
+            let cfgs = JSON.parse(req.response);
+            resolve(cfgs);
+            setConfigVals(cfgs);
+          });
+          req.open("GET", "/srvc/configs");
+          req.send();
+        });
+      };
+
+      loadConfigs();
+      setInterval(loadConfigs, 5000)
+    })();
+  </script>
+</body>
+
+</html>
