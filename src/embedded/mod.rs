@@ -1,15 +1,13 @@
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::fs::File;
-use std::io::{BufRead, BufReader, LineWriter, Read, Write};
+use std::io::{BufReader, LineWriter, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
-use std::{env, io};
 
 use anyhow::{Context, Error, Result};
 use lib_sr::common::get_epoch_sec;
-use reqwest::blocking::Client;
 use serde_json::json;
-use url::Url;
 
 use lib_sr::event::Event;
 use lib_sr::{common, event, Config};
@@ -190,55 +188,4 @@ pub fn insert_timestamp(
     };
     data.insert(String::from("timestamp"), json!(timestamp));
     Ok(())
-}
-
-fn get_file_or_url(
-    client: Client,
-    file_or_url: &str,
-) -> Result<(Box<dyn BufRead + Send + Sync>, Option<PathBuf>, Option<Url>)> {
-    match Url::parse(file_or_url) {
-        Ok(url) => {
-            let mut request = client.get(url.clone());
-
-            if let Ok(token) = env::var("SRVC_TOKEN") {
-                request = request.header("Authorization", format!("Bearer {}", token));
-            }
-
-            let response = request
-                .send()
-                .with_context(|| format!("Failed to complete HTTP request to {}", url))?;
-            let status = response.status().as_u16();
-            if status == 200 {
-                Ok((Box::new(BufReader::new(response)), None, Some(url)))
-            } else {
-                Err(Error::msg(format!(
-                    "Unexpected {} status for {}",
-                    status, url
-                )))
-            }
-        }
-        Err(_) => {
-            if file_or_url == "-" {
-                Ok((Box::new(BufReader::new(io::stdin())), None, None))
-            } else {
-                let path = PathBuf::from(file_or_url);
-                let file = File::open(&path)
-                    .with_context(|| format!("Failed to open file {}", file_or_url))?;
-                let reader = BufReader::new(file);
-                Ok((Box::new(reader), Some(path), None))
-            }
-        }
-    }
-}
-
-fn get_file_or_url_string(
-    client: Client,
-    file_or_url: &str,
-) -> Result<(String, Option<PathBuf>, Option<Url>)> {
-    let (mut reader, pathbuf, url) = get_file_or_url(client, file_or_url)?;
-    let mut s = String::new();
-    reader
-        .read_to_string(&mut s)
-        .with_context(|| format!("Buffer read failed for file {}", file_or_url))?;
-    Ok((s, pathbuf, url))
 }

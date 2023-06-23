@@ -58,7 +58,7 @@ where
     F: FnMut(Event) -> Result<()>,
 {
     trace! {"run_jsonl"};
-    let (reader, _, _) = embedded::get_file_or_url(Client::new(), file_or_url)?;
+    let (reader, _, _) = common::get_file_or_url(&Client::default(), file_or_url)?;
     let in_events = event::events(reader);
 
     let mut answers: HashMap<String, Vec<Event>> = HashMap::new();
