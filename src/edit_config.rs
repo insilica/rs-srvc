@@ -1,5 +1,6 @@
 use std::io::{BufReader, Read};
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 use std::{fs::File, path::PathBuf};
 
 use actix_files::Files;
@@ -27,6 +28,7 @@ struct AppContext {
     port: u16,
     yaml_config: sr_yaml::Config,
     yaml_config_path: PathBuf,
+    yaml_config_retrieved: Instant,
 }
 
 #[get("/")]
@@ -63,23 +65,36 @@ async fn get_configs(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpResponse {
         sr_yaml::get_config(yaml_config_path.clone()).unwrap_or_else(|_| guard.yaml_config.clone()),
     );
     let yc = yaml_config.clone();
-    let fut = web::block(move || sr_yaml::parse_config(yaml_config));
-    match fut.await {
-        Ok(Ok(config)) => {
-            let configs = Configs {
-                config: config.clone(),
-                yaml_config: yc.clone(),
-            };
-            guard.config = config;
-            guard.yaml_config = yc;
-            HttpResponse::Ok().json(configs)
-        }
-        Ok(Err(_)) | Err(_) => {
-            let configs = Configs {
-                config: guard.config.clone(),
-                yaml_config: guard.yaml_config.clone(),
-            };
-            HttpResponse::Ok().json(configs)
+
+    // Parsing the config may involve HTTP requests, so use
+    // a cached parse when the YAML has not changed
+    let since_parse = Instant::now().duration_since(guard.yaml_config_retrieved);
+    if since_parse > Duration::from_secs(60) && guard.yaml_config == yaml_config {
+        let configs = Configs {
+            config: guard.config.clone(),
+            yaml_config: guard.yaml_config.clone(),
+        };
+        HttpResponse::Ok().json(configs)
+    } else {
+        let fut = web::block(move || sr_yaml::parse_config(yaml_config));
+        match fut.await {
+            Ok(Ok(config)) => {
+                let configs = Configs {
+                    config: config.clone(),
+                    yaml_config: yc.clone(),
+                };
+                guard.config = config;
+                guard.yaml_config = yc;
+                guard.yaml_config_retrieved = Instant::now();
+                HttpResponse::Ok().json(configs)
+            }
+            Ok(Err(_)) | Err(_) => {
+                let configs = Configs {
+                    config: guard.config.clone(),
+                    yaml_config: guard.yaml_config.clone(),
+                };
+                HttpResponse::Ok().json(configs)
+            }
         }
     }
 }
@@ -205,6 +220,7 @@ pub fn run(opts: &mut Opts, editor: Option<String>, host: String, port: u16) -> 
         port,
         yaml_config,
         yaml_config_path,
+        yaml_config_retrieved: Instant::now(),
     };
 
     Ok(serve(app_ctx)?)
