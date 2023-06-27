@@ -110,6 +110,11 @@ impl Config {
     }
 }
 
+pub fn add_defaults(mut config: Config) -> Config {
+    config.db = Some(config.db.unwrap_or_else(|| String::from("sink.jsonl")));
+    config
+}
+
 pub fn non_blank(id: &str, k: &str, s: &Option<String>) -> Result<String> {
     match s {
         Some(s) => {
@@ -379,13 +384,14 @@ pub fn validate_reviewer(reviewer: &str) -> Result<()> {
 
 pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
     let client = Client::new();
-    let config = match &config.base_uri {
+    let mut config = match &config.base_uri {
         Some(uri) => {
             let cfg: Config = get_object(&client, uri)?;
             cfg.merge(config)
         }
         None => config,
     };
+    config = add_defaults(config);
 
     match config.reviewer.clone() {
         Some(reviewer) => validate_reviewer(&reviewer)?,
@@ -400,7 +406,7 @@ pub fn parse_config(config: Config) -> Result<lib_sr::Config> {
     Ok(lib_sr::Config {
         current_labels: None,
         current_step: None,
-        db: config.db.unwrap_or(String::from("sink.jsonl")),
+        db: config.db.expect("config.db"),
         extra,
         flows: parse_flows(&client, config.flows)?,
         labels: parse_labels(&client, &config.labels)?,

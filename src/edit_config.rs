@@ -59,8 +59,9 @@ struct Configs {
 async fn get_configs(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpResponse {
     let guard = &mut app_ctx_mutex.lock().unwrap();
     let yaml_config_path = &guard.yaml_config_path;
-    let yaml_config =
-        sr_yaml::get_config(yaml_config_path.clone()).unwrap_or_else(|_| guard.yaml_config.clone());
+    let yaml_config = sr_yaml::add_defaults(
+        sr_yaml::get_config(yaml_config_path.clone()).unwrap_or_else(|_| guard.yaml_config.clone()),
+    );
     let yc = yaml_config.clone();
     let fut = web::block(move || sr_yaml::parse_config(yaml_config));
     match fut.await {
@@ -178,7 +179,7 @@ async fn serve(app_ctx: AppContext) -> std::io::Result<()> {
 
 pub fn run(opts: &mut Opts, editor: Option<String>, host: String, port: u16) -> Result<()> {
     let yaml_config_path = PathBuf::from(&opts.config);
-    let yaml_config = sr_yaml::get_config(yaml_config_path.clone())?;
+    let yaml_config = sr_yaml::add_defaults(sr_yaml::get_config(yaml_config_path.clone())?);
     let config = sr_yaml::parse_config(yaml_config.clone())?;
 
     let (html, path, url) = match editor.clone() {
