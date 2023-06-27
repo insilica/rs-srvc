@@ -16,7 +16,7 @@ use crate as lib_sr;
 use crate::{event, json_schema};
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Step {
     pub env: Option<Vec<String>>,
     #[serde(flatten)]
@@ -31,7 +31,7 @@ pub struct Step {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Flow {
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
@@ -41,7 +41,7 @@ pub struct Flow {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Label {
     #[serde(flatten)]
     extra: HashMap<String, serde_json::Value>,
@@ -61,7 +61,7 @@ pub struct Label {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Source {
     file: Option<String>,
     step: Option<Step>,
@@ -70,7 +70,7 @@ pub struct Source {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Config {
     #[serde(
         alias = "base_url",
