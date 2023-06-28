@@ -31,32 +31,8 @@ jobs:
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@v4
 
-    - name: Restore cached Nix store
-      id: nix-cache-restore
-      uses: john-shaffer/cache/restore@main
-      with:
-        key: nix-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
-        restore-keys: |
-          nix-${{ runner.os }}-
-        path: |
-          /nix/store
-          /nix/var/nix/db/db.sqlite
-
-    - name: Build Nix derivations
-      if: steps.nix-cache-restore.outputs.cache-hit != 'true'
-      run: |
-        nix flake check
-        nix develop -c echo OK
-        nix build
-
-    - name: Save cached Nix store
-      if: steps.nix-cache-restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v3
-      with:
-        key: nix-${{ runner.os }}-${{ hashFiles('**.nix', '**/flake.lock') }}
-        path: |
-          /nix/store
-          /nix/var/nix/db/db.sqlite
+    - name: Cache Nix store
+      uses: DeterminateSystems/magic-nix-cache-action@v1
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1-node16
