@@ -38,9 +38,7 @@ jobs:
 
     - name: Install Nix
       if: matrix.build != 'win-msvc'
-      uses: cachix/install-nix-action@v18
-      with:
-        nix_path: nixpkgs=channel:nixos-22.05
+      uses: DeterminateSystems/nix-installer-action@v4
 
     - name: Restore cached Nix store
       if: matrix.build != 'win-msvc'
