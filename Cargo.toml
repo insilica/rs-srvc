@@ -41,6 +41,8 @@ env_logger = "0.10.0"
 log = "0.4.17"
 webbrowser = { version = "0.8.7", features = ["hardened"] }
 anyhow = "1.0.71"
+json-patch = "1.0.0"
+fs2 = "0.4.3"
 
 [dev-dependencies]
 assert_cmd = "2.0"

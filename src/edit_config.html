@@ -116,7 +116,7 @@
 
 <body>
   <div id="outer-container">
-    <form id="top-level-props-form" method="post">
+    <form id="top-level-props-form">
       <div>
         <table id="top-level-props">
           <tr>
@@ -141,36 +141,76 @@
   <script type="text/javascript">
     (function () {
       let configs = null;
-      let yamlConfig = null;
 
       let sel = (selector, source = document) => {
         return source.querySelector(selector);
       }
 
-      let setConfigVal = (el, new_val) => {
-        if (el.dataset.oldVal === undefined || el.dataset.oldVal === el.value) {
+      let setConfigVal = (el, new_val, overrideVal) => {
+        if (overrideVal || el.dataset.savedVal === undefined || el.dataset.savedVal === el.value) {
           el.value = new_val || '';
-          el.dataset.oldVal = el.value;
+          el.dataset.savedVal = el.value;
         } else if (new_val === el.value) {
-          el.dataset.oldVal = new_val
+          el.dataset.savedVal = new_val
         }
       };
 
-      let setConfigVals = (cfgs) => {
-        let cfg = cfgs['config'];
+      let setConfigVals = (cfgs, overrideVals) => {
         let yaml = cfgs['yaml-config'];
-        setConfigVal(sel('#base-uri'), yaml['base-uri']);
-        setConfigVal(sel('#db'), cfg['db']);
-        setConfigVal(sel('#reviewer'), yaml['reviewer']);
+        let set = (k) => {
+          setConfigVal(sel('#' + k), yaml[k], overrideVals);
+        }
+        set('base-uri');
+        set('db');
+        set('reviewer');
       };
 
-      let loadConfigs = () => {
+      /// https://jsonpatch.com/
+      let getJsonPatch = () => {
+        let patch = [];
+        let els = [
+          sel('#base-uri'),
+          sel('#db'),
+          sel('#reviewer')
+        ];
+        for (el of els) {
+          let v = el.value.trim();
+          if (el.dataset.savedVal != v) {
+            let op = 'replace';
+            if (!el.dataset.savedVal) op = 'add';
+            if (v === '') op = 'remove';
+            patch.push({
+              'op': op,
+              'path': '/' + el.id,
+              'value': el.value,
+            });
+          }
+        }
+
+        return patch;
+      }
+
+      let saveConfig = (event) => {
+        event.preventDefault();
+        let patch = getJsonPatch();
+        if (patch.length) {
+          let req = new XMLHttpRequest();
+          req.addEventListener("load", function (resp) {
+            loadConfigs(true)
+          });
+          req.open("PATCH", "/srvc/patch-config");
+          req.setRequestHeader("Content-Type", "application/json-patch+json");
+          req.send(JSON.stringify(patch));
+        }
+      };
+
+      let loadConfigs = (overrideVals) => {
         configs = new Promise((resolve, reject) => {
           let req = new XMLHttpRequest();
           req.addEventListener("load", function (resp) {
             let cfgs = JSON.parse(req.response);
             resolve(cfgs);
-            setConfigVals(cfgs);
+            setConfigVals(cfgs, overrideVals);
           });
           req.open("GET", "/srvc/configs");
           req.send();
@@ -179,6 +219,8 @@
 
       loadConfigs();
       setInterval(loadConfigs, 500)
+
+      sel('#submit-top-level-props').addEventListener('click', saveConfig);
     })();
   </script>
 </body>

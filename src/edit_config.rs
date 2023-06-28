@@ -1,15 +1,19 @@
-use std::io::{BufReader, Read};
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, Read, Seek, SeekFrom, Write};
+use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
-use std::{fs::File, path::PathBuf};
 
 use actix_files::Files;
 use actix_web::dev::PeerAddr;
 use actix_web::http::header::ContentType;
-use actix_web::{get, middleware, web, App, HttpRequest, HttpServer};
-use actix_web::{http::Method, routes, web::Data, HttpResponse};
-use anyhow::Result;
+use actix_web::web::Json;
+use actix_web::{get, middleware, patch, web, App, HttpRequest, HttpServer};
+use actix_web::{http::Method, web::Data, HttpResponse};
+use anyhow::{Context, Result};
+use fs2::FileExt;
 use futures_util::StreamExt;
+use json_patch::Patch;
 use lib_sr::{common, sr_yaml, Config, Opts};
 use log::{debug, info};
 use reqwest::blocking::Client;
@@ -21,6 +25,7 @@ use url::Url;
 #[derive(Clone, Debug)]
 struct AppContext {
     config: Config,
+    config_stale: bool,
     host: String,
     html: String,
     html_file_path: Option<PathBuf>,
@@ -29,6 +34,11 @@ struct AppContext {
     yaml_config: sr_yaml::Config,
     yaml_config_path: PathBuf,
     yaml_config_retrieved: Instant,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct ErrorResponse {
+    error: String,
 }
 
 #[get("/")]
@@ -56,7 +66,6 @@ struct Configs {
     yaml_config: sr_yaml::Config,
 }
 
-#[routes]
 #[get("/srvc/configs")]
 async fn get_configs(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpResponse {
     let guard = &mut app_ctx_mutex.lock().unwrap();
@@ -69,10 +78,12 @@ async fn get_configs(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpResponse {
     // Parsing the config may involve HTTP requests, so use
     // a cached parse when the YAML has not changed
     let since_parse = Instant::now().duration_since(guard.yaml_config_retrieved);
-    if since_parse > Duration::from_secs(60) && guard.yaml_config == yaml_config {
+    if guard.config_stale
+        || since_parse > Duration::from_secs(60) && guard.yaml_config == yaml_config
+    {
         let configs = Configs {
             config: guard.config.clone(),
-            yaml_config: guard.yaml_config.clone(),
+            yaml_config,
         };
         HttpResponse::Ok().json(configs)
     } else {
@@ -84,6 +95,7 @@ async fn get_configs(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpResponse {
                     yaml_config: yc.clone(),
                 };
                 guard.config = config;
+                guard.config_stale = false;
                 guard.yaml_config = yc;
                 guard.yaml_config_retrieved = Instant::now();
                 HttpResponse::Ok().json(configs)
@@ -91,7 +103,7 @@ async fn get_configs(app_ctx_mutex: Data<Mutex<AppContext>>) -> HttpResponse {
             Ok(Err(_)) | Err(_) => {
                 let configs = Configs {
                     config: guard.config.clone(),
-                    yaml_config: guard.yaml_config.clone(),
+                    yaml_config: yc,
                 };
                 HttpResponse::Ok().json(configs)
             }
@@ -150,6 +162,59 @@ async fn forward_reqwest(
     Ok(client_resp.streaming(res.bytes_stream()))
 }
 
+fn patch_config_file(config_path: &PathBuf, patch: Patch) -> Result<sr_yaml::Config> {
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(config_path)?;
+    file.lock_exclusive()?;
+    let reader = BufReader::new(&file);
+    let mut config: sr_yaml::Config = serde_yaml::from_reader(reader).with_context(|| {
+        format!(
+            "Failed to parse config file as YAML: {}",
+            config_path.to_string_lossy()
+        )
+    })?;
+    config = sr_yaml::add_defaults(config);
+    let mut config_as_json = serde_json::to_value(config)?;
+    json_patch::patch(&mut config_as_json, &patch)?;
+    let new_config = serde_yaml::from_str(&serde_json::to_string(&config_as_json)?)?;
+    file.set_len(0)?;
+    file.seek(SeekFrom::Start(0))?;
+    file.write_all(
+        serde_yaml::to_string(&new_config)?
+            .trim_start_matches("---\n")
+            .as_bytes(),
+    )?;
+    file.unlock()?;
+    Ok(new_config)
+}
+
+#[patch("/srvc/patch-config")]
+async fn patch_config(
+    app_ctx_mutex: Data<Mutex<AppContext>>,
+    request: Json<Patch>,
+) -> HttpResponse {
+    let mut guard = app_ctx_mutex.lock().unwrap();
+    let yaml_config_path = guard.yaml_config_path.clone();
+
+    let fut = web::block(move || patch_config_file(&yaml_config_path, request.into_inner()));
+    match fut.await {
+        Ok(Ok(patched_yaml_config)) => {
+            guard.config_stale = true;
+            guard.yaml_config = sr_yaml::add_defaults(patched_yaml_config.clone());
+            guard.yaml_config_retrieved = Instant::now();
+            HttpResponse::Created().body("")
+        }
+        Ok(Err(e)) => HttpResponse::InternalServerError().json(ErrorResponse {
+            error: e.to_string(),
+        }),
+        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
+            error: e.to_string(),
+        }),
+    }
+}
+
 #[actix_web::main]
 async fn serve(app_ctx: AppContext) -> std::io::Result<()> {
     let app_ctx_mutex: Data<Mutex<AppContext>> = Data::new(Mutex::new(app_ctx.clone()));
@@ -163,7 +228,8 @@ async fn serve(app_ctx: AppContext) -> std::io::Result<()> {
             .wrap(middleware::Compress::default())
             .app_data(app_ctx_mutex.to_owned())
             .service(get_configs)
-            .service(get_index);
+            .service(get_index)
+            .service(patch_config);
         match &app_ctx.html_file_path {
             Some(path) => {
                 let cpath = path.canonicalize().expect("canonicalize");
@@ -213,6 +279,7 @@ pub fn run(opts: &mut Opts, editor: Option<String>, host: String, port: u16) -> 
 
     let app_ctx = AppContext {
         config,
+        config_stale: false,
         host,
         html,
         html_file_path: path,

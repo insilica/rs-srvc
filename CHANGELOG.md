@@ -1,6 +1,7 @@
 ## Unreleased
 
 - (breaking) No longer implicitly add sink steps to the config. The sink step is still processed as before, but the output of `print-config` has changed.
+- Add `edit-config` command
 
 ## v0.20.0 (2023-06-15)
 
