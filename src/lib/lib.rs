@@ -3,7 +3,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate maplit;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -21,7 +21,7 @@ pub mod sr_yaml;
 pub struct Step {
     pub env: Option<Vec<String>>,
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
+    pub extra: BTreeMap<String, serde_json::Value>,
     pub labels: Vec<String>,
     pub run: Option<String>,
     #[serde(rename = "run-embedded")]
@@ -32,7 +32,7 @@ pub struct Step {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Flow {
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
+    pub extra: BTreeMap<String, serde_json::Value>,
     pub steps: Vec<Step>,
 }
 
@@ -40,7 +40,7 @@ pub struct Flow {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Label {
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
+    pub extra: BTreeMap<String, serde_json::Value>,
     pub hash: Option<String>,
     pub id: String,
     #[serde(rename = "json-schema")]
@@ -68,9 +68,9 @@ pub struct Config {
     pub current_step: Option<Step>,
     pub db: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
-    pub flows: HashMap<String, Flow>,
-    pub labels: HashMap<String, Label>,
+    pub extra: BTreeMap<String, serde_json::Value>,
+    pub flows: BTreeMap<String, Flow>,
+    pub labels: BTreeMap<String, Label>,
     pub reviewer: Option<String>,
     #[serde(
         alias = "sink-all-events",

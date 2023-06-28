@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::io::BufRead;
 
 use anyhow::{Context, Error, Result};
@@ -14,7 +14,7 @@ use serde_with::skip_serializing_none;
 pub struct Event {
     pub data: Option<serde_json::Value>,
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
+    pub extra: BTreeMap<String, serde_json::Value>,
     pub hash: Option<String>,
     pub r#type: String,
     pub uri: Option<String>,
@@ -27,7 +27,7 @@ pub struct LabelAnswerData {
     #[serde(alias = "document")]
     pub event: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
+    pub extra: BTreeMap<String, serde_json::Value>,
     pub label: String,
     pub reviewer: String,
     pub timestamp: u64,

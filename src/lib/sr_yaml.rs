@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
@@ -20,7 +21,7 @@ use crate::{event, json_schema};
 pub struct Step {
     pub env: Option<Vec<String>>,
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
+    pub extra: BTreeMap<String, serde_json::Value>,
     pub labels: Option<Vec<String>>,
     pub run: Option<String>,
     #[serde(alias = "run-embedded", rename(serialize = "run-embedded"))]
@@ -34,7 +35,7 @@ pub struct Step {
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Flow {
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
+    pub extra: BTreeMap<String, serde_json::Value>,
     pub steps: Option<Vec<Step>>,
     #[serde(alias = "url")]
     uri: Option<String>,
@@ -44,7 +45,7 @@ pub struct Flow {
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Label {
     #[serde(flatten)]
-    extra: HashMap<String, serde_json::Value>,
+    extra: BTreeMap<String, serde_json::Value>,
     #[serde(alias = "json-schema", rename(serialize = "json-schema"))]
     json_schema: Option<serde_json::Value>,
     #[serde(
@@ -81,9 +82,9 @@ pub struct Config {
     pub base_uri: Option<String>,
     pub db: Option<String>,
     #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
-    pub flows: Option<HashMap<String, Flow>>,
-    pub labels: Option<HashMap<String, Label>>,
+    pub extra: BTreeMap<String, serde_json::Value>,
+    pub flows: Option<BTreeMap<String, Flow>>,
+    pub labels: Option<BTreeMap<String, Label>>,
     pub reviewer: Option<String>,
     #[serde(
         alias = "sink-all-events",
@@ -218,10 +219,10 @@ pub fn parse_flow(client: &Client, flow: Flow) -> Result<lib_sr::Flow> {
 
 pub fn parse_flows(
     client: &Client,
-    flows: Option<HashMap<String, Flow>>,
-) -> Result<HashMap<String, lib_sr::Flow>> {
-    let flows = flows.unwrap_or(HashMap::new());
-    let mut m = HashMap::new();
+    flows: Option<BTreeMap<String, Flow>>,
+) -> Result<BTreeMap<String, lib_sr::Flow>> {
+    let flows = flows.unwrap_or(BTreeMap::new());
+    let mut m = BTreeMap::new();
     for (flow_name, flow) in flows {
         let flow = parse_flow(client, flow)?;
         m.insert(flow_name, flow);
@@ -249,7 +250,7 @@ pub fn parse_label_data(
     let data = serde_json::from_str(&data_s).with_context(|| "Deserialization failed")?;
     let event = event::Event {
         data: data,
-        extra: HashMap::new(),
+        extra: BTreeMap::new(),
         hash: None,
         r#type: String::from("label"),
         uri: None,
@@ -318,11 +319,11 @@ pub fn get_label_schema(
 
 pub fn parse_labels(
     client: &Client,
-    labels: &Option<HashMap<String, Label>>,
-) -> Result<HashMap<String, lib_sr::Label>> {
+    labels: &Option<BTreeMap<String, Label>>,
+) -> Result<BTreeMap<String, lib_sr::Label>> {
     match labels {
         Some(labels) => {
-            let mut m = HashMap::new();
+            let mut m = BTreeMap::new();
             for (id, label) in labels {
                 let json_schema = get_label_schema(&client, &label, id)?;
                 let parsed = parse_label(&client, &id, label, json_schema)?;
@@ -330,7 +331,7 @@ pub fn parse_labels(
             }
             Ok(m)
         }
-        None => Ok(HashMap::new()),
+        None => Ok(BTreeMap::new()),
     }
 }
 
@@ -343,7 +344,7 @@ pub fn parse_source(client: &Client, source: Source) -> Result<lib_sr::Source> {
                 None => source.uri.expect("uri"),
             };
             lib_sr::Step {
-                extra: HashMap::new(),
+                extra: BTreeMap::new(),
                 env: None,
                 labels: Vec::new(),
                 run: None,

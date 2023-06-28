@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::PathBuf;
 
 use anyhow::{Context, Error, Result};
@@ -42,7 +42,7 @@ fn get_label_events(config: &Config) -> Result<Vec<Event>> {
         data_m.remove("hash");
         let event = Event {
             data: Some(json!(data_m)),
-            extra: HashMap::new(),
+            extra: BTreeMap::new(),
             hash,
             r#type: String::from("label"),
             uri: None,

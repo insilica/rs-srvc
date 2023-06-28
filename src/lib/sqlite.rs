@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 
 use anyhow::{Context, Error, Result};
@@ -135,9 +135,10 @@ fn value_to_map(value: &Value) -> Option<HashMap<String, Value>> {
 
 pub fn parse_event_rusqlite(row: &Row) -> rusqlite::Result<Event> {
     let extra_json: Option<Value> = row.get(1)?;
-    let extra = extra_json
+    let extra_hashmap = extra_json
         .and_then(|v| value_to_map(&v))
         .unwrap_or_else(HashMap::new);
+    let extra: BTreeMap<String, Value> = extra_hashmap.into_iter().collect();
     Ok(Event {
         data: row.get(0)?,
         extra,

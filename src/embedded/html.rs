@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufReader, ErrorKind, Read, Write};
 use std::path::PathBuf;
@@ -247,14 +247,15 @@ fn write_leading_non_docs(app_ctx: &mut AppContext) -> std::io::Result<()> {
 
 fn write_port_event(app_ctx_mutex: Data<Mutex<AppContext>>, port: u16) -> std::io::Result<()> {
     let mut app_ctx = app_ctx_mutex.lock().unwrap();
-    let mut data = hashmap! {String::from("http-port") => json!(port)};
+    let mut data = BTreeMap::new();
+    data.insert(String::from("http-port"), json!(port));
     match embedded::insert_timestamp(&mut data, app_ctx.timestamp_override) {
         Ok(_) => Ok(()),
         Err(_) => Err(err("Failed to calculate timestamp")),
     }?;
     let mut port_event = Event {
         data: Some(json!(data)),
-        extra: HashMap::new(),
+        extra: BTreeMap::new(),
         hash: None,
         r#type: String::from("control"),
         uri: None,

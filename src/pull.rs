@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
 use std::thread;
@@ -18,7 +18,7 @@ pub fn run(
     let mut config = sr_yaml::parse_config(yaml_config)?;
     config.db = db.unwrap_or(config.db);
     // Don't add any sr.yaml labels to the db
-    config.labels = HashMap::new();
+    config.labels = BTreeMap::new();
     config.sink_control_events = sink_control_events;
 
     let (tx, rx) = mpsc::sync_channel::<Event>(16);

@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::io;
 use std::io::{BufRead, BufReader, Write};
 
@@ -12,8 +12,12 @@ use lib_sr::Label;
 use crate::embedded;
 use crate::embedded::MapContext;
 
-fn answer_data(label: &Label, doc: &Event, reviewer: String) -> HashMap<String, serde_json::Value> {
-    let mut data: HashMap<String, serde_json::Value> = HashMap::new();
+fn answer_data(
+    label: &Label,
+    doc: &Event,
+    reviewer: String,
+) -> BTreeMap<String, serde_json::Value> {
+    let mut data: BTreeMap<String, serde_json::Value> = BTreeMap::new();
     data.insert(
         String::from("event"),
         json!(doc.hash.as_ref().expect("Document must have a hash")),
@@ -39,7 +43,7 @@ fn read_boolean(
     let mut data = answer_data(label, doc, reviewer);
     let mut event = Event {
         data: None,
-        extra: HashMap::new(),
+        extra: BTreeMap::new(),
         hash: None,
         r#type: String::from("label-answer"),
         uri: None,
@@ -100,7 +104,7 @@ fn read_categorical(
     let mut data = answer_data(label, doc, reviewer);
     let mut event = Event {
         data: None,
-        extra: HashMap::new(),
+        extra: BTreeMap::new(),
         hash: None,
         r#type: String::from("label-answer"),
         uri: None,
@@ -144,7 +148,7 @@ fn read_string(
     let mut data = answer_data(label, doc, reviewer);
     let mut event = Event {
         data: None,
-        extra: HashMap::new(),
+        extra: BTreeMap::new(),
         hash: None,
         r#type: String::from("label-answer"),
         uri: None,

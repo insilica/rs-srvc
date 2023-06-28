@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, LineWriter, Write};
 use std::net::{SocketAddr, TcpListener};
@@ -307,7 +307,7 @@ pub fn run_flow_in_dir(flow: &Flow, config: &Config, dir: &TempDir) -> Result<()
     steps.extend(flow_steps);
     let sink_step = Step {
         env: Some(vec![String::from("SRVC_TOKEN")]),
-        extra: HashMap::new(),
+        extra: BTreeMap::new(),
         labels: Vec::new(),
         run: None,
         run_embedded: Some(String::from("sink")),

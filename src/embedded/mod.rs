@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::env;
 use std::fs::File;
 use std::io::{BufReader, LineWriter, Write};
@@ -179,7 +179,7 @@ pub fn write_event_dedupe(
     Ok(())
 }
 pub fn insert_timestamp(
-    data: &mut HashMap<String, serde_json::Value>,
+    data: &mut BTreeMap<String, serde_json::Value>,
     timestamp_override: Option<u64>,
 ) -> Result<()> {
     let timestamp = match timestamp_override {
