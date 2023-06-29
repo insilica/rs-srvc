@@ -35,10 +35,8 @@
 
     li {
       list-style: none;
+      margin-top: 6px;
     }
-
-
-
 
     #labels td,
     thead {
@@ -62,10 +60,6 @@
 
     li td ul {
       margin: 10px 0;
-    }
-
-    li td ul li+li {
-      margin-top: 4px;
     }
 
     input,
@@ -116,7 +110,7 @@
 
 <body>
   <div id="outer-container">
-    <form id="top-level-props-form">
+    <form id="top-level-props-form" method="post">
       <div>
         <table id="top-level-props">
           <tr>
@@ -137,6 +131,19 @@
         <button id="submit-top-level-props" type="submit">Save</button>
       </div>
     </form>
+    <hr>
+    <h2>Labels</h2>
+    <form id="labels-form" method="post">
+      <button class="add-new-label">+</button>
+      <div>
+        <table id="labels">
+          <tbody></tbody>
+        </table>
+      </div>
+      <div>
+        <button id="submit-labels" type="submit">Save</button>
+      </div>
+    </form>
   </div>
   <script type="text/javascript">
     (function () {
@@ -150,7 +157,7 @@
         if (overrideVal || el.dataset.savedVal === undefined || el.dataset.savedVal === el.value) {
           el.value = new_val || '';
           el.dataset.savedVal = el.value;
-        } else if (new_val === el.value) {
+        } else if ((new_val || '') === el.value) {
           el.dataset.savedVal = new_val
         }
       };
@@ -163,6 +170,105 @@
         set('base-uri');
         set('db');
         set('reviewer');
+        setLabels(cfgs, overrideVals);
+      };
+
+      let createLabelPropEls = (ul, labelId, prop, label_text, label) => {
+        let li = document.createElement('li');
+        ul.appendChild(li);
+        let lbl = document.createElement('label');
+        li.appendChild(lbl);
+        lbl.for = 'label-' + prop + '-' + labelId;
+        lbl.innerText = label_text;
+        let in_li = document.createElement('li');
+        ul.appendChild(in_li);
+        let input = document.createElement('input');
+        in_li.appendChild(input);
+        input.dataset.labelId = labelId;
+        input.dataset.prop = prop;
+        input.id = 'label-' + prop + '-' + labelId;
+        if ('id' === prop) {
+          setConfigVal(input, labelId, true);
+        } else {
+          setConfigVal(input, label[prop], true);
+        }
+      };
+
+      let setLabel = (overrideVals, labelId, label) => {
+        let tr = sel('#label-row-' + labelId);
+        if (!tr) {
+          tr = document.createElement('tr');
+          sel('#labels tbody').appendChild(tr);
+          tr.classList.add('label-row');
+          tr.dataset.labelId = labelId
+          tr.id = 'label-row-' + labelId;
+          let ul = document.createElement('ul');
+          tr.appendChild(ul);
+          createLabelPropEls(ul, labelId, 'id', 'ID', label);
+          createLabelPropEls(ul, labelId, 'question', 'Question', label);
+          createLabelPropEls(ul, labelId, 'json-schema', 'JSON Schema', label);
+        } else {
+          sel('#label-row-' + labelId).dataset.isNew = false;
+          setConfigVal(sel('#label-id-' + labelId), labelId, overrideVals);
+          setConfigVal(sel('#label-question-' + labelId), label['question'], overrideVals);
+          setConfigVal(sel('#label-json-schema-' + labelId), label['json-schema'], overrideVals);
+        }
+      };
+
+      let addNewLabel = async (event) => {
+        event.preventDefault();
+        let labelId = '---' + window.crypto.getRandomValues(new Uint32Array(1))[0];
+        setLabel(true, labelId, {});
+        setConfigVal(sel('#label-id-' + labelId), null, true);
+        sel('#label-row-' + labelId).dataset.isNew = true;
+        sortLabelRows();
+      };
+
+      let setLabels = (cfgs, overrideVals) => {
+        let yaml = cfgs['yaml-config'];
+        let labels = yaml['labels'] || {};
+
+        for (let tr of document.querySelectorAll('.label-row')) {
+          if (tr.dataset.isNew !== 'true' && !labels[tr.dataset.labelId]) {
+            sel('#labels tbody').removeChild(tr);
+          }
+        }
+
+        for (let id in labels) {
+          let label = yaml['labels'][id];
+          setLabel(overrideVals, id, label);
+        }
+
+        sortLabelRows();
+      };
+
+      let sortLabelRows = () => {
+        let table = document.querySelector('#labels');
+        let tbody = table.querySelector('tbody');
+        let rows = Array.from(tbody.rows);
+
+        // Apply a CSS display: flex and flex-direction: column to the tbody
+        tbody.style.display = 'flex';
+        tbody.style.flexDirection = 'column';
+
+        // Sort the array
+        rows.sort((a, b) => {
+            let aData = a.dataset.labelId;
+            let bData = b.dataset.labelId;
+
+            if (aData < bData) {
+                return -1;
+            }
+            if (aData > bData) {
+                return 1;
+            }
+            return 0;
+        });
+
+        // Apply the CSS order property to each row
+        for (let i = 0; i < rows.length; i++) {
+            rows[i].style.order = i;
+        }
       };
 
       /// https://jsonpatch.com/
@@ -173,7 +279,7 @@
           sel('#db'),
           sel('#reviewer')
         ];
-        for (el of els) {
+        for (let el of els) {
           let v = el.value.trim();
           if (el.dataset.savedVal != v) {
             let op = 'replace';
@@ -186,6 +292,48 @@
             });
           }
         }
+
+        for (let el of sel('#labels-form').querySelectorAll('input')) {
+          let v = el.value.trim();
+          if (el.dataset.savedVal != v) {
+            if (el.dataset.prop === 'id') {
+              if(el.dataset.savedVal) {
+                patch.push({
+                  'op': 'move',
+                  'from': '/labels/' + el.dataset.savedVal,
+                  'path': '/labels/' + v,
+                });
+              } else {
+                patch.push({
+                  'op': 'add',
+                  'path': '/labels/' + v,
+                  'value': {},
+                });
+              }
+            } else {
+              let currentLabelId = sel('#label-id-' + el.dataset.labelId).value;
+              let op = 'replace';
+              if (!el.dataset.savedVal) op = 'add';
+              if (v === '') op = 'remove';
+              patch.push({
+                'op': op,
+                'path': '/labels/' + currentLabelId + '/' + el.dataset.prop,
+                'value': el.value,
+              });
+            }
+          }
+        }
+
+        // Ensure that moves come before child paths
+        patch.sort((a, b) => {
+          if (a.path < b.path) {
+            return -1;
+          }
+          if (a.path > b.path) {
+            return 1;
+          }
+          return 0;
+        });
 
         return patch;
       }
@@ -201,6 +349,9 @@
           req.open("PATCH", "/srvc/patch-config");
           req.setRequestHeader("Content-Type", "application/json-patch+json");
           req.send(JSON.stringify(patch));
+          for (let el of document.querySelectorAll('.label-row')) {
+            el.dataset.isNew = false;
+          }
         }
       };
 
@@ -221,6 +372,8 @@
       setInterval(loadConfigs, 500)
 
       sel('#submit-top-level-props').addEventListener('click', saveConfig);
+      sel('.add-new-label').addEventListener('click', addNewLabel);
+      sel('#submit-labels').addEventListener('click', saveConfig);
     })();
   </script>
 </body>
