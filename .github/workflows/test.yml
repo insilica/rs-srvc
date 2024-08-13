@@ -38,10 +38,10 @@ jobs:
 
     - name: Install Nix
       if: matrix.build != 'win-msvc'
-      uses: DeterminateSystems/nix-installer-action@v4
+      uses: DeterminateSystems/nix-installer-action@v13
 
     - name: Cache Nix store
-      uses: DeterminateSystems/magic-nix-cache-action@v1
+      uses: DeterminateSystems/magic-nix-cache-action@v7
 
     - name: Install packages (Ubuntu)
       if: matrix.build == 'linux'
